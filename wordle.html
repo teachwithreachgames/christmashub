@@ -88,6 +88,18 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
 .stats div{text-align:center}.stats b{display:block;font-family:'Lilita One',cursive;font-size:36px}
 .row-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .cf{position:fixed;width:12px;height:18px;z-index:60;pointer-events:none;border-radius:2px}
+.daychip{cursor:pointer;color:var(--cream);font:inherit;font-weight:800}
+.daychip:hover{border-color:var(--gold)}
+.notyet{text-align:center;max-width:620px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:22px;padding:30px}
+.notyet .big{font-size:72px}
+.notyet h2{font-family:'Lilita One',cursive;font-weight:400;font-size:36px;margin:8px 0}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.day{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:12px;padding:8px;color:var(--cream);cursor:pointer;text-align:center;font:inherit}
+.day b{display:block;font-family:'Lilita One',cursive;font-weight:400;font-size:22px}
+.day .st{font-size:22px}
+.day.today{border-color:var(--gold)}
+.day.locked{opacity:.4;cursor:default}
+.day.cur{background:rgba(245,197,66,.2)}
 </style>
 </head>
 <body>
@@ -96,14 +108,17 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
   <button class="btn hidden" id="hubBtn">🏠 Hub</button>
   <h1>🎄 Christmas <span>Wordle</span></h1>
   <span class="chip" id="classChip"></span>
-  <div class="seg" id="levelSeg"><button data-l="elem">Elementary</button><button data-l="hs">High School</button></div>
+  <div class="seg" id="levelSeg"><button data-l="elem" title="Elementary">🧒 Elem</button><button data-l="hs" title="High School">🎓 HS</button></div>
+  <div class="seg" id="modeSeg"><button data-m="daily">📅 Daily</button><button data-m="unlimited">♾️ Unlimited</button></div>
+  <button class="chip daychip" id="dayChip"></button>
   <div class="spacer"></div>
-  <button class="btn" id="teamsBtn">👥 Teams</button>
-  <button class="btn" id="clueBtn">💡 Clue</button>
-  <button class="btn" id="revealBtn">🏳 Reveal</button>
-  <button class="btn" id="secretBtn">✏️ Secret word</button>
-  <button class="btn" id="statsBtn">📊</button>
+  <button class="btn" id="teamsBtn" title="Teams">👥</button>
+  <button class="btn" id="clueBtn" title="Show the clue">💡</button>
+  <button class="btn" id="revealBtn" title="Reveal the word">🏳</button>
+  <button class="btn" id="secretBtn" title="Type a secret word">✏️</button>
+  <button class="btn" id="statsBtn" title="Class stats">📊</button>
   <button class="btn gold" id="nextBtn">⏭ New word</button>
+  <button class="btn gold" id="daysBtn">📅 Days</button>
 </header>
 
 <main>
@@ -112,6 +127,7 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
     <div class="clue hidden" id="clue"></div>
   </div>
   <div class="board" id="board"></div>
+  <div class="notyet hidden" id="notYet"></div>
 </main>
 <div class="kb" id="kb"></div>
 
@@ -126,6 +142,15 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
     <p id="endClue" style="font-size:18px;margin:6px 0"></p>
     <p class="hint" id="endInfo"></p>
     <div class="row-btns"><button class="btn" data-close>Look at the board</button><button class="btn gold" id="endNext">⏭ Next word</button></div>
+  </div>
+</div>
+
+<!-- All days -->
+<div class="overlay hidden" id="daysModal">
+  <div class="sheet" style="width:min(900px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>📅 Daily words</h2><button class="btn" data-close>✕</button></div>
+    <p class="hint" id="daysInfo"></p>
+    <div class="days" id="daysGrid"></div>
   </div>
 </div>
 
@@ -171,58 +196,113 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
 /* =====================================================
-   WORD LISTS  —  [word, emoji, clue]
-   Add your own words here (letters only).
+   WORD LISTS  —  [word, emoji, clue]   (letters only)
+   DAILY: one word per school day, Nov 25 – Dec 24, in order.
+   UNLIMITED: separate list, so it never spoils a daily.
    ===================================================== */
-const WORDS = {
+const WORDS_DAILY = {
   elem: [
-    ['TREE','🎄','We hang ornaments and lights on it'], ['SNOW','❄️','White flakes that fall from the sky'],
-    ['GIFT','🎁','Something wrapped up for someone special'], ['STAR','⭐','It goes on the very top of the tree'],
-    ['BELL','🔔','It rings: jingle, jingle!'], ['SLED','🛷','Ride it down a snowy hill'],
-    ['SOCK','🧦','Hang it on the fireplace… or wear it!'], ['COLD','🥶','How it feels outside in winter'],
-    ['TOYS','🧸','The elves make these in the workshop'], ['WRAP','🎀','What you do to a present before you give it'],
-    ['CARD','💌','You write a holiday message inside it'], ['COAL','⚫','Snowman eyes are often made of this'],
-    ['ELVES','🧝','Santa\'s little helpers'], ['SANTA','🎅','He says "Ho ho ho!"'],
-    ['CANDY','🍬','A sweet treat, like a candy cane'], ['MERRY','😊','"_____ Christmas!"'],
-    ['CHEER','📣','Happy holiday feelings'], ['JOLLY','😄','Happy and cheerful, just like Santa'],
-    ['SCARF','🧣','Wrap it around your neck to stay warm'], ['COCOA','☕','A hot chocolate drink'],
-    ['NORTH','🧭','Santa lives at the _____ Pole'], ['BOOTS','👢','Wear them to stomp in the snow'],
-    ['SKATE','⛸️','Glide across the ice'], ['TOQUE','🧢','A Canadian winter hat'],
-    ['LIGHT','💡','Strings of these make the tree glow'], ['HOLLY','🌿','Spiky green leaves with red berries'],
-    ['TREAT','🍪','A cookie is a yummy _____'], ['PARTY','🎉','A class celebration with snacks and games'],
-    ['FROST','🌨️','Icy patterns on the window on a cold morning'], ['CAROL','🎶','A holiday song people sing together'],
-    ['MITTS','🧤','Warm things for your hands'], ['SWEET','🍭','Candy tastes very _____'],
+    ['SNOW','❄️','White flakes that fall from the sky'], ['COCOA','☕','A hot chocolate drink'],
+    ['MITTS','🧤','Warm things for your hands'], ['TOQUE','🧢','A Canadian winter hat'],
+    ['SLED','🛷','Ride it down a snowy hill'], ['POLAR','🐻‍❄️','A white bear is a _____ bear'],
+    ['SKATE','⛸️','Glide across the ice'], ['FROST','🌨️','Icy patterns on the window on a cold morning'],
+    ['SCARF','🧣','Wrap it around your neck to stay warm'], ['ELVES','🧝','Santa\'s little helpers'],
+    ['CANDY','🍬','A sweet treat, like a candy cane'], ['BELL','🔔','It rings: jingle, jingle!'],
+    ['STAR','⭐','It goes on the very top of the tree'], ['HOLLY','🌿','Spiky green leaves with red berries'],
+    ['GIFT','🎁','Something wrapped up for someone special'], ['CAROL','🎶','A holiday song people sing together'],
+    ['JOLLY','😄','Happy and cheerful, just like Santa'], ['CHEER','📣','Happy holiday feelings'],
+    ['TREE','🎄','We hang ornaments and lights on it'], ['MERRY','😊','"_____ Christmas!"'],
+    ['NORTH','🧭','Santa lives at the _____ Pole'], ['SANTA','🎅','He says "Ho ho ho!"'],
   ],
   hs: [
-    ['FROST','🌨️','Thin layer of ice crystals; Jack _____'], ['CIDER','🍎','Warm spiced apple drink'],
+    ['FROST','🌨️','Thin layer of ice crystals; Jack _____'], ['FLURRY','🌨️','A light, brief snowfall'],
+    ['PARKA','🧥','A long, hooded winter coat'], ['TOQUE','🧢','Canadian for a knit winter hat'],
+    ['CIDER','🍎','Warm spiced apple drink'], ['SPRUCE','🌲','A type of evergreen tree'],
+    ['ICICLE','🧊','Frozen spike hanging from the roof'], ['TINSEL','✨','Shiny strands draped on the tree'],
+    ['WREATH','🎄','A circle of greenery hung on the door'], ['CAROL','🎶','A festive song; also a Dickens Christmas story'],
+    ['GRINCH','💚','He tried to steal Christmas'], ['EGGNOG','🥛','Creamy holiday drink'],
+    ['MANTEL','🧦','The shelf above the fireplace'], ['BAUBLE','🔴','A shiny ball ornament (British word)'],
+    ['NUTMEG','🌰','Spice sprinkled on eggnog'], ['COMET','☄️','A reindeer… and an icy object in space'],
+    ['VIXEN','🦌','A reindeer, and a female fox'], ['SEASON','🍂','"\'Tis the ______"'],
+    ['SPIRIT','✨','Holiday ______'], ['JINGLE','🔔','_____ Bell Rock'],
+    ['FROSTY','⛄','The snowman with a magic hat'], ['SLEIGH','🛷','Santa\'s ride across the sky'],
+  ],
+};
+const WORDS = {
+  elem: [
+    ['SOCK','🧦','Hang it on the fireplace… or wear it!'],
+    ['COLD','🥶','How it feels outside in winter'], ['TOYS','🧸','The elves make these in the workshop'],
+    ['WRAP','🎀','What you do to a present before you give it'], ['CARD','💌','You write a holiday message inside it'],
+    ['COAL','⚫','Snowman eyes are often made of this'], ['BOOTS','👢','Wear them to stomp in the snow'],
+    ['LIGHT','💡','Strings of these make the tree glow'], ['TREAT','🍪','A cookie is a yummy _____'],
+    ['PARTY','🎉','A class celebration with snacks and games'], ['SWEET','🍭','Candy tastes very _____'],
+    ['WISH','🌠','Make a ____ on a shooting star'], ['BAKE','🧁','What we do with cookie dough in the oven'],
+    ['FIRE','🔥','Warm and crackly in the fireplace'], ['WARM','🧣','How a cozy blanket makes you feel'],
+    ['PINE','🌲','A tree with needles instead of leaves'], ['DEER','🦌','Reindeer are a kind of ____'],
+    ['SNOWY','🌨️','A day full of snow is a _____ day'], ['HOME','🏠','Where we spend the holidays with family'],
+    ['BOWS','🎀','Pretty ribbons tied on presents'], ['CLAUS','🎅','Santa _____'],
+    ['CHILL','🥶','A cold feeling in the air'], ['FUDGE','🍫','Soft chocolate squares'],
+    ['ICING','🧁','Sweet frosting on a cookie'], ['SHARE','🤝','Be kind and _____ your toys'],
+    ['SMILE','😊','What your face does when you\'re happy'], ['HAPPY','😀','"_____ holidays!"'],
+    ['WHITE','⬜','The colour of snow'], ['GREEN','🟩','The colour of a Christmas tree'],
+    ['NIGHT','🌙','Santa flies through the _____ sky'], ['MOOSE','🫎','A big Canadian animal with antlers'],
+    ['GLOVE','🧤','It keeps your hand warm and has fingers'], ['NOSE','👃','Rudolph\'s is red and shiny'],
+    ['SNACK','🍿','A little bite to eat between meals'], ['SKIS','🎿','Long and skinny, you wear them on snowy hills'],
+    ['COZY','🛋️','Warm and snug'], ['STORY','📖','A bedtime _____'],
+    ['MAGIC','✨','Santa\'s sleigh flies by _____'], ['CABIN','🏡','A little wooden house in the woods'],
+    ['MILK','🥛','Santa\'s cookies come with a glass of ____'], ['CAKE','🍰','A sweet dessert, often with icing'],
+    ['PEACE','🕊️','Calm and quiet, with no fighting'],
+  ],
+  hs: [
     ['FEAST','🍗','A huge holiday meal'], ['SPICE','🫚','Cinnamon, nutmeg or clove'],
     ['FUDGE','🍫','Rich, soft chocolate squares'], ['CHILL','🥶','A cold feeling in the air'],
     ['FLAKE','❄️','No two snow_____s are alike'], ['POLAR','🐻‍❄️','The _____ Express'],
-    ['GLEAM','✨','To shine brightly'], ['COMET','☄️','A reindeer… and an icy object in space'],
-    ['VIXEN','🦌','A reindeer, and a female fox'], ['TOQUE','🧢','Canadian for a knit winter hat'],
-    ['CAROL','🎶','A festive song; also a Dickens Christmas story'], ['NORTH','🧭','The direction of Santa\'s workshop'],
-    ['TINSEL','✨','Shiny strands draped on the tree'], ['WREATH','🎄','A circle of greenery hung on the door'],
-    ['GRINCH','💚','He tried to steal Christmas'], ['EGGNOG','🥛','Creamy holiday drink'],
+    ['GLEAM','✨','To shine brightly'], ['NORTH','🧭','The direction of Santa\'s workshop'],
     ['RIBBON','🎀','Tie it in a bow on a present'], ['CANDLE','🕯️','Wax and a wick'],
-    ['FROSTY','⛄','The snowman with a magic hat'], ['SLEIGH','🛷','Santa\'s ride across the sky'],
     ['WINTER','🌨️','The season after fall'], ['GINGER','🍪','_____bread cookies'],
-    ['SPRUCE','🌲','A type of evergreen tree'], ['ICICLE','🧊','Frozen spike hanging from the roof'],
     ['MITTEN','🧤','A glove with no separate fingers'], ['PARCEL','📦','A package delivered in the mail'],
-    ['DASHER','🦌','The first reindeer named in the famous poem'], ['MANTEL','🧦','The shelf above the fireplace'],
-    ['JINGLE','🔔','_____ Bell Rock'], ['BAUBLE','🔴','A shiny ball ornament (British word)'],
-    ['NUTMEG','🌰','Spice sprinkled on eggnog'], ['TOFFEE','🍬','Hard, buttery caramel candy'],
+    ['DASHER','🦌','The first reindeer named in the famous poem'], ['TOFFEE','🍬','Hard, buttery caramel candy'],
     ['FROZEN','🧊','Turned to ice'], ['DANCER','🦌','One of Santa\'s reindeer, after Dasher'],
+    ['CLOVE','🌰','A nail-shaped spice'], ['SLUSH','💧','Melting, dirty snow by the curb'],
+    ['CUPID','🦌','A reindeer who shares a name with Valentine\'s Day'], ['DONNER','🦌','A reindeer whose name means "thunder"'],
+    ['EMBER','🔥','A glowing piece of a dying fire'], ['HEARTH','🔥','The floor in front of a fireplace'],
+    ['TUNDRA','🌨️','A frozen, treeless Arctic plain'], ['SQUALL','🌬️','A sudden, sharp snowstorm'],
+    ['SLEET','🧊','Rain and snow mixed together'], ['HOCKEY','🏒','Canada\'s winter game'],
+    ['GOALIE','🥅','Stops pucks for a living'], ['TRIFLE','🍰','Layered dessert of cake, custard and fruit'],
+    ['PECAN','🥧','The nut in a classic holiday pie'], ['MARLEY','👻','Scrooge\'s ghostly former partner'],
+    ['SEQUIN','✨','A shiny disc sewn on a sweater'], ['CEDAR','🌲','A fragrant evergreen'],
+    ['BALSAM','🌲','A fir tree with a famous Christmas scent'], ['ALPINE','🏔️','Of the high mountains'],
+    ['CHALET','🏠','A Swiss-style mountain cabin'], ['LODGE','🏨','Ski _____'],
+    ['SLOPE','⛷️','A ski run'], ['MOGUL','⛷️','A bump on a ski hill'],
+    ['FRIGID','🥶','Extremely cold'], ['NIPPY','🥶','Chilly; a bit cold'],
+    ['BRISK','🚶','Cool and refreshing, like a winter walk'], ['ADVENT','📅','A countdown calendar with little doors'],
+    ['LATKES','🥔','Potato pancakes for Hanukkah'], ['BOXING','🎁','_____ Day, December 26'],
+    ['TOAST','🥂','Raise a glass and make one'], ['FIGGY','🍮','"Bring us some _____ pudding"'],
+    ['SUGAR','🍬','_____ Plum Fairy'], ['BALLET','🩰','The Nutcracker is one'],
+    ['CLARA','🩰','The girl in The Nutcracker'], ['KEVIN','🏠','The boy left Home Alone'],
+    ['BUDDY','🧝','The human raised by elves in "Elf"'],
   ],
 };
+
 const MAX = 6;
+
+/* =====================================================
+   SCHOOL-DAY CALENDAR: Nov 25 – Dec 24, Monday to Friday
+   (add ?preview=1 to the address to unlock every day for testing)
+   ===================================================== */
+const params = new URLSearchParams(location.search), EMBED = params.has('embed'), PREVIEW = params.has('preview');
+const SEASON_YEAR = (() => { const t = new Date(); return t.getMonth() < 10 ? t.getFullYear() - 1 : t.getFullYear(); })();
+const DAYS = (() => { const out = [], d = new Date(SEASON_YEAR, 10, 25), end = new Date(SEASON_YEAR, 11, 24); while (d <= end){ const w = d.getDay(); if (w > 0 && w < 6) out.push(new Date(d)); d.setDate(d.getDate() + 1); } return out; })();
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDay = d => d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+function lastUnlocked(){ if (PREVIEW) return DAYS.length - 1; const now = new Date(); let n = -1; DAYS.forEach((d, i) => { if (d <= now) n = i; }); return n; }
+function todayIndex(){ const k = ymd(new Date()); return DAYS.findIndex(d => ymd(d) === k); }
 
 /* =====================================================
    SAVE DATA (per class)
    ===================================================== */
 const KEY = 'twr-wordle-v1', HUB_KEY = 'twr-hub-v1';
-const params = new URLSearchParams(location.search), EMBED = params.has('embed');
 let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
 if (!store || !store.classes) store = {classes:{}, current:'default'};
 let className = 'Our Class', hubLevel = null;
@@ -230,33 +310,43 @@ let className = 'Our Class', hubLevel = null;
   if (!hub || !Array.isArray(hub.classes) || !hub.classes.length) return;
   const c = hub.classes.find(x => x.id === (params.get('class') || hub.current)) || hub.classes[0];
   store.current = c.id; className = c.name; hubLevel = c.level; })();
-if (!store.classes[store.current]) store.classes[store.current] = {
-  level: hubLevel || 'hs', used:{elem:[], hs:[]}, game:null,
-  stats:{played:0, won:0, streak:0, best:0, dist:[0,0,0,0,0,0]},
-  teams:{on:false, names:['Team Holly','Team Ivy'], scores:[0,0], turn:0},
-};
+if (!store.classes[store.current]) store.classes[store.current] = {level: hubLevel || 'hs'};
 const C = store.classes[store.current];
+// fill in anything missing (also upgrades saves from the first version)
+C.mode = C.mode || 'daily'; C.used = C.used || {elem:[], hs:[]}; C.daily = C.daily || {elem:{}, hs:{}};
+C.stats = C.stats || {played:0, won:0, streak:0, best:0, dist:[0,0,0,0,0,0]};
+C.teams = C.teams || {on:false, names:['Team Holly','Team Ivy'], scores:[0,0], turn:0};
+if (C.game && !WORDS[C.level].some(w => w[0] === C.game.word) && !C.game.custom) C.game = null;  // drop an unlimited word that is now a daily
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
 $('#classChip').textContent = className;
+let dayIdx = todayIndex() >= 0 ? todayIndex() : (PREVIEW && new Date() < DAYS[0] ? 0 : lastUnlocked());
 
 /* =====================================================
    GAME
    ===================================================== */
+const needNewUnl = () => !C.game || C.game.done || (!C.game.custom && C.game.level && C.game.level !== C.level);
+const fresh = (word, emoji, clue, extra = {}) => ({word, emoji, clue, guesses:[], typed:'', done:false, won:false, clueShown:false, ...extra});
 function newGame(custom){
-  if (custom) C.game = {word:custom.word, emoji:custom.emoji || '🤫', clue:custom.clue || '', custom:true, guesses:[], typed:'', done:false, won:false, clueShown:false};
+  C.mode = 'unlimited';
+  if (custom) C.game = fresh(custom.word, custom.emoji || '🤫', custom.clue || '', {custom:true});
   else {
     const list = WORDS[C.level];
     let left = list.map((_, i) => i).filter(i => !C.used[C.level].includes(i));
     if (!left.length){ C.used[C.level] = []; left = list.map((_, i) => i); toast('You\'ve played every word! Starting the list again.'); }
     const i = left[Math.floor(Math.random() * left.length)];
     C.used[C.level].push(i);
-    const [word, emoji, clue] = list[i];
-    C.game = {word, emoji, clue, custom:false, guesses:[], typed:'', done:false, won:false, clueShown:false};
+    C.game = fresh(...list[i], {level:C.level});
   }
-  if (C.teams.on) C.teams.turn = (C.teams.firstNext = 1 - (C.teams.firstNext || 0));
-  save(); buildBoard(); renderAll();
+  nextTurn(); save(); show();
 }
-const G = () => C.game;
+function nextTurn(){ if (C.teams.on) C.teams.turn = (C.teams.first = 1 - (C.teams.first || 0)); }
+function G(){
+  if (C.mode !== 'daily') return C.game;
+  if (dayIdx < 0) return null;
+  const k = ymd(DAYS[dayIdx]), L = C.daily[C.level];
+  if (!L[k]){ const list = WORDS_DAILY[C.level]; L[k] = fresh(...list[dayIdx % list.length], {daily:true}); nextTurn(); save(); }
+  return L[k];
+}
 function score(guess, word){
   const n = word.length, res = Array(n).fill('absent'), cnt = {};
   for (let i = 0; i < n; i++){ if (guess[i] === word[i]) res[i] = 'correct'; else cnt[word[i]] = (cnt[word[i]] || 0) + 1; }
@@ -264,12 +354,34 @@ function score(guess, word){
   return res;
 }
 
+/* --- what's on screen --- */
+function show(){
+  const daily = C.mode === 'daily', g = G();
+  document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === C.mode));
+  $('#nextBtn').classList.toggle('hidden', daily);
+  $('#daysBtn').classList.toggle('hidden', !daily);
+  $('#dayChip').classList.toggle('hidden', !daily || dayIdx < 0);
+  if (daily && dayIdx >= 0) $('#dayChip').textContent = `#${dayIdx + 1} · ${dayIdx === todayIndex() ? 'Today' : fmtDay(DAYS[dayIdx])}`;
+  const blocked = !g;
+  $('#board').classList.toggle('hidden', blocked); $('#kb').classList.toggle('hidden', blocked); $('#notYet').classList.toggle('hidden', !blocked);
+  ['#clueBtn','#revealBtn','#teamsBtn'].forEach(id => $(id).classList.toggle('hidden', blocked));
+  if (blocked){
+    $('#notYet').innerHTML = `<div class="big">🎄</div><h2>Daily words start ${fmtDay(DAYS[0])}!</h2>
+      <p>A new Christmas word every school day until ${fmtDay(DAYS[DAYS.length - 1])}.</p>
+      <p class="hint">${Math.ceil((DAYS[0] - new Date()) / 86400000)} days to go.</p>
+      <div class="row-btns"><button class="btn gold" id="goUnl">♾️ Play Unlimited now</button></div>`;
+    $('#goUnl').onclick = () => { C.mode = 'unlimited'; if (needNewUnl()) newGame(); else { save(); show(); } };
+    renderStatus(); return;
+  }
+  buildBoard(); renderAll();
+}
+
 /* --- board --- */
 function fitTiles(){
-  const n = G().word.length;
+  const g = G(); if (!g) return;
+  const n = g.word.length;
   const main = $('main').getBoundingClientRect();
-  const statusH = 84;
-  const byH = (main.height - statusH - 20 - (MAX-1)*6) / MAX;
+  const byH = (main.height - 84 - 20 - (MAX-1)*6) / MAX;
   const byW = (Math.min(innerWidth - 40, 900) - (n-1)*6) / n;
   document.documentElement.style.setProperty('--tile', Math.max(34, Math.min(86, byH, byW)) + 'px');
 }
@@ -300,21 +412,20 @@ function renderTyped(){
   [...row.children].forEach((t, i) => { t.textContent = g.typed[i] || ''; t.classList.toggle('filled', !!g.typed[i]); });
 }
 function renderKeys(){
-  const best = {};
-  const rank = {correct:3, present:2, absent:1};
+  const best = {}, rank = {correct:3, present:2, absent:1};
   for (const gs of G().guesses){ const res = score(gs, G().word); [...gs].forEach((ch, i) => { if (!best[ch] || rank[res[i]] > rank[best[ch]]) best[ch] = res[i]; }); }
   document.querySelectorAll('.key[data-k]').forEach(k => { k.classList.remove('correct', 'present', 'absent'); const s = best[k.dataset.k]; if (s) k.classList.add(s); });
 }
 function renderStatus(){
   const g = G(), T = C.teams;
+  document.querySelectorAll('#levelSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === C.level));
+  if (!g){ $('#clue').classList.add('hidden'); $('#teams').classList.add('hidden'); return; }
   $('#clue').classList.toggle('hidden', !g.clueShown || !g.clue);
   $('#clue').innerHTML = `<span class="emo">${esc(g.emoji)}</span>${esc(g.clue)}`;
-  // elementary always shows the picture clue
   if (C.level === 'elem' && !g.custom && !g.clueShown){ $('#clue').classList.remove('hidden'); $('#clue').innerHTML = `<span class="emo">${esc(g.emoji)}</span><span class="hint">Tap 💡 Clue for a hint</span>`; }
   $('#teams').classList.toggle('hidden', !T.on);
   if (T.on) $('#teams').innerHTML = T.names.map((nm, i) => `<div class="team${i === T.turn && !g.done ? ' active' : ''}"><div class="nm">${i === T.turn && !g.done ? '👉 ' : ''}${esc(nm)}</div><div class="pts">${T.scores[i]}</div></div>`).join('');
   $('#teamsBtn').classList.toggle('on', T.on);
-  document.querySelectorAll('#levelSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === C.level));
 }
 function renderAll(){
   const g = G();
@@ -325,7 +436,7 @@ function renderAll(){
 /* --- input --- */
 let busy = false;
 function press(k){
-  const g = G(); if (busy || g.done) return;
+  const g = G(); if (!g || busy || g.done) return;
   if (k === 'ENTER') return submit();
   if (k === 'BACK'){ g.typed = g.typed.slice(0, -1); renderTyped(); return; }
   if (/^[A-Z]$/.test(k) && g.typed.length < g.word.length){ g.typed += k; renderTyped(); }
@@ -347,15 +458,17 @@ async function submit(){
 function shakeRow(r){ const row = $('#board').children[r]; if (!row) return; row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake'); }
 function finish(won, gaveUp){
   const g = G(); g.done = true; g.won = won;
-  const S = C.stats; S.played++;
   let teamMsg = '';
+  if (!g.daily){
+    const S = C.stats; S.played++;
+    if (won){ S.won++; S.streak++; S.best = Math.max(S.best, S.streak); S.dist[g.guesses.length - 1]++; } else S.streak = 0;
+  }
   if (won){
-    S.won++; S.streak++; S.best = Math.max(S.best, S.streak); S.dist[g.guesses.length - 1]++;
     if (C.teams.on){ const pts = MAX + 1 - g.guesses.length; C.teams.scores[C.teams.turn] += pts; teamMsg = `${C.teams.names[C.teams.turn]} gets ${pts} point${pts === 1 ? '' : 's'}!`; }
     const row = $('#board').children[g.guesses.length - 1];
     [...row.children].forEach((t, i) => setTimeout(() => t.classList.add('win'), i * 90));
     confetti();
-  } else S.streak = 0;
+  }
   save(); renderStatus();
   const msgs = ['Genius! 🤯', 'Amazing!', 'Fantastic!', 'Great job!', 'Nice work!', 'Phew, just in time!'];
   setTimeout(() => {
@@ -363,17 +476,21 @@ function finish(won, gaveUp){
     $('#endTitle').textContent = won ? msgs[g.guesses.length - 1] : gaveUp ? 'Here\'s the word' : 'So close!';
     $('#endWord').textContent = g.word;
     $('#endClue').textContent = g.clue;
-    $('#endInfo').textContent = won ? `Solved in ${g.guesses.length}/${MAX}. ${teamMsg}` : `Class streak resets. Try the next one!`;
+    let info = won ? `Solved in ${g.guesses.length}/${MAX}. ${teamMsg}` : 'Better luck on the next one!';
+    if (g.daily){
+      const next = DAYS[dayIdx + 1];
+      info += next ? `  Daily #${dayIdx + 2} unlocks ${fmtDay(next)}.` : '  That was the last daily word. Merry Christmas! 🎄';
+      $('#endNext').textContent = '♾️ Play Unlimited';
+    } else $('#endNext').textContent = '⏭ Next word';
+    $('#endInfo').textContent = info;
     $('#endModal').classList.remove('hidden');
   }, won ? 1100 : 400);
 }
 
 /* --- keyboard --- */
 const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', '+ZXCVBNM-'];
-$('#kb').innerHTML = ROWS.map(r => `<div class="kb-row">${[...r].map(ch => ch === '+' ? '<button class="key wide" data-k="ENTER">Enter</button>' : ch === '-' ? '<button class="key wide" data-k2="BACK">⌫ Back</button>' : `<button class="key" data-k="${ch}">${ch}</button>`).join('')}</div>`).join('');
+$('#kb').innerHTML = ROWS.map(r => `<div class="kb-row">${[...r].map(ch => ch === '+' ? '<button class="key wide" data-k2="ENTER">Enter</button>' : ch === '-' ? '<button class="key wide" data-k2="BACK">⌫ Back</button>' : `<button class="key" data-k="${ch}">${ch}</button>`).join('')}</div>`).join('');
 $('#kb').addEventListener('click', e => { const k = e.target.closest('.key'); if (!k) return; press(k.dataset.k || k.dataset.k2); });
-document.querySelector('[data-k="ENTER"]').removeAttribute('data-k');
-document.querySelector('.key.wide').dataset.k2 = 'ENTER';
 document.addEventListener('keydown', e => {
   if (e.target.matches('input')) return;
   if (!document.querySelectorAll('.overlay:not(.hidden)').length){
@@ -385,22 +502,53 @@ document.addEventListener('keydown', e => {
 });
 
 /* =====================================================
+   DAILY ARCHIVE
+   ===================================================== */
+function dailyStreak(){
+  const L = C.daily[C.level]; let i = lastUnlocked(), n = 0;
+  if (i >= 0 && !(L[ymd(DAYS[i])] || {}).done) i--;   // today not finished yet: count from the day before
+  while (i >= 0 && (L[ymd(DAYS[i])] || {}).won){ n++; i--; }
+  return n;
+}
+function openDays(){
+  const L = C.daily[C.level], last = lastUnlocked(), ti = todayIndex();
+  const solved = Object.values(L).filter(g => g.won).length;
+  $('#daysInfo').textContent = `${C.level === 'elem' ? 'Elementary' : 'High School'} · ${solved} of ${Math.max(0, last + 1)} solved so far · streak ${dailyStreak()} 🔥  — tap any unlocked day to play it.`;
+  $('#daysGrid').innerHTML = DAYS.map((d, i) => {
+    const g = L[ymd(d)], locked = i > last;
+    const st = locked ? '🔒' : !g || !g.guesses.length ? '⬜' : !g.done ? '✏️' : g.won ? '✅' : '❌';
+    return `<button class="day${i === ti ? ' today' : ''}${locked ? ' locked' : ''}${i === dayIdx && C.mode === 'daily' ? ' cur' : ''}" data-i="${i}" ${locked ? 'disabled' : ''}><b>#${i + 1}</b>${fmtDay(d)}<div class="st">${st}</div></button>`;
+  }).join('');
+  $('#daysGrid').querySelectorAll('.day:not(.locked)').forEach(b => b.onclick = () => { dayIdx = +b.dataset.i; C.mode = 'daily'; save(); $('#daysModal').classList.add('hidden'); show(); });
+  $('#daysModal').classList.remove('hidden');
+}
+
+/* =====================================================
    BUTTONS
    ===================================================== */
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.overlay').classList.add('hidden'));
+$('#daysBtn').onclick = openDays; $('#dayChip').onclick = openDays;
+document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => {
+  if (C.mode === b.dataset.m) return;
+  C.mode = b.dataset.m;
+  if (C.mode === 'unlimited' && needNewUnl()) { newGame(); return; }
+  save(); show();
+});
 $('#nextBtn').onclick = () => {
   const g = G();
-  if (!g.done && g.guesses.length && !confirm('Skip this word? It will count as not solved.')) return;
-  if (!g.done && g.guesses.length){ C.stats.played++; C.stats.streak = 0; }
+  if (g && !g.done && g.guesses.length && !confirm('Skip this word? It will count as not solved.')) return;
+  if (g && !g.done && g.guesses.length){ C.stats.played++; C.stats.streak = 0; }
   newGame();
 };
 $('#endNext').onclick = () => { $('#endModal').classList.add('hidden'); newGame(); };
-$('#clueBtn').onclick = () => { const g = G(); if (!g.clue){ toast('No clue for this word'); return; } g.clueShown = true; save(); renderStatus(); };
-$('#revealBtn').onclick = () => { const g = G(); if (g.done) return; if (!confirm('Reveal the word? This round won\'t count as solved.')) return; finish(false, true); };
+$('#clueBtn').onclick = () => { const g = G(); if (!g) return; if (!g.clue){ toast('No clue for this word'); return; } g.clueShown = true; save(); renderStatus(); };
+$('#revealBtn').onclick = () => { const g = G(); if (!g || g.done) return; if (!confirm('Reveal the word? This round won\'t count as solved.')) return; finish(false, true); };
 document.querySelectorAll('#levelSeg button').forEach(b => b.onclick = () => {
   if (C.level === b.dataset.l) return;
-  const g = G(); if (!g.done && g.guesses.length && !confirm('Switch level and start a new word?')) return;
-  C.level = b.dataset.l; newGame();
+  const g = G();
+  if (C.mode === 'unlimited' && g && !g.done && g.guesses.length && !confirm('Switch level and start a new word?')) return;
+  C.level = b.dataset.l;
+  if (C.mode === 'unlimited') newGame(); else { save(); show(); }
 });
 $('#secretBtn').onclick = () => { $('#secretWord').value = ''; $('#secretClue').value = ''; $('#secretEmo').value = ''; $('#secretModal').classList.remove('hidden'); setTimeout(() => $('#secretWord').focus(), 50); };
 $('#secretGo').onclick = () => {
@@ -412,9 +560,13 @@ $('#secretGo').onclick = () => {
 };
 $('#secretWord').addEventListener('keydown', e => { if (e.key === 'Enter') $('#secretGo').click(); });
 $('#statsBtn').onclick = () => {
-  const S = C.stats, maxD = Math.max(1, ...S.dist);
-  $('#statsBody').innerHTML = `<div class="stats"><div><b>${S.played}</b>Played</div><div><b>${S.played ? Math.round(S.won / S.played * 100) : 0}%</b>Solved</div><div><b>${S.streak}</b>Streak</div><div><b>${S.best}</b>Best streak</div></div>
-    <p class="hint">Guesses needed</p><div class="dist">${S.dist.map((d, i) => `<div class="bar"><b style="width:14px">${i+1}</b><span class="fill${G().won && G().guesses.length === i+1 ? ' hi' : ''}" style="width:${8 + d / maxD * 82}%">${d}</span></div>`).join('')}</div>
+  const S = C.stats, maxD = Math.max(1, ...S.dist), L = C.daily[C.level], last = lastUnlocked();
+  const dWon = Object.values(L).filter(g => g.won).length;
+  $('#statsBody').innerHTML = `<h3 style="margin:8px 0 0">📅 Daily (${C.level === 'elem' ? 'Elementary' : 'High School'})</h3>
+    <div class="stats"><div><b>${dWon}/${Math.max(0, last + 1)}</b>Days solved</div><div><b>${dailyStreak()}</b>Streak 🔥</div></div>
+    <h3 style="margin:16px 0 0">♾️ Unlimited</h3>
+    <div class="stats"><div><b>${S.played}</b>Played</div><div><b>${S.played ? Math.round(S.won / S.played * 100) : 0}%</b>Solved</div><div><b>${S.streak}</b>Streak</div><div><b>${S.best}</b>Best</div></div>
+    <p class="hint">Guesses needed (unlimited)</p><div class="dist">${S.dist.map((d, i) => `<div class="bar"><b style="width:14px">${i+1}</b><span class="fill" style="width:${8 + d / maxD * 82}%">${d}</span></div>`).join('')}</div>
     ${C.teams.on ? `<p style="margin-top:14px"><b>${esc(C.teams.names[0])}</b> ${C.teams.scores[0]} · <b>${esc(C.teams.names[1])}</b> ${C.teams.scores[1]}</p>` : ''}`;
   $('#statsModal').classList.remove('hidden');
 };
@@ -425,7 +577,7 @@ $('#teamsOff').onclick = () => { C.teams.on = false; save(); renderStatus(); $('
 if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*'); }
 
 let toastT;
-function toast(m){ const t = $('#toast'); t.textContent = m; t.style.top = ($('#kb').getBoundingClientRect().top - 58) + 'px'; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 1800); }
+function toast(m){ const t = $('#toast'); t.textContent = m; t.style.top = (($('#kb').classList.contains('hidden') ? innerHeight - 80 : $('#kb').getBoundingClientRect().top) - 58) + 'px'; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 1800); }
 function confetti(){
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const colors = ['#f5c542','#d64045','#2fbf71','#ffffff','#4aa3ff'];
@@ -434,19 +586,17 @@ function confetti(){
     el.style.left = innerWidth/2 + 'px'; el.style.top = innerHeight*.4 + 'px'; el.style.background = colors[i % 5];
     document.body.appendChild(el);
     const dx = (Math.random() - .5) * innerWidth, dy = -100 - Math.random() * 400, r = (Math.random() - .5) * 900;
-    el.animate([{transform:'translate(0,0)'}, {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, offset:.4}, {transform:`translate(${dx*1.2}px,${dy + 800}px) rotate(${r*2}deg)`, opacity:0}], {duration:1800 + Math.random()*900, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove();
+    try { el.animate([{transform:'translate(0,0)'}, {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, offset:.4}, {transform:`translate(${dx*1.2}px,${dy + 800}px) rotate(${r*2}deg)`, opacity:0}], {duration:1800 + Math.random()*900, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove(); } catch(e) { el.remove(); }
   }
 }
 addEventListener('resize', fitTiles);
-
-/* snowfall */
 (() => { const cv = $('#snow'), cx = cv.getContext('2d'); if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   let W, H; const f = []; const size = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; }; size(); addEventListener('resize', size);
   for (let i = 0; i < 70; i++) f.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+.6, s:Math.random()*.4+.2, d:Math.random()*6});
   (function t(){ cx.clearRect(0,0,W,H); cx.fillStyle = 'rgba(255,255,255,.4)'; cx.beginPath(); for (const p of f){ p.y += p.s; p.d += .01; p.x += Math.sin(p.d)*.3; if (p.y > H) { p.y = -4; p.x = Math.random()*W; } cx.moveTo(p.x, p.y); cx.arc(p.x, p.y, p.r, 0, 6.28); } cx.fill(); requestAnimationFrame(t); })(); })();
 
-/* start: resume the class's current word, or pick a new one */
-if (!C.game || C.game.done) newGame(); else { buildBoard(); renderAll(); }
+/* start */
+if (C.mode === 'unlimited' && needNewUnl()) newGame(); else show();
 </script>
 </body>
 </html>

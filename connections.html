@@ -87,6 +87,18 @@ select.in option{color:#111}
 .list .item{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
 .list .item b{flex:1}
 .cf{position:fixed;width:12px;height:18px;z-index:60;pointer-events:none;border-radius:2px}
+.daychip{cursor:pointer;color:var(--cream);font:inherit;font-weight:800}
+.daychip:hover{border-color:var(--gold)}
+.notyet{text-align:center;max-width:620px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:22px;padding:30px}
+.notyet .big{font-size:72px}
+.notyet h2{font-family:'Lilita One',cursive;font-weight:400;font-size:36px;margin:8px 0}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.day{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:12px;padding:8px;color:var(--cream);cursor:pointer;text-align:center;font:inherit}
+.day b{display:block;font-family:'Lilita One',cursive;font-weight:400;font-size:22px}
+.day .st{font-size:22px}
+.day.today{border-color:var(--gold)}
+.day.locked{opacity:.4;cursor:default}
+.day.cur{background:rgba(245,197,66,.2)}
 </style>
 </head>
 <body>
@@ -95,15 +107,16 @@ select.in option{color:#111}
   <button class="btn hidden" id="hubBtn">🏠 Hub</button>
   <h1>🔗 Christmas <span>Connections</span></h1>
   <span class="chip" id="classChip"></span>
-  <div class="seg" id="levelSeg">
-    <button data-l="easy" title="Elementary: 3 groups of 3">🧒 Easy</button><button data-l="harder" title="Elementary: 4 groups of 4">🧒 Harder</button><button data-l="hs" title="High School: 4 groups of 4 with traps">🎓 High School</button>
-  </div>
+  <div class="seg" id="levelSeg"></div>
+  <div class="seg" id="modeSeg"><button data-m="daily">📅 Daily</button><button data-m="unlimited">♾️ Unlimited</button></div>
+  <button class="chip daychip" id="dayChip"></button>
   <div class="spacer"></div>
-  <button class="btn" id="teamsBtn">👥 Teams</button>
-  <button class="btn" id="hintBtn">💡 Hint</button>
-  <button class="btn" id="revealBtn">🏳 Reveal</button>
-  <button class="btn" id="mineBtn">✏️ Make</button>
+  <button class="btn" id="teamsBtn" title="Teams">👥</button>
+  <button class="btn" id="hintBtn" title="Hint">💡</button>
+  <button class="btn" id="revealBtn" title="Reveal all groups">🏳</button>
+  <button class="btn" id="mineBtn" title="Make your own puzzle">✏️</button>
   <button class="btn gold" id="nextBtn">⏭ New</button>
+  <button class="btn gold" id="daysBtn">📅 Days</button>
 </header>
 
 <main>
@@ -114,6 +127,7 @@ select.in option{color:#111}
   </div>
   <div class="grid" id="grid"><div id="solved"></div><div class="tiles" id="tiles"></div></div>
   <div class="mist" id="mist"></div>
+  <div class="notyet hidden" id="notYet"></div>
   <div class="controls">
     <button class="btn" id="shuffleBtn">🔀 Shuffle</button>
     <button class="btn" id="clearBtn">Deselect all</button>
@@ -130,6 +144,15 @@ select.in option{color:#111}
     <p class="hint" id="endInfo"></p>
     <div class="end-bars" id="endBars"></div>
     <div class="row-btns"><button class="btn" data-close>Look at the board</button><button class="btn gold" id="endNext">⏭ Next puzzle</button></div>
+  </div>
+</div>
+
+<!-- All days -->
+<div class="overlay hidden" id="daysModal">
+  <div class="sheet" style="width:min(900px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>📅 Daily puzzles</h2><button class="btn" data-close>✕</button></div>
+    <p class="hint" id="daysInfo"></p>
+    <div class="days" id="daysGrid"></div>
   </div>
 </div>
 
@@ -164,6 +187,60 @@ select.in option{color:#111}
 </div>
 
 <script>
+/* =====================================================
+   DAILY PUZZLES: one per school day, Nov 25 – Dec 24, in order.
+   Elementary dailies are 4 groups of 4 with pictures.
+   ===================================================== */
+const DAILY = {
+  elem: [
+    [['Farm animals',0,[['Cow','🐄'],['Pig','🐖'],['Horse','🐴'],['Sheep','🐑']]], ['Christmas treats',1,[['Candy cane','🍭'],['Gingerbread','🍪'],['Fudge','🍫'],['Cocoa','☕']]], ['In the night sky',2,[['Moon','🌙'],['Star','⭐'],['Planet','🪐'],['Comet','☄️']]], ['Winter clothes',3,[['Mittens','🧤'],['Scarf','🧣'],['Toque','🧢'],['Boots','👢']]]],
+    [['Fruits',0,[['Apple','🍎'],['Banana','🍌'],['Grapes','🍇'],['Orange','🍊']]], ['Santa\'s team',1,[['Santa','🎅'],['Elf','🧝'],['Reindeer','🦌'],['Mrs. Claus','🤶']]], ['Things with wheels',2,[['Car','🚗'],['Bike','🚲'],['Bus','🚌'],['Truck','🚚']]], ['Snow day fun',3,[['Sled','🛷'],['Snowman','⛄'],['Snow angel','👼'],['Snow fort','🏰']]]],
+    [['Colours',0,[['Red','🟥'],['Blue','🟦'],['Green','🟩'],['Purple','🟪']]], ['Instruments',1,[['Drum','🥁'],['Guitar','🎸'],['Piano','🎹'],['Violin','🎻']]], ['Ocean animals',2,[['Whale','🐳'],['Shark','🦈'],['Octopus','🐙'],['Crab','🦀']]], ['On the tree',3,[['Lights','💡'],['Tinsel','✨'],['Ornament','🎄'],['Garland','🌿']]]],
+    [['Shapes',0,[['Circle','🔵'],['Square','🟧'],['Triangle','🔺'],['Heart','❤️']]], ['Pets',1,[['Dog','🐶'],['Cat','🐱'],['Fish','🐠'],['Hamster','🐹']]], ['Brrr, cold!',2,[['Ice cube','🧊'],['Snowflake','❄️'],['Ice cream','🍦'],['Freezer','🥶']]], ['Breakfast',3,[['Pancakes','🥞'],['Cereal','🥣'],['Eggs','🍳'],['Toast','🍞']]]],
+    [['Body parts',0,[['Nose','👃'],['Ear','👂'],['Hand','✋'],['Foot','🦶']]], ['Bugs',1,[['Ladybug','🐞'],['Bee','🐝'],['Ant','🐜'],['Butterfly','🦋']]], ['Santa brings',2,[['Gifts','🎁'],['Toys','🧸'],['Candy','🍬'],['Coal','⚫']]], ['Weather',3,[['Sunny','☀️'],['Rainy','🌧️'],['Windy','💨'],['Snowy','🌨️']]]],
+    [['Vegetables',0,[['Carrot','🥕'],['Corn','🌽'],['Broccoli','🥦'],['Potato','🥔']]], ['Sports balls',1,[['Soccer','⚽'],['Basketball','🏀'],['Football','🏈'],['Baseball','⚾']]], ['Things that glow',2,[['Candle','🕯️'],['Fire','🔥'],['Lamp','💡'],['Flashlight','🔦']]], ['Santa\'s world',3,[['North Pole','🧭'],['Workshop','🔨'],['Sleigh','🛷'],['Chimney','🏠']]]],
+    [['Jungle animals',0,[['Lion','🦁'],['Tiger','🐯'],['Monkey','🐒'],['Elephant','🐘']]], ['Things to write with',1,[['Pencil','✏️'],['Crayon','🖍️'],['Marker','🖊️'],['Pen','🖋️']]], ['Desserts',2,[['Cake','🍰'],['Pie','🥧'],['Cupcake','🧁'],['Donut','🍩']]], ['Winter sports',3,[['Hockey','🏒'],['Skiing','⛷️'],['Skating','⛸️'],['Curling','🥌']]]],
+    [['In the classroom',0,[['Desk','🪑'],['Book','📕'],['Ruler','📏'],['Backpack','🎒']]], ['Birds',1,[['Owl','🦉'],['Penguin','🐧'],['Duck','🦆'],['Eagle','🦅']]], ['Things that ring',2,[['Bell','🔔'],['Phone','📱'],['Alarm clock','⏰'],['Doorbell','🚪']]], ['Drinks',3,[['Milk','🥛'],['Juice','🧃'],['Water','💧'],['Hot cocoa','☕']]]],
+    [['Red fruits',0,[['Strawberry','🍓'],['Cherry','🍒'],['Apple','🍎'],['Watermelon','🍉']]], ['Wrapping a gift',1,[['Paper','📄'],['Ribbon','🎀'],['Tag','🏷️'],['Box','📦']]], ['Outer space',2,[['Rocket','🚀'],['Astronaut','🧑‍🚀'],['Planet','🪐'],['Alien','👽']]], ['Feelings',3,[['Happy','😀'],['Sad','😢'],['Angry','😠'],['Sleepy','😴']]]],
+    [['Snowman parts',0,[['Coal','⚫'],['Top hat','🎩'],['Scarf','🧣'],['Buttons','🔘']]], ['Things that fly',1,[['Plane','✈️'],['Helicopter','🚁'],['Hot air balloon','🎈'],['Rocket','🚀']]], ['In the kitchen',2,[['Spoon','🥄'],['Fork','🍴'],['Bowl','🥣'],['Pot','🍲']]], ['Baby animals',3,[['Puppy','🐶'],['Kitten','🐱'],['Chick','🐥'],['Calf','🐮']]]],
+    [['Sweet treats',0,[['Candy','🍬'],['Lollipop','🍭'],['Chocolate','🍫'],['Cookie','🍪']]], ['On your feet',1,[['Socks','🧦'],['Boots','👢'],['Sneakers','👟'],['Slippers','🥿']]], ['Toys',2,[['Teddy bear','🧸'],['Yo-yo','🪀'],['Blocks','🧱'],['Robot','🤖']]], ['Animals that fly',3,[['Bird','🐦'],['Bee','🐝'],['Bat','🦇'],['Butterfly','🦋']]]],
+    [['Things with stripes',0,[['Zebra','🦓'],['Candy cane','🍭'],['Tiger','🐯'],['Barber pole','💈']]], ['Ride on snow',1,[['Sled','🛷'],['Skis','🎿'],['Skates','⛸️'],['Snowboard','🏂']]], ['Breakfast',2,[['Waffles','🧇'],['Bacon','🥓'],['Eggs','🍳'],['Bagel','🥯']]], ['Instruments',3,[['Trumpet','🎺'],['Drum','🥁'],['Saxophone','🎷'],['Banjo','🪕']]]],
+    [['Rainbow colours',0,[['Red','🟥'],['Orange','🟧'],['Yellow','🟨'],['Green','🟩']]], ['Pond animals',1,[['Frog','🐸'],['Duck','🦆'],['Fish','🐟'],['Turtle','🐢']]], ['Birthday party',2,[['Balloon','🎈'],['Cake','🎂'],['Present','🎁'],['Candles','🕯️']]], ['Tools',3,[['Hammer','🔨'],['Saw','🪚'],['Wrench','🔧'],['Screwdriver','🪛']]]],
+    [['Things that are white',0,[['Snow','❄️'],['Milk','🥛'],['Cloud','☁️'],['Polar bear','🐻‍❄️']]], ['Things that are green',1,[['Frog','🐸'],['Tree','🎄'],['Leaf','🍃'],['Broccoli','🥦']]], ['Things that are yellow',2,[['Sun','☀️'],['Banana','🍌'],['Lemon','🍋'],['Chick','🐥']]], ['Things that are red',3,[['Strawberry','🍓'],['Fire truck','🚒'],['Rose','🌹'],['Apple','🍎']]]],
+    [['Sea creatures',0,[['Dolphin','🐬'],['Jellyfish','🪼'],['Whale','🐋'],['Shrimp','🦐']]], ['Winter weather',1,[['Blizzard','🌨️'],['Frost','❄️'],['Icicle','🧊'],['Slush','💧']]], ['Holiday dinner',2,[['Turkey','🦃'],['Ham','🍖'],['Potatoes','🥔'],['Pie','🥧']]], ['At the hockey rink',3,[['Puck','🏒'],['Net','🥅'],['Skates','⛸️'],['Zamboni','🚜']]]],
+    [['Fairy tales',0,[['Dragon','🐉'],['Unicorn','🦄'],['Castle','🏰'],['Crown','👑']]], ['Grows on trees',1,[['Apple','🍎'],['Coconut','🥥'],['Leaves','🍂'],['Pinecone','🌲']]], ['Days of the week',2,[['Monday','📅'],['Tuesday','📅'],['Friday','📅'],['Sunday','📅']]], ['Ways to move',3,[['Run','🏃'],['Jump','🦘'],['Swim','🏊'],['Dance','💃']]]],
+    [['Ice cream flavours',0,[['Vanilla','🍦'],['Chocolate','🍫'],['Strawberry','🍓'],['Mint','🌿']]], ['Seasons',1,[['Winter','❄️'],['Spring','🌷'],['Summer','☀️'],['Fall','🍂']]], ['At the beach',2,[['Sand','🏖️'],['Shell','🐚'],['Waves','🌊'],['Sunscreen','🧴']]], ['Soft things',3,[['Teddy bear','🧸'],['Feather','🪶'],['Bunny','🐰'],['Cloud','☁️']]]],
+    [['Numbers',0,[['One','1️⃣'],['Five','5️⃣'],['Ten','🔟'],['Hundred','💯']]], ['In the bathroom',1,[['Toothbrush','🪥'],['Soap','🧼'],['Bathtub','🛁'],['Toilet','🚽']]], ['Things that jingle',2,[['Bells','🔔'],['Keys','🔑'],['Coins','🪙'],['Bracelet','📿']]], ['Arctic animals',3,[['Polar bear','🐻‍❄️'],['Walrus','🦭'],['Arctic fox','🦊'],['Snowy owl','🦉']]]],
+    [['Planets',0,[['Earth','🌍'],['Mars','🔴'],['Jupiter','🪐'],['Saturn','🪐']]], ['We bake these',1,[['Cookies','🍪'],['Bread','🍞'],['Pie','🥧'],['Muffins','🧁']]], ['Kinds of trees',2,[['Pine','🌲'],['Maple','🍁'],['Palm','🌴'],['Oak','🌳']]], ['Hot things',3,[['Fire','🔥'],['Soup','🍲'],['Pepper','🌶️'],['Lava','🌋']]]],
+    [['Very Canadian',0,[['Maple leaf','🍁'],['Moose','🫎'],['Beaver','🦫'],['Hockey','🏒']]], ['Decorations',1,[['Lights','💡'],['Wreath','🌿'],['Stocking','🧦'],['Tinsel','✨']]], ['In a pencil case',2,[['Pencil','✏️'],['Ruler','📏'],['Scissors','✂️'],['Glue','🧴']]], ['Pizza toppings',3,[['Cheese','🧀'],['Pepperoni','🍕'],['Mushrooms','🍄'],['Olives','🫒']]]],
+    [['On the water',0,[['Boat','⛵'],['Canoe','🛶'],['Ship','🚢'],['Ferry','⛴️']]], ['Animals that hop',1,[['Bunny','🐰'],['Frog','🐸'],['Kangaroo','🦘'],['Grasshopper','🦗']]], ['On a cake',2,[['Candles','🕯️'],['Icing','🧁'],['Sprinkles','✨'],['Cherry','🍒']]], ['Christmas symbols',3,[['Santa hat','🎅'],['Snowflake','❄️'],['Reindeer','🦌'],['Present','🎁']]]],
+    [['Round things',0,[['Ball','⚽'],['Wheel','🛞'],['Coin','🪙'],['Pizza','🍕']]], ['Bedtime',1,[['Pajamas','👕'],['Bed','🛏️'],['Toothbrush','🪥'],['Story book','📖']]], ['On the farm',2,[['Tractor','🚜'],['Barn','🏠'],['Hay','🌾'],['Rooster','🐓']]], ['Hot cocoa toppings',3,[['Marshmallows','☁️'],['Whipped cream','🍦'],['Sprinkles','✨'],['Candy cane','🍭']]]],
+  ],
+  hs: [
+    [['In the fireplace',0,['Logs','Ash','Embers','Kindling']], ['Trees',1,['Oak','Birch','Cedar','Fir']], ['Card games',2,['Rummy','Poker','Snap','Euchre']], ['S + ___ = something wintry',3,['Now','Led','Kate','Tar']]],
+    [['Ways to cook',0,['Bake','Roast','Fry','Boil']], ['Christmas movie characters',1,['Kevin','Buddy','Ralphie','Clark']], ['Superhero first names',2,['Bruce','Peter','Diana','Tony']], ['Hidden numbers',3,['Often','Weight','Phone','Canine']]],
+    [['On a snowman',0,['Carrot','Coal','Scarf','Hat']], ['Orange things',1,['Pumpkin','Tangerine','Pylon','Goldfish']], ['Pixar movies',2,['Up','Cars','Coco','Brave']], ['___ trick',3,['Card','Magic','Party','Dirty']]],
+    [['Hockey positions',0,['Goalie','Defence','Centre','Winger']], ['NHL teams',1,['Leafs','Flames','Oilers','Jets']], ['Parts of a pine tree',2,['Branch','Needle','Cone','Bark']], ['___ lights',3,['Northern','Traffic','Flood','Head']]],
+    [['Minty things',0,['Toothpaste','Candy cane','Gum','Mouthwash']], ['Striped things',1,['Zebra','Barber pole','Referee','Tiger']], ['Starts a Christmas song title',2,['Deck','Jingle','Let','Feliz']], ['Things that pop',3,['Corn','Balloon','Question','Collar']]],
+    [['In a deck of cards',0,['Ace','King','Queen','Joker']], ['Chess pieces',1,['Bishop','Knight','Rook','Pawn']], ['Frozen ___',2,['Peas','Yogurt','Pizza','Tundra']], ['___fish',3,['Star','Jelly','Gold','Sword']]],
+    [['Pasta',0,['Penne','Rigatoni','Fusilli','Linguine']], ['Formal wear',1,['Tuxedo','Gown','Bow tie','Cufflinks']], ['On a present',2,['Ribbon','Tag','Bow','Paper']], ['Shades of white',3,['Ivory','Pearl','Snow','Cream']]],
+    [['Things that melt',0,['Snow','Ice','Butter','Chocolate']], ['Spread on toast',1,['Jam','Honey','Nutella','Marmalade']], ['Things with caps',2,['Bottle','Pen','Knee','Toothpaste']], ['Famous bears',3,['Paddington','Pooh','Yogi','Baloo']]],
+    [['Holiday scents',0,['Cinnamon','Peppermint','Vanilla','Gingerbread']], ['Nuts',1,['Walnut','Pecan','Almond','Cashew']], ['___ cone',2,['Pine','Snow','Waffle','Nose']], ['___shell',3,['Sea','Egg','Bomb','Clam']]],
+    [['"Christmas" in other languages',0,['Noël','Navidad','Natale','Weihnachten']], ['New Year\'s Eve',1,['Countdown','Resolution','Fireworks','Confetti']], ['Things that go off',2,['Alarm','Milk','Timer','Sprinkler']], ['Hidden "ice"',3,['Price','Slice','Advice','Notice']]],
+    [['Slide downhill on these',0,['Sled','Toboggan','Snowboard','Skis']], ['On a curling sheet',1,['Stone','Broom','House','Hack']], ['A witch\'s things',2,['Hat','Cat','Cauldron','Wand']], ['___work',3,['Home','Team','Fire','Clock']]],
+    [['Holiday desserts',0,['Yule log','Trifle','Pie','Pudding']], ['Peanuts characters',1,['Snoopy','Linus','Lucy','Schroeder']], ['Parts of a piano',2,['Keys','Pedal','Hammer','String']], ['Rhymes with "snow"',3,['Glow','Throw','Crow','Dough']]],
+    [['Winter emergency kit',0,['Flashlight','Blanket','Shovel','Candle']], ['Ghosts in A Christmas Carol',1,['Past','Present','Future','Marley']], ['Another word for "gift"',2,['Offering','Token','Donation','Handout']], ['Birthday ___',3,['Cake','Party','Card','Wish']]],
+    [['Pets',0,['Dog','Cat','Hamster','Goldfish']], ['Hot drinks',1,['Coffee','Tea','Cocoa','Cider']], ['___house',2,['Tree','Green','Gingerbread','Light']], ['___pot',3,['Flower','Jack','Melting','Crock']]],
+    [['In a stocking',0,['Orange','Candy','Socks','Toothbrush']], ['Fruits',1,['Apple','Pear','Plum','Kiwi']], ['Computer brands',2,['Dell','HP','Lenovo','Acer']], ['Shades of purple',3,['Lavender','Violet','Lilac','Mauve']]],
+    [['Evergreen trees',0,['Fir','Spruce','Pine','Hemlock']], ['Things with needles',1,['Cactus','Compass','Porcupine','Record player']], ['Sweaters',2,['Cardigan','Hoodie','Turtleneck','Pullover']], ['Ninja Turtles',3,['Leonardo','Raphael','Donatello','Michelangelo']]],
+    [['Snack foods',0,['Pretzels','Chips','Nachos','Crackers']], ['String these on a tree',1,['Popcorn','Cranberries','Lights','Beads']], ['Computer parts',2,['Mouse','Keyboard','Monitor','Speaker']], ['___jack',3,['Black','Car','Lumber','Flap']]],
+    [['On an ugly sweater',0,['Reindeer','Pompom','Sequins','Snowflakes']], ['The Nutcracker characters',1,['Clara','Fritz','Drosselmeyer','Mouse King']], ['Ballet words',2,['Plié','Pirouette','Tutu','Pointe']], ['Things that sparkle',3,['Tiara','Diamond','Disco ball','Crystal']]],
+    [['Ways up',0,['Escalator','Ladder','Stairs','Elevator']], ['Small cottages',1,['Cabin','Cottage','Bungalow','Hut']], ['Business big shots',2,['Tycoon','Magnate','Executive','CEO']], ['Skiing words',3,['Slope','Lift','Chalet','Mogul']]],
+    [['Gingerbread house parts',0,['Roof','Door','Chimney','Walls']], ['Operating systems',1,['Windows','Linux','Android','iOS']], ['___bell',2,['Bar','Dumb','Blue','Cow']], ['Things that crash',3,['Waves','Cymbals','Party','Market']]],
+    [['Hanukkah',0,['Dreidel','Menorah','Latkes','Gelt']], ['Things that spin',1,['Top','Wheel','Globe','Tornado']], ['Potato dishes',2,['Fries','Poutine','Gnocchi','Hash browns']], ['Chocolate ___',3,['Bar','Chip','Milk','Fountain']]],
+    [['Dr. Seuss characters',0,['Grinch','Lorax','Horton','Yertle']], ['Green things',1,['Lime','Emerald','Shamrock','Kermit']], ['Muppets',2,['Gonzo','Fozzie','Animal','Beaker']], ['Famous elephants',3,['Dumbo','Babar','Jumbo','Ellie']]],
+  ],
+};
 /* =====================================================
    PUZZLES
    Each group: [category, colour level 0-3, [[word, emoji], ...]]
@@ -218,7 +295,15 @@ function norm(p, pool){
    SAVE DATA
    ===================================================== */
 const KEY = 'twr-connections-v1', HUB_KEY = 'twr-hub-v1';
-const params = new URLSearchParams(location.search), EMBED = params.has('embed');
+const params = new URLSearchParams(location.search), EMBED = params.has('embed'), PREVIEW = params.has('preview');
+
+/* School-day calendar: Nov 25 – Dec 24, Monday to Friday (add ?preview=1 to unlock every day for testing) */
+const SEASON_YEAR = (() => { const t = new Date(); return t.getMonth() < 10 ? t.getFullYear() - 1 : t.getFullYear(); })();
+const DAYS = (() => { const out = [], d = new Date(SEASON_YEAR, 10, 25), end = new Date(SEASON_YEAR, 11, 24); while (d <= end){ const w = d.getDay(); if (w > 0 && w < 6) out.push(new Date(d)); d.setDate(d.getDate() + 1); } return out; })();
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDay = d => d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+function lastUnlocked(){ if (PREVIEW) return DAYS.length - 1; const now = new Date(); let n = -1; DAYS.forEach((d, i) => { if (d <= now) n = i; }); return n; }
+function todayIndex(){ const k = ymd(new Date()); return DAYS.findIndex(d => ymd(d) === k); }
 let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
 if (!store || !store.classes) store = {classes:{}, current:'default', mine:[]};
 store.mine = store.mine || [];
@@ -232,22 +317,27 @@ if (!store.classes[store.current]) store.classes[store.current] = {
   teams:{on:false, names:['Team Holly','Team Ivy'], scores:[0,0], turn:0}, stats:{played:0, perfect:0},
 };
 const C = store.classes[store.current];
+C.mode = C.mode || 'daily'; C.daily = C.daily || {elem:{}, hs:{}};
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
 $('#classChip').textContent = className;
 const isElem = () => C.level !== 'hs';
+const needNewUnl = () => !C.game || C.game.done || (!C.game.meta.custom && C.game.meta.pool !== C.level);
+const dailyPool = () => C.level === 'hs' ? 'hs' : 'elem';
+let dayIdx = todayIndex() >= 0 ? todayIndex() : (PREVIEW && new Date() < DAYS[0] ? 0 : lastUnlocked());
 const MAX_MISTAKES = 4;
 
 /* =====================================================
    GAME STATE
    ===================================================== */
 function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function startPuzzle(puz, meta){
+function makeGame(puz, meta){
   const tiles = shuffle(puz.groups.flatMap((g, gi) => g.words.map(w => ({...w, g:gi}))));
-  C.game = {puz, meta, order: tiles.map(t => t.w), solved:[], sel:[], mistakes:0, tried:[], done:false, hints:[]};
   if (C.teams.on) C.teams.turn = (C.teams.first = 1 - (C.teams.first || 0));
-  save(); render();
+  return {puz, meta, order: tiles.map(t => t.w), solved:[], sel:[], mistakes:0, tried:[], done:false, hints:[]};
 }
+function startPuzzle(puz, meta){ C.mode = 'unlimited'; C.game = makeGame(puz, meta); save(); show(); }
 function newPuzzle(){
+  C.mode = 'unlimited';
   const pool = PUZZLES[C.level];
   let left = pool.map((_, i) => i).filter(i => !C.used[C.level].includes(i));
   if (!left.length){ C.used[C.level] = []; left = pool.map((_, i) => i); toast('You\'ve done every puzzle! Starting the list again.'); }
@@ -255,7 +345,68 @@ function newPuzzle(){
   C.used[C.level].push(i);
   startPuzzle(norm(pool[i]), {pool:C.level, i});
 }
-const G = () => C.game;
+function dailyStreak(){
+  const L = C.daily[dailyPool()]; let i = lastUnlocked(), n = 0;
+  if (i >= 0 && !(L[ymd(DAYS[i])] || {}).done) i--;
+  while (i >= 0 && (L[ymd(DAYS[i])] || {}).won){ n++; i--; }
+  return n;
+}
+function openDays(){
+  const L = C.daily[dailyPool()], last = lastUnlocked(), ti = todayIndex();
+  const solved = Object.values(L).filter(g => g.won).length;
+  $('#daysInfo').textContent = `${dailyPool() === 'elem' ? 'Elementary' : 'High School'} · ${solved} of ${Math.max(0, last + 1)} solved so far · streak ${dailyStreak()} 🔥 — tap any unlocked day to play it.`;
+  $('#daysGrid').innerHTML = DAYS.map((d, i) => {
+    const g = L[ymd(d)], locked = i > last;
+    const started = g && (g.solved.length || g.mistakes || g.done);
+    const st = locked ? '🔒' : !started ? '⬜' : !g.done ? '✏️' : g.won ? (g.mistakes ? '✅' : '🌟') : '❌';
+    return `<button class="day${i === ti ? ' today' : ''}${locked ? ' locked' : ''}${i === dayIdx && C.mode === 'daily' ? ' cur' : ''}" data-i="${i}" ${locked ? 'disabled' : ''}><b>#${i + 1}</b>${fmtDay(d)}<div class="st">${st}</div></button>`;
+  }).join('');
+  $('#daysGrid').querySelectorAll('.day:not(.locked)').forEach(b => b.onclick = () => { dayIdx = +b.dataset.i; C.mode = 'daily'; save(); $('#daysModal').classList.add('hidden'); show(); });
+  $('#daysModal').classList.remove('hidden');
+}
+function G(){
+  if (C.mode !== 'daily') return C.game;
+  if (dayIdx < 0) return null;
+  const pool = dailyPool(), k = ymd(DAYS[dayIdx]), L = C.daily[pool];
+  if (!L[k]){ L[k] = makeGame(norm(DAILY[pool][dayIdx % DAILY[pool].length]), {daily:true, pool, i:dayIdx}); save(); }
+  return L[k];
+}
+const LEVELS_UNL = [['easy','🧒 Easy','Elementary: 3 groups of 3'], ['harder','🧒 Harder','Elementary: 4 groups of 4'], ['hs','🎓 HS','High School: 4 groups of 4 with traps']];
+const LEVELS_DAILY = [['harder','🧒 Elem','Elementary daily: 4 groups of 4 with pictures'], ['hs','🎓 HS','High School daily']];
+function renderLevels(){
+  const list = C.mode === 'daily' ? LEVELS_DAILY : LEVELS_UNL;
+  const cur = C.mode === 'daily' && C.level === 'easy' ? 'harder' : C.level;
+  $('#levelSeg').innerHTML = list.map(([l, lab, t]) => `<button data-l="${l}" title="${t}" class="${l === cur ? 'on' : ''}">${lab}</button>`).join('');
+  $('#levelSeg').querySelectorAll('button').forEach(b => b.onclick = () => setLevel(b.dataset.l));
+}
+function setLevel(l){
+  if (C.mode === 'daily'){ if ((l === 'hs') === (C.level === 'hs')) return; C.level = l; save(); show(); return; }
+  if (C.level === l) return;
+  const g = G(); if (g && !g.done && (g.solved.length || g.mistakes) && !confirm('Switch level and start a new puzzle?')) return;
+  C.level = l; newPuzzle();
+}
+function show(){
+  const daily = C.mode === 'daily', g = G();
+  document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === C.mode));
+  renderLevels();
+  $('#nextBtn').classList.toggle('hidden', daily);
+  $('#daysBtn').classList.toggle('hidden', !daily);
+  $('#dayChip').classList.toggle('hidden', !daily || dayIdx < 0);
+  if (daily && dayIdx >= 0) $('#dayChip').textContent = `#${dayIdx + 1} · ${dayIdx === todayIndex() ? 'Today' : fmtDay(DAYS[dayIdx])}`;
+  const blocked = !g;
+  ['#grid', '.controls', '#mist', '.top'].forEach(s => $(s).classList.toggle('hidden', blocked));
+  ['#hintBtn', '#revealBtn', '#teamsBtn'].forEach(s => $(s).classList.toggle('hidden', blocked));
+  $('#notYet').classList.toggle('hidden', !blocked);
+  if (blocked){
+    $('#notYet').innerHTML = `<div class="big">🎄</div><h2>Daily puzzles start ${fmtDay(DAYS[0])}!</h2>
+      <p>A new Christmas Connections puzzle every school day until ${fmtDay(DAYS[DAYS.length - 1])}.</p>
+      <p class="hint">${Math.ceil((DAYS[0] - new Date()) / 86400000)} days to go.</p>
+      <div class="row-btns"><button class="btn gold" id="goUnl">♾️ Play Unlimited now</button></div>`;
+    $('#goUnl').onclick = () => { C.mode = 'unlimited'; if (needNewUnl()) newPuzzle(); else { save(); show(); } };
+    return;
+  }
+  render();
+}
 const tileInfo = w => { for (const [gi, g] of G().puz.groups.entries()) for (const x of g.words) if (x.w === w) return {...x, g:gi}; };
 const size = () => G().puz.groups[0].words.length;
 
@@ -263,6 +414,7 @@ const size = () => G().puz.groups[0].words.length;
    RENDER
    ===================================================== */
 function fit(){
+  if (!G()) return;
   const n = size(), rows = G().puz.groups.length;
   const main = $('main').getBoundingClientRect();
   const free = main.height - 170 - (rows - 1) * 8;
@@ -290,7 +442,7 @@ function render(){
   // mistakes
   if (isElem()) $('#mist').innerHTML = g.mistakes ? `<span class="hint">Tries so far: ${g.mistakes}</span>` : '';
   else $('#mist').innerHTML = `Mistakes left: ${Array.from({length:MAX_MISTAKES}, (_, i) => `<span class="dot${i < g.mistakes ? ' used' : ''}"></span>`).join('')}`;
-  $('#prompt').textContent = g.done ? (g.meta.custom ? g.meta.title : 'Puzzle complete!') : `Find ${g.puz.groups.length} groups of ${n}!`;
+  $('#prompt').textContent = (g.meta.custom ? g.meta.title + ' · ' : g.meta.daily ? `Daily #${g.meta.i + 1} · ` : '') + (g.done ? 'Puzzle complete!' : `Find ${g.puz.groups.length} groups of ${n}!`);
   $('#hintbar').classList.toggle('hidden', !g.hints.length || g.done);
   $('#hintbar').innerHTML = '💡 ' + g.hints.map(h => `One group is: <b>${esc(g.puz.groups[h].cat)}</b>`).join(' · ');
   const T = C.teams;
@@ -299,7 +451,6 @@ function render(){
   $('#teamsBtn').classList.toggle('on', T.on);
   $('#submitBtn').disabled = g.sel.length !== n || g.done;
   $('#clearBtn').disabled = !g.sel.length;
-  document.querySelectorAll('#levelSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === C.level && !g.meta.custom));
 }
 
 /* =====================================================
@@ -350,9 +501,9 @@ function submit(){
   }, n * 90 + 250);
 }
 function finish(won, gaveUp){
-  const g = G(); g.done = true; g.sel = [];
+  const g = G(); g.done = true; g.won = won; g.sel = [];
   g.puz.groups.forEach((_, i) => { if (!g.solved.includes(i)) g.solved.push(i); });
-  C.stats.played++; if (won && g.mistakes === 0) C.stats.perfect++;
+  if (!g.meta.daily){ C.stats.played++; if (won && g.mistakes === 0) C.stats.perfect++; }
   save(); render();
   if (won) confetti();
   setTimeout(() => {
@@ -360,6 +511,11 @@ function finish(won, gaveUp){
     $('#endTitle').textContent = won ? (g.mistakes === 0 ? 'Perfect! No mistakes!' : 'Puzzle solved!') : gaveUp ? 'Here are the groups' : 'Out of mistakes!';
     const T = C.teams;
     $('#endInfo').textContent = (won ? (isElem() ? `Solved with ${g.mistakes} wrong tr${g.mistakes === 1 ? 'y' : 'ies'}.` : `Solved with ${g.mistakes} mistake${g.mistakes === 1 ? '' : 's'}.`) : 'Here\'s how it all connects:') + (T.on ? `  ${T.names[0]}: ${T.scores[0]} · ${T.names[1]}: ${T.scores[1]}` : '');
+    if (g.meta.daily){
+      const next = DAYS[dayIdx + 1];
+      $('#endInfo').textContent += next ? `  Daily #${dayIdx + 2} unlocks ${fmtDay(next)}.` : '  That was the last daily puzzle. Merry Christmas! 🎄';
+      $('#endNext').textContent = '♾️ Play Unlimited';
+    } else $('#endNext').textContent = '⏭ Next puzzle';
     $('#endBars').innerHTML = [...g.puz.groups].sort((a, b) => a.lvl - b.lvl).map(grp => `<div style="background:${COLS[grp.lvl]}"><b>${esc(grp.cat)}</b>${grp.words.map(x => esc(x.w)).join(', ')}</div>`).join('');
     $('#endModal').classList.remove('hidden');
   }, won ? 900 : 300);
@@ -370,22 +526,24 @@ function finish(won, gaveUp){
    ===================================================== */
 $('#submitBtn').onclick = submit;
 $('#clearBtn').onclick = () => { G().sel = []; save(); render(); };
-$('#shuffleBtn').onclick = () => { const g = G(); g.order = shuffle(g.order); save(); render(); };
+$('#shuffleBtn').onclick = () => { const g = G(); if (!g) return; g.order = shuffle(g.order); save(); render(); };
 $('#hintBtn').onclick = () => {
-  const g = G(); if (g.done) return;
+  const g = G(); if (!g || g.done) return;
   const next = g.puz.groups.map((grp, i) => ({i, lvl:grp.lvl})).filter(x => !g.solved.includes(x.i) && !g.hints.includes(x.i)).sort((a, b) => a.lvl - b.lvl)[0];
   if (!next){ toast('No more hints!'); return; }
   if (!isElem() && !confirm('Show a hint? It reveals one category name.')) return;
   g.hints.push(next.i); save(); render();
 };
-$('#revealBtn').onclick = () => { const g = G(); if (g.done) return; if (!confirm('Reveal all the groups?')) return; finish(false, true); };
-$('#nextBtn').onclick = () => { const g = G(); if (!g.done && (g.solved.length || g.mistakes) && !confirm('Skip to a new puzzle?')) return; newPuzzle(); };
-$('#endNext').onclick = () => { $('#endModal').classList.add('hidden'); newPuzzle(); };
-document.querySelectorAll('#levelSeg button').forEach(b => b.onclick = () => {
-  if (C.level === b.dataset.l && !G().meta.custom) return;
-  const g = G(); if (!g.done && (g.solved.length || g.mistakes) && !confirm('Switch level and start a new puzzle?')) return;
-  C.level = b.dataset.l; newPuzzle();
+$('#revealBtn').onclick = () => { const g = G(); if (!g || g.done) return; if (!confirm('Reveal all the groups?')) return; finish(false, true); };
+$('#daysBtn').onclick = openDays; $('#dayChip').onclick = openDays;
+document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => {
+  if (C.mode === b.dataset.m) return;
+  C.mode = b.dataset.m;
+  if (C.mode === 'unlimited' && needNewUnl()) { newPuzzle(); return; }
+  save(); show();
 });
+$('#nextBtn').onclick = () => { const g = G(); if (g && !g.done && (g.solved.length || g.mistakes) && !confirm('Skip to a new puzzle?')) return; newPuzzle(); };
+$('#endNext').onclick = () => { $('#endModal').classList.add('hidden'); newPuzzle(); };
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.overlay').classList.add('hidden'));
 $('#teamsBtn').onclick = () => { $('#t1').value = C.teams.names[0]; $('#t2').value = C.teams.names[1]; $('#teamsModal').classList.remove('hidden'); };
 $('#teamsOn').onclick = () => { C.teams.on = true; C.teams.names = [$('#t1').value.trim() || 'Team 1', $('#t2').value.trim() || 'Team 2']; save(); render(); $('#teamsModal').classList.add('hidden'); };
@@ -397,7 +555,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.overlay').forEach(o => o.classList.add('hidden'));
 });
 if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*'); }
-addEventListener('resize', () => render());
+addEventListener('resize', () => { if (G()) render(); });
 
 /* =====================================================
    MY PUZZLES (teacher-made)
@@ -456,7 +614,7 @@ function confetti(){
   (function t(){ cx.clearRect(0,0,W,H); cx.fillStyle = 'rgba(255,255,255,.4)'; cx.beginPath(); for (const p of f){ p.y += p.s; p.d += .01; p.x += Math.sin(p.d)*.3; if (p.y > H){ p.y = -4; p.x = Math.random()*W; } cx.moveTo(p.x, p.y); cx.arc(p.x, p.y, p.r, 0, 6.28); } cx.fill(); requestAnimationFrame(t); })(); })();
 
 /* start: resume this class's puzzle or begin a new one */
-if (!C.game || C.game.done) newPuzzle(); else render();
+if (C.mode === 'unlimited' && needNewUnl()) newPuzzle(); else show();
 </script>
 </body>
 </html>
