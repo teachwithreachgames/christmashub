@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>25 Songs of Christmas — Tier List | Teach With Reach Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#14402d; --bg2:#06140e; --cream:#fdf6e3; --gold:#f5c542; --red:#d64045;
+  --panel:rgba(255,255,255,.07); --line:rgba(255,255,255,.14);
+  --tile-w:clamp(104px,7.6vw,150px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:Nunito,system-ui,sans-serif;color:var(--cream);
+  background:radial-gradient(1400px 900px at 30% -10%,var(--bg1),var(--bg2));
+  overflow:hidden;-webkit-user-select:none;user-select:none;
+}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+header{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25);flex-wrap:wrap}
+h1{font-family:'Lilita One',cursive;font-weight:400;margin:0;font-size:clamp(22px,2.2vw,34px);letter-spacing:.5px;white-space:nowrap}
+h1 span{color:var(--gold)}
+.spacer{flex:1}
+.count{font-weight:800;opacity:.85;margin-right:6px;white-space:nowrap}
+button,select,input{font:inherit}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;
+  padding:10px 16px;font-weight:800;cursor:pointer;min-height:48px;text-decoration:none;white-space:nowrap
+}
+.btn:hover{background:rgba(255,255,255,.14)}
+.btn.primary{background:var(--red);border-color:transparent}
+.btn.gold{background:var(--gold);color:#2a1d00;border-color:transparent}
+.btn.danger{border-color:#d64045;color:#ffb3b5}
+select.btn{padding-right:12px}
+select option{color:#111}
+
+/* Layout */
+main{flex:1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:16px;padding:14px 18px;min-height:0}
+.tiers{display:grid;grid-template-rows:repeat(6,minmax(0,1fr));gap:6px;min-height:0}
+.tier{display:flex;min-height:0;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+.tier-label{flex:0 0 clamp(56px,5vw,90px);display:grid;place-items:center;font-family:'Lilita One',cursive;font-size:clamp(28px,3vw,54px);color:#1b1b1b}
+.zone{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;padding:6px;overflow-y:auto;min-height:0;transition:background .15s}
+.zone.over{background:rgba(245,197,66,.16)}
+.side{display:flex;flex-direction:column;gap:12px;min-height:0}
+.panel{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:16px;padding:12px}
+.panel h2{margin:0 0 8px;font-family:'Lilita One',cursive;font-weight:400;font-size:20px;letter-spacing:.5px}
+.presents{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:min(100%,46vh);margin:0 auto}
+.gift{background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation;position:relative}
+.gift:hover .present{transform:translateY(-4px) rotate(-3deg)}
+.gift.opened .present{opacity:.4}
+.gift.opened .lid{transform:translate(22%,-35%) rotate(28deg)}
+.gift.opened::after{content:'✓';position:absolute;right:4%;bottom:4%;background:var(--gold);color:#2a1d00;font-weight:800;border-radius:50%;width:32%;aspect-ratio:1;display:grid;place-items:center;font-size:clamp(10px,1vw,16px)}
+.tray-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+.tray-panel .zone{border:2px dashed var(--line);border-radius:12px}
+.hint{font-size:13px;opacity:.6;margin-top:6px}
+
+/* Tiles */
+.tile{
+  position:relative;width:var(--tile-w);aspect-ratio:16/9;border-radius:9px;overflow:hidden;
+  background:#333 center/cover no-repeat;box-shadow:0 2px 6px rgba(0,0,0,.45);
+  cursor:grab;touch-action:none;flex:0 0 auto
+}
+.tile .t{
+  position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;
+  font-size:clamp(10px,.78vw,13px);font-weight:800;line-height:1.1;
+  background:linear-gradient(transparent,rgba(0,0,0,.88));text-shadow:0 1px 2px #000;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.tile.noimg{background-color:var(--wrap);background-image:var(--pat);background-size:var(--patsize)}
+.tile.noimg .t{top:0;display:flex;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.35);padding:6px}
+.tile.dragging{opacity:.25}
+.ghost{position:fixed;z-index:1000;pointer-events:none;transform:rotate(-4deg) scale(1.08);box-shadow:0 12px 30px rgba(0,0,0,.6)}
+.placeholder{width:var(--tile-w);aspect-ratio:16/9;border-radius:9px;border:3px dashed var(--gold);flex:0 0 auto}
+
+/* Presents */
+.present{position:relative;width:100%;aspect-ratio:1;transition:transform .2s;container-type:inline-size}
+.present .box,.present .lid{position:absolute;background-color:var(--wrap);background-image:var(--pat);background-size:var(--patsize)}
+.present .box{left:10%;right:10%;top:36%;bottom:2%;border-radius:4px;box-shadow:inset 0 -8cqw 0 rgba(0,0,0,.15),0 3cqw 6cqw rgba(0,0,0,.45)}
+.present .lid{left:4%;right:4%;top:22%;height:17%;border-radius:4px;box-shadow:0 2cqw 0 rgba(0,0,0,.25);filter:brightness(1.08);transition:transform .25s}
+.brib,.lrib{position:absolute;top:0;bottom:0;width:10cqw;left:calc(50% - 5cqw);background:var(--ribbon)}
+.num{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:'Lilita One',cursive;font-size:26cqw;color:#fff;text-shadow:0 1.2cqw 0 rgba(0,0,0,.5),0 0 4cqw rgba(0,0,0,.55)}
+.bow{position:absolute;left:50%;bottom:85%;width:46cqw;height:20cqw;transform:translateX(-50%)}
+.bow::before,.bow::after{content:'';position:absolute;bottom:0;width:50%;height:100%;border:3.6cqw solid var(--ribbon);border-radius:50% 50% 50% 50%/55% 55% 45% 45%}
+.bow::before{left:0;transform:rotate(-16deg);transform-origin:right bottom}
+.bow::after{right:0;transform:rotate(16deg);transform-origin:left bottom}
+.bow i{position:absolute;left:50%;bottom:-3cqw;width:10cqw;height:10cqw;transform:translateX(-50%);background:var(--ribbon);border-radius:3cqw;filter:brightness(.88);z-index:1}
+
+/* Overlay + reveal */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(3,10,7,.86);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
+.hidden{display:none!important}
+.close-x{position:fixed;top:14px;right:16px;z-index:510;width:56px;height:56px;border-radius:50%;font-size:24px}
+.stage{position:relative;width:min(980px,94vw);display:grid;place-items:center}
+.bigpresent{width:min(52vh,70vw);cursor:pointer;touch-action:manipulation;padding-top:10%}
+.tap-hint{font-family:'Lilita One',cursive;font-size:clamp(26px,3vw,44px);margin-top:20px;color:var(--gold);text-align:center;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45;transform:scale(.97)}}
+.present.idle{animation:idle 2.2s ease-in-out infinite}
+@keyframes idle{0%,100%{transform:rotate(0)}10%{transform:rotate(-3deg)}20%{transform:rotate(3deg)}30%{transform:rotate(0)}}
+.present.shake{animation:shake .8s ease-in-out}
+@keyframes shake{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-7deg)}30%{transform:rotate(7deg)}
+  45%{transform:rotate(-6deg) scale(1.04)}60%{transform:rotate(6deg) scale(1.07)}
+  75%{transform:rotate(-3deg) scale(1.1)}90%{transform:rotate(2deg) scale(1.1)}
+}
+.present.open{animation:none;transform:scale(1.1)}
+.present.open .lid{transition:transform .7s cubic-bezier(.2,.8,.3,1),opacity .6s .25s;transform:translate(70%,-280%) rotate(55deg);opacity:0}
+.present.open .box{transition:transform .5s .3s,opacity .5s .3s;transform:scale(.7) translateY(20%);opacity:0}
+.cf{position:fixed;width:12px;height:18px;z-index:600;pointer-events:none;border-radius:2px}
+
+.card{
+  width:100%;background:linear-gradient(180deg,#1d5039,#0e2a1e);border:3px solid var(--gold);border-radius:22px;
+  padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:pop .55s cubic-bezier(.2,1.4,.4,1)
+}
+@keyframes pop{from{transform:scale(.5) rotate(-4deg);opacity:0}to{transform:scale(1);opacity:1}}
+.card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.badge{font-family:'Lilita One',cursive;background:var(--red);padding:4px 14px;border-radius:999px;font-size:18px}
+.player{aspect-ratio:16/9;width:min(100%,calc((100vh - 340px) * 16 / 9));margin:0 auto;border-radius:12px;overflow:hidden;background:#000}
+.player iframe{width:100%;height:100%;border:0;display:block}
+.nolink{display:grid;place-items:center;align-content:center;height:100%;text-align:center;padding:20px;gap:12px;font-size:20px}
+.card h2{font-family:'Lilita One',cursive;font-weight:400;font-size:clamp(28px,3.4vw,52px);margin:14px 0 0;line-height:1.05}
+.card .artist{font-size:clamp(18px,1.8vw,28px);opacity:.85;margin:4px 0 14px}
+.rank-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rank-row .lbl{font-weight:800;margin-right:4px}
+.rank-btn{width:64px;height:64px;border-radius:14px;border:0;font-family:'Lilita One',cursive;font-size:32px;color:#1b1b1b;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.rank-btn:active{transform:translateY(2px);box-shadow:none}
+.rank-btn.current{outline:4px solid #fff;outline-offset:2px}
+
+/* Settings */
+.sheet{width:min(1000px,96vw);max-height:90vh;overflow:auto;background:#0f2a1e;border:1px solid var(--line);border-radius:18px;padding:22px;-webkit-user-select:text;user-select:text}
+.sheet h2{font-family:'Lilita One',cursive;font-weight:400;margin:0 0 6px;font-size:28px}
+.sheet h3{font-family:'Lilita One',cursive;font-weight:400;margin:22px 0 8px;font-size:22px;color:var(--gold)}
+.sheet .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.in{background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+.in.sm{width:90px}
+.in.bad{border-color:#ff6b6b;background:rgba(255,80,80,.15)}
+.name-in{max-width:320px}
+table{width:100%;border-collapse:collapse}
+td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td small{opacity:.7}
+.spoiler{background:rgba(214,64,69,.2);border:1px solid rgba(214,64,69,.5);padding:8px 12px;border-radius:10px;font-weight:800}
+.sheet-foot{position:sticky;bottom:-22px;background:#0f2a1e;padding:14px 0 4px;margin-top:10px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+
+@media (max-width:900px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100vh}
+  main{grid-template-columns:1fr}
+  .tiers{grid-template-rows:none;grid-auto-rows:minmax(100px,auto)}
+}
+@media (prefers-reduced-motion:reduce){
+  .present.idle,.tap-hint{animation:none}
+}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<div class="app">
+  <header>
+    <button class="btn hidden" id="hubBtn">🏠 Hub</button>
+    <h1>🎁 25 Songs of <span>Christmas</span></h1>
+    <div class="spacer"></div>
+    <div class="count" id="count"></div>
+    <select class="btn" id="classSelect" aria-label="Choose class"></select>
+    <button class="btn" id="newClassBtn">＋ Class</button>
+    <button class="btn" id="settingsBtn">⚙ Settings</button>
+    <button class="btn" id="fsBtn" title="Fullscreen">⛶</button>
+  </header>
+  <main>
+    <section class="tiers" id="tiers"></section>
+    <aside class="side">
+      <div class="panel">
+        <h2>Pick a gift to unwrap</h2>
+        <div class="presents" id="presents"></div>
+      </div>
+      <div class="panel tray-panel">
+        <h2>Unwrapped — drag into a tier</h2>
+        <div class="zone" data-zone="tray" id="tray"></div>
+        <div class="hint">Tap a song to replay it or rank it with one tap.</div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- Reveal overlay -->
+<div class="overlay hidden" id="reveal">
+  <button class="btn close-x" id="closeReveal" aria-label="Close">✕</button>
+  <div class="stage">
+    <div id="giftStage" class="hidden">
+      <div class="bigpresent" id="bigGift"></div>
+      <div class="tap-hint" id="tapHint">Tap to unwrap!</div>
+    </div>
+    <div class="card hidden" id="card">
+      <div class="card-top"><span class="badge" id="cardNum"></span><div class="spacer"></div><a class="btn" id="ytLink" target="_blank" rel="noopener"></a></div>
+      <div class="player" id="player"></div>
+      <h2 id="cardTitle"></h2>
+      <div class="artist" id="cardArtist"></div>
+      <div class="rank-row" id="rankRow"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings overlay -->
+<div class="overlay hidden" id="settings">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+/* ============================================================
+   SONG LIST — edit titles here. You can also paste a YouTube
+   link directly into `yt` (just the 11-character video ID) and a
+   start time in seconds, or add links in Settings on the page.
+   ============================================================ */
+const SONGS = [
+  {id:'mariah',     title:'All I Want for Christmas Is You',            artist:'Mariah Carey',               yt:'aAkMkVFwAoo', alt:'fRyhqobl0sk', start:0},
+  {id:'rosie',      title:"Why Can't It Be Christmas Time All Year",     artist:'Rosie Thomas',               yt:'d3C_3sZyxLU', alt:'OpKoa8tqdB4', start:0},
+  {id:'petty',      title:'Christmas All Over Again',                    artist:'Tom Petty & the Heartbreakers', yt:'j9kEPYyTHNA', alt:'Um_QCy-r3D4', start:0},
+  {id:'sia',        title:'Candy Cane Lane',                             artist:'Sia',                        yt:'ElmsIGT85tI', alt:'quVoIUfj_rM', start:0},
+  {id:'relientk',   title:"Merry Christmas, Here's to Many More",        artist:'Relient K',                  yt:'UGCs0voqeL4', alt:'LC9IXnFuwFs', start:0},
+  {id:'buble',      title:"It's Beginning to Look a Lot Like Christmas", artist:'Michael Bublé',              yt:'0bhsXykXxfg', alt:'EVctSiqceA0', start:0},
+  {id:'u2',         title:'Christmas (Baby Please Come Home)',           artist:'U2',                         yt:'Vh0K93tgYkM', alt:'', start:0},
+  {id:'waitresses', title:'Christmas Wrapping',                          artist:'The Waitresses',             yt:'UzVsUewmsJY', alt:'nud2TQNahaU', start:0},
+  {id:'bing',       title:'White Christmas',                             artist:'Bing Crosby',                yt:'v5ryZdpEHqM', alt:'', start:0},
+  {id:'natking',    title:'The Christmas Song',                          artist:'Nat King Cole',              yt:'wKhRnZZ0cJI', alt:'Z57yI62PUys', start:0},
+  {id:'brenda',     title:"Rockin' Around the Christmas Tree",           artist:'Brenda Lee',                 yt:'TFsZy9t-qDc', alt:'O1x-hOOrl5E', start:0},
+  {id:'helms',      title:'Jingle Bell Rock',                            artist:'Bobby Helms',                yt:'ZnDmmiiFSUU', alt:'Z0ajuTaHBtM', start:0},
+  {id:'burl',       title:'A Holly Jolly Christmas',                     artist:'Burl Ives',                  yt:'P_dI6fVZwd0', alt:'9QEK4K-KWT8', start:0},
+  {id:'andy',       title:"It's the Most Wonderful Time of the Year",    artist:'Andy Williams',              yt:'cbZTfrhcamA', alt:'9JQU_3Mx6xY', start:0},
+  {id:'dean',       title:'Let It Snow! Let It Snow! Let It Snow!',      artist:'Dean Martin',                yt:'Rnil5LyK_B0', alt:'2TA3IKH8Y5c', start:0},
+  {id:'elvis',      title:'Blue Christmas',                              artist:'Elvis Presley',              yt:'B6WnnZRSKYs', alt:'NqwENLwSTWQ', start:0},
+  {id:'berry',      title:'Run Rudolph Run',                             artist:'Chuck Berry',                yt:'YiadNVhaGwk', alt:'3tQLBSt80Ac', start:0},
+  {id:'feliciano',  title:'Feliz Navidad',                               artist:'José Feliciano',             yt:'N8NcQzMQN_U', alt:'', start:0},
+  {id:'chipmunks',  title:"The Chipmunk Song (Christmas Don't Be Late)", artist:'Alvin & the Chipmunks',      yt:'mDtOwSjIDFw', alt:'N7xALO9ocvo', start:0},
+  {id:'wham',       title:'Last Christmas',                              artist:'Wham!',                      yt:'E8gmARGvPlI', alt:'UOCJBYTrRFM', start:0},
+  {id:'mccartney',  title:'Wonderful Christmastime',                     artist:'Paul McCartney',             yt:'94Ye-3C1FC8', alt:'-IHP9Acxa54', start:0},
+  {id:'rundmc',     title:'Christmas in Hollis',                         artist:'Run-DMC',                    yt:'OR07r0ZMFb8', alt:'C0b8FqocXcU', start:0},
+  {id:'tso',        title:'Christmas Eve/Sarajevo 12/24',                artist:'Trans-Siberian Orchestra',   yt:'MHioIlbnS_A', alt:'2LbmhneqBnE', start:0},
+  {id:'ariana',     title:'Santa Tell Me',                               artist:'Ariana Grande',              yt:'nlR0MkrRklg', alt:'2TEAh5SHZGs', start:0},
+  {id:'bieber',     title:'Mistletoe',                                   artist:'Justin Bieber',              yt:'LUjn3RpkcKY', alt:'g-HR0e4gLzQ', start:0},
+];
+
+const KEY = 'twr-xmas-tierlist-v1';
+const TIER_KEYS = ['S','A','B','C','D','F'];
+const TIER_COLORS = {S:'#ff7f7f',A:'#ffbf7f',B:'#ffdf7f',C:'#ffff7f',D:'#bfff7f',F:'#7fbfff'};
+const byId = Object.fromEntries(SONGS.map(s => [s.id, s]));
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- State (saved in this browser) ---------- */
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function makeClass(name){
+  return {name, order:shuffle(SONGS.map(s=>s.id)), opened:[], tiers:Object.fromEntries(TIER_KEYS.map(k=>[k,[]])), tray:[]};
+}
+function sanitize(c){
+  const ids = new Set(SONGS.map(s=>s.id));
+  c.order = (c.order||[]).filter(id=>ids.has(id));
+  c.order.push(...shuffle(SONGS.map(s=>s.id).filter(id=>!c.order.includes(id))));
+  c.tiers = c.tiers || {};
+  for (const k of TIER_KEYS) c.tiers[k] = (c.tiers[k]||[]).filter(id=>ids.has(id));
+  c.tray = (c.tray||[]).filter(id=>ids.has(id));
+  c.opened = (c.opened||[]).filter(id=>ids.has(id));
+  c.name = c.name || 'Class';
+}
+function load(){
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+  if (!s || !s.classes || !Object.keys(s.classes).length){
+    const id = uid();
+    s = {meta:{}, classes:{[id]:makeClass('My Class')}, current:id};
+  }
+  s.meta = s.meta || {};
+  Object.values(s.classes).forEach(sanitize);
+  if (!s.classes[s.current]) s.current = Object.keys(s.classes)[0];
+  return s;
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} }
+let store = load();
+
+/* ---------- Christmas Hub link: classes are managed in the hub ---------- */
+const HUB_KEY = 'twr-hub-v1';
+const params = new URLSearchParams(location.search);
+const EMBED = params.has('embed');
+let HUBBED = false;
+(function syncFromHub(){
+  let hub = null;
+  try { hub = JSON.parse(localStorage.getItem(HUB_KEY)); } catch(e) {}
+  if (!hub || !Array.isArray(hub.classes) || !hub.classes.length) return;
+  HUBBED = true;
+  for (const c of hub.classes){
+    if (!store.classes[c.id]) store.classes[c.id] = makeClass(c.name);
+    else store.classes[c.id].name = c.name;
+  }
+  const want = params.get('class') || hub.current;
+  if (store.classes[want]) store.current = want;
+  store.hubIds = hub.classes.map(c => c.id);
+  save();
+})();
+const cur = () => store.classes[store.current];
+
+function songInfo(id){
+  const s = byId[id], m = store.meta[id] || {};
+  const custom = m.yt !== undefined && m.yt !== (s.yt||'');
+  return {...s, yt: m.yt !== undefined ? m.yt : (s.yt||''), start: m.start !== undefined ? m.start : (s.start||0), alt: custom ? '' : (s.alt||'')};
+}
+const searchURL = s => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(s.artist + ' ' + s.title);
+
+function parseYT(str){
+  str = (str||'').trim();
+  if (!str) return {yt:'', start:null};
+  if (/^[\w-]{11}$/.test(str)) return {yt:str, start:null};
+  try {
+    const u = new URL(str); let id = '';
+    if (u.hostname.includes('youtu.be')) id = u.pathname.slice(1,12);
+    else if (u.searchParams.get('v')) id = u.searchParams.get('v');
+    else { const m = u.pathname.match(/\/(embed|shorts|live)\/([\w-]{11})/); if (m) id = m[2]; }
+    const t = u.searchParams.get('t') || u.searchParams.get('start'); let start = null;
+    if (t){ const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/); if (m) start = (+m[1]||0)*3600 + (+m[2]||0)*60 + (+m[3]||0); }
+    return {yt: /^[\w-]{11}$/.test(id) ? id : '', start};
+  } catch(e){ return {yt:'', start:null}; }
+}
+
+/* ---------- Gift wrap styles ---------- */
+const WRAPS = ['#c0392b','#1e7d4f','#2f6fb5','#7b3fa0','#d4a017','#e3e3e3','#0f8b8d'];
+const RIBBONS = ['#f5c542','#ffffff','#d64045'];
+const PATS = ['none','repeating-linear-gradient(45deg,rgba(255,255,255,.2) 0 10%,transparent 10% 20%)','radial-gradient(rgba(255,255,255,.45) 18%,transparent 22%)'];
+function giftStyle(n){
+  const w = WRAPS[n % WRAPS.length];
+  let r = RIBBONS[(n*2+1) % RIBBONS.length];
+  if ((w==='#d4a017' && r==='#f5c542') || (w==='#e3e3e3' && r==='#ffffff')) r = '#d64045';
+  if (w==='#c0392b' && r==='#d64045') r = '#f5c542';
+  const p = (n*5+2) % 3;
+  return `--wrap:${w};--ribbon:${r};--pat:${PATS[p]};--patsize:${p===2?'22% 22%':'auto'}`;
+}
+function presentHTML(n){
+  return `<div class="present" style="${giftStyle(n)}"><div class="box"><span class="brib"></span><span class="num">${n+1}</span></div><div class="lid"><span class="lrib"></span><span class="bow"><i></i></span></div></div>`;
+}
+
+/* ---------- Rendering ---------- */
+function tileEl(id){
+  const s = songInfo(id), n = cur().order.indexOf(id);
+  const d = document.createElement('div');
+  d.className = 'tile' + (s.yt ? '' : ' noimg');
+  d.dataset.sid = id;
+  d.title = `${s.title} — ${s.artist}`;
+  if (s.yt) d.style.backgroundImage = `url(https://i.ytimg.com/vi/${s.yt}/mqdefault.jpg)`;
+  else d.setAttribute('style', giftStyle(n));
+  d.innerHTML = `<div class="t">${esc(s.title)}</div>`;
+  return d;
+}
+function renderTiers(){
+  const c = cur(), wrap = $('#tiers'); wrap.innerHTML = '';
+  for (const k of TIER_KEYS){
+    const row = document.createElement('div'); row.className = 'tier';
+    row.innerHTML = `<div class="tier-label" style="background:${TIER_COLORS[k]}">${k}</div>`;
+    const z = document.createElement('div'); z.className = 'zone'; z.dataset.zone = k;
+    c.tiers[k].forEach(id => z.appendChild(tileEl(id)));
+    row.appendChild(z); wrap.appendChild(row);
+  }
+}
+function renderTray(){
+  const t = $('#tray'); t.innerHTML = '';
+  cur().tray.forEach(id => t.appendChild(tileEl(id)));
+}
+function renderPresents(){
+  const c = cur(), p = $('#presents'); p.innerHTML = '';
+  c.order.forEach((id, n) => {
+    const b = document.createElement('button');
+    b.className = 'gift' + (c.opened.includes(id) ? ' opened' : '');
+    b.setAttribute('aria-label', 'Gift ' + (n+1));
+    b.innerHTML = presentHTML(n);
+    b.onclick = () => openPresent(n);
+    p.appendChild(b);
+  });
+}
+function renderCount(){
+  const c = cur();
+  const ranked = TIER_KEYS.reduce((a,k) => a + c.tiers[k].length, 0);
+  $('#count').textContent = `${c.opened.length}/${SONGS.length} unwrapped · ${ranked} ranked`;
+}
+function renderClassSelect(){
+  const sel = $('#classSelect');
+  sel.innerHTML = Object.entries(store.classes).filter(([id]) => !HUBBED || store.hubIds.includes(id)).map(([id,c]) => `<option value="${id}"${id===store.current?' selected':''}>${esc(c.name)}</option>`).join('');
+}
+function renderBoard(){ renderTiers(); renderTray(); renderPresents(); renderCount(); }
+function renderAll(){ renderClassSelect(); renderBoard(); }
+
+/* ---------- Moving songs ---------- */
+const zoneArr = (c,z) => z === 'tray' ? c.tray : c.tiers[z];
+function removeEverywhere(c,id){ for (const k of TIER_KEYS) c.tiers[k] = c.tiers[k].filter(x=>x!==id); c.tray = c.tray.filter(x=>x!==id); }
+function moveSong(id, z, idx){
+  const c = cur(); removeEverywhere(c, id);
+  const a = zoneArr(c, z); a.splice(Math.min(idx, a.length), 0, id);
+}
+function tierOf(id){ const c = cur(); return TIER_KEYS.find(k => c.tiers[k].includes(id)) || null; }
+
+/* ---------- Drag & drop (pointer events: works on touch/smartboards) ---------- */
+let drag = null;
+const placeholder = document.createElement('div'); placeholder.className = 'placeholder';
+document.addEventListener('pointerdown', e => {
+  const t = e.target.closest('.tile');
+  if (!t || t.classList.contains('ghost') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault();
+  const r = t.getBoundingClientRect();
+  drag = {sid:t.dataset.sid, el:t, sx:e.clientX, sy:e.clientY, ox:e.clientX-r.left, oy:e.clientY-r.top, w:r.width, h:r.height, started:false, zoneEl:null, index:0};
+});
+window.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.started){
+    if (Math.hypot(e.clientX-drag.sx, e.clientY-drag.sy) < 8) return;
+    drag.started = true;
+    const g = drag.el.cloneNode(true); g.classList.add('ghost');
+    g.style.width = drag.w + 'px'; g.style.height = drag.h + 'px';
+    document.body.appendChild(g); drag.ghost = g;
+    drag.el.classList.add('dragging'); document.body.classList.add('is-dragging');
+  }
+  drag.ghost.style.left = (e.clientX - drag.ox) + 'px';
+  drag.ghost.style.top  = (e.clientY - drag.oy) + 'px';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const zone = under && under.closest('.zone');
+  if (drag.zoneEl && drag.zoneEl !== zone) drag.zoneEl.classList.remove('over');
+  drag.zoneEl = zone;
+  if (!zone){ placeholder.remove(); return; }
+  zone.classList.add('over');
+  const tiles = [...zone.querySelectorAll('.tile')].filter(x => x !== drag.el);
+  let idx = tiles.length;
+  for (let i = 0; i < tiles.length; i++){
+    const r = tiles[i].getBoundingClientRect();
+    if (e.clientY < r.top || (e.clientY <= r.bottom && e.clientX < r.left + r.width/2)){ idx = i; break; }
+  }
+  drag.index = idx;
+  if (idx < tiles.length) zone.insertBefore(placeholder, tiles[idx]); else zone.appendChild(placeholder);
+});
+function endDrag(d){
+  d.ghost && d.ghost.remove(); placeholder.remove();
+  d.zoneEl && d.zoneEl.classList.remove('over');
+  document.body.classList.remove('is-dragging');
+}
+window.addEventListener('pointerup', () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.started){ openSong(d.sid); return; }
+  endDrag(d);
+  if (d.zoneEl){ moveSong(d.sid, d.zoneEl.dataset.zone, d.index); save(); }
+  renderBoard();
+});
+window.addEventListener('pointercancel', () => {
+  if (!drag) return;
+  if (drag.started) endDrag(drag);
+  drag = null; renderBoard();
+});
+
+/* ---------- Unwrap + reveal ---------- */
+let unwrapping = null, timers = [];
+function showOverlay(){ $('#reveal').classList.remove('hidden'); }
+function closeReveal(){
+  timers.forEach(clearTimeout); timers = [];
+  if (unwrapping && unwrapping.stage === 'going') markOpened(unwrapping.id);
+  unwrapping = null;
+  $('#player').innerHTML = '';           // stops the music
+  $('#reveal').classList.add('hidden');
+  $('#giftStage').classList.add('hidden');
+  $('#card').classList.add('hidden');
+}
+function openPresent(n){
+  const id = cur().order[n];
+  showOverlay();
+  if (cur().opened.includes(id)){ showCard(id); return; }
+  $('#card').classList.add('hidden');
+  $('#bigGift').innerHTML = presentHTML(n);
+  $('#bigGift .present').classList.add('idle');
+  $('#tapHint').classList.remove('hidden');
+  $('#giftStage').classList.remove('hidden');
+  unwrapping = {n, id, stage:'ready'};
+}
+$('#bigGift').addEventListener('click', () => {
+  if (!unwrapping || unwrapping.stage !== 'ready') return;
+  unwrapping.stage = 'going';
+  const p = $('#bigGift .present');
+  p.classList.remove('idle'); p.classList.add('shake');
+  $('#tapHint').classList.add('hidden');
+  timers.push(setTimeout(() => {
+    p.classList.remove('shake'); p.classList.add('open');
+    const r = p.getBoundingClientRect();
+    confetti(r.left + r.width/2, r.top + r.height*0.35);
+  }, 800));
+  timers.push(setTimeout(() => {
+    const id = unwrapping.id; markOpened(id); unwrapping = null;
+    $('#giftStage').classList.add('hidden');
+    showCard(id);
+  }, 1500));
+});
+function markOpened(id){
+  const c = cur();
+  if (!c.opened.includes(id)) c.opened.push(id);
+  if (!tierOf(id) && !c.tray.includes(id)) c.tray.push(id);
+  save(); renderBoard();
+}
+function openSong(id){ showOverlay(); showCard(id); }
+function showCard(id){
+  const s = songInfo(id), n = cur().order.indexOf(id);
+  $('#cardNum').textContent = '🎁 Gift #' + (n+1);
+  $('#cardTitle').textContent = s.title;
+  $('#cardArtist').textContent = s.artist;
+  const pl = $('#player'), link = $('#ytLink');
+  document.querySelectorAll('.alt-btn').forEach(x => x.remove());
+  if (s.yt){
+    const st = s.start|0;
+    const play = vid => {
+      const origin = /^https?:/.test(location.protocol) ? '&origin=' + encodeURIComponent(location.origin) : '';
+      pl.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0&playsinline=1&start=${st}${origin}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="${esc(s.title)}"></iframe>`;
+      link.href = `https://www.youtube.com/watch?v=${vid}&t=${st}s`;
+    };
+    play(s.yt); link.textContent = 'Open on YouTube ↗';
+    if (s.alt){
+      const b = document.createElement('button'); b.className = 'btn alt-btn'; b.textContent = '↻ Backup video';
+      b.title = 'Use this if the video says it can’t be played here';
+      let onAlt = false;
+      b.onclick = () => { onAlt = !onAlt; play(onAlt ? s.alt : s.yt); b.textContent = onAlt ? '↻ Main video' : '↻ Backup video'; };
+      link.before(b);
+    }
+  } else {
+    pl.innerHTML = `<div class="nolink"><div style="font-size:56px">🎵</div><div>No YouTube link added for this song yet.</div><button class="btn gold" id="addLinkBtn">Add a link</button></div>`;
+    $('#addLinkBtn').onclick = () => { closeReveal(); openSettings(id); };
+    link.href = searchURL(s); link.textContent = 'Search on YouTube ↗';
+  }
+  const t = tierOf(id);
+  $('#rankRow').innerHTML = `<span class="lbl">Rank it:</span>` +
+    TIER_KEYS.map(k => `<button class="rank-btn${t===k?' current':''}" data-k="${k}" style="background:${TIER_COLORS[k]}">${k}</button>`).join('') +
+    `<button class="btn" data-k="tray">Decide later</button>`;
+  $('#rankRow').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    moveSong(id, k, zoneArr(cur(), k).length + 1); save(); closeReveal(); renderBoard();
+  });
+  $('#card').classList.remove('hidden');
+}
+$('#closeReveal').onclick = closeReveal;
+
+function confetti(x, y){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#f5c542','#d64045','#2fbf71','#ffffff','#4aa3ff','#ff8fd1'];
+  for (let i = 0; i < 110; i++){
+    const el = document.createElement('div'); el.className = 'cf';
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    el.style.background = colors[i % colors.length];
+    if (i % 3 === 0){ el.style.borderRadius = '50%'; el.style.height = '12px'; }
+    document.body.appendChild(el);
+    const dx = (Math.random() - .5) * 1100, dy = -150 - Math.random() * 420, r = (Math.random() - .5) * 900;
+    el.animate([
+      {transform:'translate(-50%,-50%) rotate(0)', opacity:1},
+      {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, opacity:1, offset:.4},
+      {transform:`translate(${dx*1.25}px,${dy+700}px) rotate(${r*2}deg)`, opacity:0}
+    ], {duration:1700 + Math.random()*900, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove();
+  }
+}
+
+/* ---------- Classes ---------- */
+$('#classSelect').onchange = e => { store.current = e.target.value; save(); renderBoard(); };
+$('#newClassBtn').onclick = () => {
+  const name = (prompt('Name for the new class (e.g. "Period 2"):') || '').trim();
+  if (!name) return;
+  const id = uid(); store.classes[id] = makeClass(name); store.current = id; save(); renderAll();
+};
+
+/* ---------- Settings ---------- */
+function openSettings(focusId){
+  const c = cur(), multi = Object.keys(store.classes).length > 1;
+  const rows = SONGS.map((s0, i) => {
+    const s = songInfo(s0.id), m = store.meta[s0.id] || {};
+    const url = m.url !== undefined ? m.url : (s.yt ? 'https://youtu.be/' + s.yt : '');
+    return `<tr>
+      <td>${i+1}</td>
+      <td><b>${esc(s.title)}</b><br><small>${esc(s.artist)}</small></td>
+      <td><input class="in" data-url="${s.id}" value="${esc(url)}" placeholder="Paste YouTube link"></td>
+      <td><input class="in sm" type="number" min="0" data-start="${s.id}" value="${s.start|0}" title="Start time (seconds)"></td>
+      <td><a class="btn" href="${searchURL(s)}" target="_blank" rel="noopener">Find ↗</a></td>
+    </tr>`;
+  }).join('');
+  $('#sheet').innerHTML = `
+    <h2>⚙ Settings</h2>
+    <h3>This class</h3>
+    <div class="row">
+      ${HUBBED ? `<b style="font-size:20px">${esc(c.name)}</b><span class="hint">Rename or add classes in the Hub.</span>` : `<input class="in name-in" id="className" value="${esc(c.name)}">
+      <button class="btn" id="renameBtn">Rename</button>`}
+      <button class="btn danger" id="resetBtn">Re-wrap all gifts</button>
+      ${multi && !HUBBED ? '<button class="btn danger" id="deleteBtn">Delete class</button>' : ''}
+    </div>
+    <h3>Backup</h3>
+    <div class="row">
+      <button class="btn" id="exportBtn">⬇ Export backup</button>
+      <label class="btn">⬆ Import backup<input type="file" id="importFile" accept="application/json" hidden></label>
+      <span class="hint">Progress saves automatically in this browser. Export to move it to another computer.</span>
+    </div>
+    <h3>Song links</h3>
+    <p class="spoiler">⚠ Spoilers! Every song is listed below. Don't put this screen on the smartboard.</p>
+    <p class="hint">Paste a YouTube link for each song. A link with a timestamp (&t=45) sets the start time automatically. Start time is in seconds, so you can skip straight to the chorus.</p>
+    <table>${rows}</table>
+    <div class="sheet-foot">
+      <button class="btn" id="cancelSettings">Cancel</button>
+      <button class="btn primary" id="saveSettings">Save songs</button>
+    </div>`;
+  $('#settings').classList.remove('hidden');
+
+  $('#sheet').querySelectorAll('[data-url]').forEach(inp => inp.addEventListener('input', () => {
+    const p = parseYT(inp.value);
+    inp.classList.toggle('bad', !!inp.value.trim() && !p.yt);
+    if (p.start != null) $(`[data-start="${inp.dataset.url}"]`).value = p.start;
+  }));
+  if (!HUBBED) $('#renameBtn').onclick = () => { const v = $('#className').value.trim(); if (v){ c.name = v; save(); renderClassSelect(); } };
+  $('#resetBtn').onclick = () => {
+    if (!confirm(`Re-wrap all 25 gifts for "${c.name}"? This clears this class's tier list and reshuffles the songs.`)) return;
+    store.classes[store.current] = makeClass(c.name); save(); renderAll(); closeSettings();
+  };
+  if (multi) $('#deleteBtn').onclick = () => {
+    if (!confirm(`Delete "${c.name}" and its tier list?`)) return;
+    delete store.classes[store.current]; store.current = Object.keys(store.classes)[0]; save(); renderAll(); closeSettings();
+  };
+  $('#exportBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify(store, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'christmas-tier-list-backup.json'; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('#importFile').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    f.text().then(txt => {
+      try {
+        const s = JSON.parse(txt);
+        if (!s.classes || !Object.keys(s.classes).length) throw 0;
+        localStorage.setItem(KEY, JSON.stringify(s)); store = load(); save(); renderAll(); closeSettings();
+      } catch(err){ alert("That file doesn't look like a tier list backup."); }
+    });
+  };
+  $('#cancelSettings').onclick = closeSettings;
+  $('#saveSettings').onclick = () => {
+    let bad = false;
+    SONGS.forEach(s => {
+      const raw = $(`[data-url="${s.id}"]`).value.trim(), p = parseYT(raw);
+      if (raw && !p.yt){ bad = true; return; }
+      store.meta[s.id] = {url:raw, yt:p.yt, start:Math.max(0, parseInt($(`[data-start="${s.id}"]`).value, 10) || 0)};
+    });
+    save(); renderBoard();
+    if (bad) alert('Some links (in red) were not recognized as YouTube links and were not saved.');
+    else closeSettings();
+  };
+  if (focusId){ const f = $(`[data-url="${focusId}"]`); f.scrollIntoView({block:'center'}); f.focus(); }
+}
+function closeSettings(){ $('#settings').classList.add('hidden'); }
+$('#settingsBtn').onclick = () => openSettings();
+
+/* ---------- Misc ---------- */
+$('#fsBtn').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{});
+};
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('#settings').classList.contains('hidden')) closeSettings();
+  else if (!$('#reveal').classList.contains('hidden')) closeReveal();
+});
+
+/* Snowfall */
+(() => {
+  const cv = $('#snow'), cx = cv.getContext('2d');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let W, H; const flakes = [];
+  const size = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  size(); addEventListener('resize', size);
+  for (let i = 0; i < 90; i++) flakes.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2.2+.6, s:Math.random()*.5+.25, d:Math.random()*6.28});
+  (function tick(){
+    cx.clearRect(0,0,W,H); cx.fillStyle = 'rgba(255,255,255,.55)'; cx.beginPath();
+    for (const f of flakes){
+      f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .3;
+      if (f.y > H + 5){ f.y = -5; f.x = Math.random()*W; }
+      cx.moveTo(f.x, f.y); cx.arc(f.x, f.y, f.r, 0, 6.28);
+    }
+    cx.fill(); requestAnimationFrame(tick);
+  })();
+})();
+
+/* Videos can't play from a file opened on your computer (file://) — YouTube needs a real website address. */
+if (location.protocol === 'file:'){
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:900;background:#d64045;color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:92vw;text-align:center';
+  bar.textContent = '⚠ Videos won’t play when this file is opened from your computer. Upload it to your website (GitHub Pages) and open it from there.';
+  document.body.appendChild(bar);
+}
+
+if (HUBBED){ $('#newClassBtn').classList.add('hidden'); }
+if (EMBED){
+  $('#hubBtn').classList.remove('hidden');
+  $('#classSelect').classList.add('hidden');
+  $('#fsBtn').classList.add('hidden');
+  $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*');
+}
+$('#classSelect').addEventListener('change', () => {
+  if (!HUBBED) return;
+  try { const hub = JSON.parse(localStorage.getItem(HUB_KEY)); hub.current = store.current; localStorage.setItem(HUB_KEY, JSON.stringify(hub)); } catch(e) {}
+});
+
+renderAll();
+</script>
+</body>
+</html>

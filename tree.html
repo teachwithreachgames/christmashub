@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Christmas Tree | Teach With Reach Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#fdf6e3;--gold:#f5c542;--red:#d64045;--green:#2fbf71;--panel:rgba(12,28,20,.82);--line:rgba(255,255,255,.16)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0705}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--cream);-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+body.mode-decorate #c{cursor:crosshair}
+body.mode-remove #c{cursor:not-allowed}
+button,select,input,textarea{font:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;min-height:44px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.on{background:var(--gold);color:#2a1d00;border-color:transparent}
+.btn.danger{border-color:#d64045;color:#ffb3b5}
+.hidden{display:none!important}
+
+.topbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(rgba(0,0,0,.6),transparent);z-index:10;flex-wrap:wrap;pointer-events:none}
+.topbar>*{pointer-events:auto}
+h1{font-family:'Lilita One',cursive;font-weight:400;margin:0 6px;font-size:clamp(20px,2vw,30px);text-shadow:0 2px 6px rgba(0,0,0,.6)}
+h1 span{color:var(--gold)}
+.chip{font-weight:800;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.spacer{flex:1}
+
+.modes{position:fixed;left:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:10}
+.modes .btn{width:110px;justify-content:flex-start;background:var(--panel)}
+.modes .btn.on{background:var(--gold)}
+
+.tray{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:10;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;width:min(980px,calc(100vw - 28px));backdrop-filter:blur(6px)}
+.tray-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tray-lbl{font-weight:800;opacity:.75;min-width:78px}
+.orn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:70px;padding:4px 6px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.07);color:var(--cream);cursor:pointer;font-weight:800;font-size:13px}
+.orn-btn .ico{font-size:22px;line-height:1}
+.orn-btn.on{border-color:var(--gold);background:rgba(245,197,66,.18)}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+.sw.on{border-color:#fff;box-shadow:0 0 0 3px var(--gold)}
+.in{background:rgba(255,255,255,.1);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px}
+.in::placeholder{color:rgba(253,246,227,.5)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{background:transparent;color:var(--cream);border:0;padding:9px 14px;font-weight:800;cursor:pointer;min-height:42px}
+.seg button.on{background:var(--gold);color:#2a1d00}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:20;background:#0f2a1e;border-left:1px solid var(--line);padding:18px;overflow:auto;transform:translateX(100%);transition:transform .25s;-webkit-user-select:text;user-select:text}
+.drawer.open{transform:none;box-shadow:-10px 0 40px rgba(0,0,0,.5)}
+.drawer h2{font-family:'Lilita One',cursive;font-weight:400;margin:0;font-size:28px}
+.drawer h3{font-family:'Lilita One',cursive;font-weight:400;font-size:20px;color:var(--gold);margin:20px 0 8px}
+.drawer .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.opt{background:rgba(255,255,255,.08);color:var(--cream);border:2px solid transparent;border-radius:12px;padding:8px 12px;font-weight:800;cursor:pointer;min-height:42px}
+.opt.on{border-color:var(--gold);background:rgba(245,197,66,.18)}
+.hint{opacity:.65;font-size:14px}
+
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:rgba(0,0,0,.65);border:1px solid var(--line);padding:10px 18px;border-radius:999px;font-weight:800;z-index:15;transition:opacity .6s;pointer-events:none;text-align:center;max-width:92vw}
+.tip{position:fixed;z-index:30;pointer-events:none;background:#fff;color:#7a1414;font-weight:800;padding:4px 10px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.4);transform:translate(-50%,-140%);white-space:nowrap}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:5}
+.lbl{position:absolute;transform:translate(-50%,-160%);background:rgba(255,255,255,.92);color:#7a1414;font-weight:800;font-size:13px;padding:2px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+#loading{position:fixed;inset:0;display:grid;place-items:center;z-index:50;background:#0b0705;font-family:'Lilita One',cursive;font-size:32px}
+@media (max-width:760px){ .modes{top:auto;bottom:210px;transform:none} .modes .btn{width:auto} }
+</style>
+</head>
+<body class="mode-decorate">
+<canvas id="c" tabindex="0"></canvas>
+<div id="labels"></div>
+<div id="loading">🎄 Setting up the tree…</div>
+
+<div class="topbar">
+  <button class="btn hidden" id="hubBtn">🏠 Hub</button>
+  <h1>🎄 Our Christmas <span>Tree</span></h1>
+  <span class="chip" id="classChip"></span>
+  <div class="spacer"></div>
+  <span class="chip" id="countChip">0 ornaments</span>
+  <button class="btn" id="spinBtn">🔄 Spin</button>
+  <button class="btn" id="namesBtn">🏷 Names</button>
+  <button class="btn" id="photoBtn">📷 Save picture</button>
+  <button class="btn" id="drawerBtn">🎨 Tree &amp; Room</button>
+  <button class="btn" id="fsBtn" title="Fullscreen">⛶</button>
+</div>
+
+<div class="modes">
+  <button class="btn" data-mode="look">✋ Look</button>
+  <button class="btn on" data-mode="decorate">🎄 Decorate</button>
+  <button class="btn" data-mode="remove">🗑 Remove</button>
+  <button class="btn" id="undoBtn">↶ Undo</button>
+</div>
+
+<div class="tray" id="tray">
+  <div class="tray-row" id="ornRow"><span class="tray-lbl">Ornament</span></div>
+  <div class="tray-row" id="colRow"><span class="tray-lbl">Colour</span></div>
+  <div class="tray-row">
+    <span class="tray-lbl">Size</span>
+    <div class="seg" id="sizeSeg"><button data-s="0.9">S</button><button data-s="1.2" class="on">M</button><button data-s="1.6">L</button></div>
+    <span class="tray-lbl" style="margin-left:10px">Name tag</span>
+    <input class="in" id="nameIn" maxlength="18" placeholder="Optional, e.g. Maya" style="flex:1;min-width:160px">
+  </div>
+</div>
+
+<div class="toast" id="toast">Drag to look around · Click the tree to hang an ornament</div>
+<div class="tip hidden" id="tip"></div>
+
+<aside class="drawer" id="drawer">
+  <div class="row" style="justify-content:space-between"><h2>🎨 Tree &amp; Room</h2><button class="btn" id="closeDrawer">✕</button></div>
+
+  <h3>✨ Lights</h3>
+  <div class="row" id="lightsOn"></div>
+  <div class="row" id="paletteRow"></div>
+  <div class="row" id="effectRow"></div>
+
+  <h3>⭐ Tree topper</h3>
+  <div class="row" id="topperRow"></div>
+
+  <h3>🛋 Room</h3>
+  <div class="row" id="roomLightRow"></div>
+  <p class="hint" style="margin:0 0 6px">Rug</p>
+  <div class="row" id="rugRow"></div>
+  <p class="hint" style="margin:0 0 6px">Walls</p>
+  <div class="row" id="wallRow"></div>
+  <div class="row" id="fireRow"></div>
+  <div class="row" id="presentRow"></div>
+
+  <h3>🧦 Stockings</h3>
+  <div class="row">
+    <input type="range" id="stockCount" min="0" max="8" step="1" style="flex:1">
+    <b id="stockCountLbl" style="min-width:24px;text-align:right"></b>
+  </div>
+  <input class="in" id="stockNames" placeholder="Names, separated by commas" style="width:100%">
+  <p class="hint">First names only. They show on the stocking cuffs.</p>
+
+  <h3>🧹 Start over</h3>
+  <div class="row">
+    <button class="btn danger" id="clearBtn">Remove all ornaments</button>
+  </div>
+</aside>
+
+<script type="module">
+import * as THREE from './vendor/three-bundle.min.js';
+const { OrbitControls, RoomEnvironment } = THREE;
+const $ = s => document.querySelector(s);
+
+/* =====================================================
+   SAVE DATA (per class, in this browser)
+   ===================================================== */
+const KEY = 'twr-xmas-tree-v1', HUB_KEY = 'twr-hub-v1';
+const params = new URLSearchParams(location.search);
+const EMBED = params.has('embed');
+const defaultTree = () => ({
+  ornaments: [], topper: 'star',
+  lights: {on:true, palette:'multi', effect:'twinkle'},
+  room: {rug:'red', wall:'cream', fire:true, presents:true, dim:false, stockings:3, names:''}
+});
+let store;
+try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+if (!store || !store.classes) store = {classes:{}, current:'default'};
+let className = 'Our Class';
+(function syncFromHub(){
+  let hub = null;
+  try { hub = JSON.parse(localStorage.getItem(HUB_KEY)); } catch(e) {}
+  if (!hub || !Array.isArray(hub.classes) || !hub.classes.length) return;
+  const want = params.get('class') || hub.current;
+  const c = hub.classes.find(x => x.id === want) || hub.classes[0];
+  store.current = c.id; className = c.name;
+})();
+if (!store.classes[store.current]) store.classes[store.current] = defaultTree();
+const T = store.classes[store.current];
+// fill in anything missing from older saves
+const d0 = defaultTree();
+T.lights = {...d0.lights, ...T.lights}; T.room = {...d0.room, ...T.room}; T.ornaments = T.ornaments || [];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
+$('#classChip').textContent = className;
+
+/* =====================================================
+   RENDERER / CAMERA
+   ===================================================== */
+const canvas = $('#c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = .9;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x120c09);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+camera.position.set(1.2, 3.3, 9.2);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 2.35, 0);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.minDistance = 3.2; controls.maxDistance = 9.4;
+controls.minPolarAngle = Math.PI * 0.18; controls.maxPolarAngle = Math.PI * 0.53;
+controls.autoRotateSpeed = 1.2;
+
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+function canvasTex(w, h, draw, repeat){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  if (repeat){ t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+  return t;
+}
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const std = (color, o={}) => new THREE.MeshStandardMaterial({color, roughness:.8, metalness:0, ...o});
+
+/* =====================================================
+   ROOM: floor, walls, window, fireplace
+   ===================================================== */
+const ROOM = 20, WALL_H = 7.5, HALF = ROOM/2;
+const floorTex = canvasTex(1024, 1024, (g, w, h) => {
+  const n = 8, pw = w / n;
+  for (let i = 0; i < n; i++){
+    for (let j = 0; j < 3; j++){
+      const y0 = (j*h/3 + (i%2)*h/6) % h, len = h/3;
+      const l = 32 + rnd()*14;
+      g.fillStyle = `hsl(26,45%,${l}%)`; g.fillRect(i*pw, y0, pw, len); g.fillRect(i*pw, y0 - h, pw, len);
+      g.strokeStyle = 'rgba(0,0,0,.08)';
+      for (let k = 0; k < 10; k++){ g.beginPath(); const x = i*pw + rnd()*pw; g.moveTo(x, y0); g.bezierCurveTo(x+6, y0+len*.3, x-6, y0+len*.6, x+3, y0+len); g.stroke(); }
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(i*pw, y0, pw, 3);
+    }
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(i*pw, 0, 3, h);
+  }
+}, [4, 4]);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, ROOM), std(0xffffff, {map:floorTex, roughness:.55}));
+floor.rotation.x = -Math.PI/2; scene.add(floor);
+
+const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, ROOM), std(0xe8e0d4));
+ceiling.rotation.x = Math.PI/2; ceiling.position.y = WALL_H; scene.add(ceiling);
+
+const wallTex = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(0,0,0,.06)'; for (let x = 0; x < w; x += 32) g.fillRect(x, 0, 12, h);
+}, [12, 4]);
+const wallMat = std(0xf1e6cf, {map:wallTex, roughness:.95});
+const walls = [
+  {p:[0, WALL_H/2, -HALF], r:0}, {p:[0, WALL_H/2, HALF], r:Math.PI},
+  {p:[-HALF, WALL_H/2, 0], r:Math.PI/2}, {p:[HALF, WALL_H/2, 0], r:-Math.PI/2},
+];
+for (const w of walls){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, WALL_H), wallMat);
+  m.position.set(...w.p); m.rotation.y = w.r; scene.add(m);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(ROOM, .3, .06), std(0xf7f2ea));
+  base.position.set(w.p[0], .15, w.p[2]); base.rotation.y = w.r; base.translateZ(.03); scene.add(base);
+}
+
+/* Window with falling snow (left wall) */
+const win = new THREE.Group(); scene.add(win);
+win.position.set(-HALF + .02, 3.3, 0.5); win.rotation.y = Math.PI/2;
+const skyTex = canvasTex(256, 320, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0b1636'); gr.addColorStop(1, '#3a3f78');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fff'; for (let i = 0; i < 60; i++){ g.globalAlpha = rnd()*.8+.2; g.fillRect(rnd()*w, rnd()*h*.7, 1.5, 1.5); }
+  g.globalAlpha = 1; g.fillStyle = '#fdf6d0'; g.beginPath(); g.arc(w*.72, h*.2, 22, 0, 7); g.fill();
+  g.fillStyle = '#eef3ff'; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 16) g.lineTo(x, h - 40 - Math.sin(x/30)*14); g.lineTo(w, h); g.fill();
+  g.fillStyle = '#16301f'; for (const [x, s] of [[40,60],[110,85],[200,70]]){ g.beginPath(); g.moveTo(x, h-40-s); g.lineTo(x-s*.35, h-38); g.lineTo(x+s*.35, h-38); g.fill(); }
+});
+const WIN_W = 2.6, WIN_H = 3.1;
+const glass = new THREE.Mesh(new THREE.PlaneGeometry(WIN_W, WIN_H), new THREE.MeshBasicMaterial({map:skyTex, toneMapped:false}));
+win.add(glass);
+const frameMat = std(0xf5f0e6, {roughness:.6});
+for (const [w, h, x, y] of [[WIN_W+.3,.16,0,WIN_H/2],[WIN_W+.3,.16,0,-WIN_H/2],[.16,WIN_H,-WIN_W/2,0],[.16,WIN_H,WIN_W/2,0],[.07,WIN_H,0,0],[WIN_W,.07,0,0]]){
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, .14), frameMat); b.position.set(x, y, .06); win.add(b);
+}
+const sill = new THREE.Mesh(new THREE.BoxGeometry(WIN_W+.6, .1, .4), frameMat); sill.position.set(0, -WIN_H/2 - .08, .2); win.add(sill);
+const SNOW_N = 160, snowPos = new Float32Array(SNOW_N * 3);
+for (let i = 0; i < SNOW_N; i++){ snowPos[i*3] = (rnd()-.5)*WIN_W; snowPos[i*3+1] = (rnd()-.5)*WIN_H; snowPos[i*3+2] = .02; }
+const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+const dotTex = canvasTex(64, 64, (g, w) => { const r = g.createRadialGradient(w/2,w/2,0,w/2,w/2,w/2); r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.35,'rgba(255,255,255,.6)'); r.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0,0,w,w); });
+const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({size:.07, map:dotTex, transparent:true, depthWrite:false, toneMapped:false}));
+win.add(snow);
+
+/* Fireplace (back wall) */
+const brickTex = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#d9cfc2'; g.fillRect(0, 0, w, h);
+  const bh = 32, bw = 96;
+  for (let r = 0; r < h/bh; r++) for (let c = -1; c < w/bw + 1; c++){
+    const x = c*bw + (r%2 ? bw/2 : 0), l = 30 + rnd()*12;
+    g.fillStyle = `hsl(${8+rnd()*8},${45+rnd()*15}%,${l}%)`; g.fillRect(x+3, r*bh+3, bw-6, bh-6);
+  }
+}, [1, 1]);
+const fire = new THREE.Group(); scene.add(fire);
+fire.position.set(-4.3, 0, -HALF + .45);
+const brick = std(0xffffff, {map:brickTex, roughness:.9});
+const addBox = (parent, w, h, d, x, y, z, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
+addBox(fire, .95, 3.1, .8, -1.38, 1.55, 0, brick);
+addBox(fire, .95, 3.1, .8,  1.38, 1.55, 0, brick);
+addBox(fire, 1.85, 1.55, .8, 0, 2.32, 0, brick);
+addBox(fire, 1.85, 1.55, .1, 0, .78, -.36, std(0x120a08));
+addBox(fire, 4.5, .14, 1.5, 0, .07, .3, std(0x6d625a, {roughness:.7}));
+const mantel = addBox(fire, 4.6, .22, 1.05, 0, 3.2, .1, std(0x5a3520, {roughness:.6}));
+// logs
+const logMat = std(0x4a2c18);
+for (const [x, r] of [[-.3,.35],[.3,-.35],[0,0]]){
+  const l = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, 1.1, 10), logMat);
+  l.rotation.z = Math.PI/2; l.rotation.y = r; l.position.set(x*.4, .26 + (r === 0 ? .17 : 0), -.05); fire.add(l);
+}
+const flames = [];
+const flameCols = [0xff5a1f, 0xff8a2a, 0xffc04a, 0xffe27a];
+for (let i = 0; i < 7; i++){
+  const f = new THREE.Mesh(new THREE.ConeGeometry(.16 + rnd()*.1, .7 + rnd()*.4, 10, 1, true),
+    new THREE.MeshBasicMaterial({color:flameCols[i%4], transparent:true, opacity:.75, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, toneMapped:false}));
+  f.position.set((rnd()-.5)*.8, .7, (rnd()-.5)*.2 - .05); f.userData = {base:f.position.y, ph:rnd()*10, sp:4+rnd()*4};
+  fire.add(f); flames.push(f);
+}
+const fireLight = new THREE.PointLight(0xff8a3a, 6, 14, 1); fireLight.position.set(0, 1, .8); fire.add(fireLight);
+const fireGlow = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xff8a3a, transparent:true, opacity:.55, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+fireGlow.scale.set(2.2, 1.6, 1); fireGlow.position.set(0, .7, 0); fire.add(fireGlow);
+
+/* Stockings */
+const stockingGroup = new THREE.Group(); fire.add(stockingGroup);
+const stockShape = new THREE.Shape();
+stockShape.moveTo(-.22, 0); stockShape.lineTo(.22, 0); stockShape.lineTo(.22, -.72);
+stockShape.quadraticCurveTo(.24, -.92, .44, -.95); stockShape.quadraticCurveTo(.64, -.98, .62, -1.13);
+stockShape.quadraticCurveTo(.6, -1.28, .32, -1.28); stockShape.lineTo(.02, -1.28);
+stockShape.quadraticCurveTo(-.22, -1.28, -.22, -1.02); stockShape.lineTo(-.22, 0);
+const stockGeo = new THREE.ExtrudeGeometry(stockShape, {depth:.12, bevelEnabled:true, bevelThickness:.03, bevelSize:.03, bevelSegments:2});
+function nameTexture(text, color='#b3122a'){
+  return canvasTex(256, 96, (g, w, h) => {
+    g.fillStyle = '#fbf8f2'; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(0,0,0,.05)'; for (let i = 0; i < 300; i++) g.fillRect(Math.random()*w, Math.random()*h, 3, 3);
+    if (!text) return;
+    g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle';
+    let size = 56; g.font = `800 ${size}px Nunito, Arial, sans-serif`;
+    while (g.measureText(text).width > w - 20 && size > 20){ size -= 4; g.font = `800 ${size}px Nunito, Arial, sans-serif`; }
+    g.fillText(text, w/2, h/2 + 3);
+  });
+}
+function buildStockings(){
+  stockingGroup.clear();
+  const n = T.room.stockings|0; if (!n) return;
+  const names = (T.room.names || '').split(',').map(s => s.trim());
+  const span = Math.min(4.1, n * .62), cols = [0xc0392b, 0x1e7d4f, 0xb3122a, 0x2f6fb5];
+  for (let i = 0; i < n; i++){
+    const g = new THREE.Group();
+    const x = n === 1 ? 0 : -span/2 + span * i/(n-1);
+    g.position.set(x, 3.08, .66); g.scale.setScalar(.72);
+    g.rotation.z = (i % 2 ? 1 : -1) * .03;
+    const body = new THREE.Mesh(stockGeo, std(cols[i % cols.length], {roughness:.95})); body.position.z = -.06; g.add(body);
+    const cuffTex = nameTexture(names[i] || '');
+    const cuff = new THREE.Mesh(new THREE.BoxGeometry(.56, .26, .26), [std(0xfbf8f2), std(0xfbf8f2), std(0xfbf8f2), std(0xfbf8f2), std(0xffffff, {map:cuffTex}), std(0xfbf8f2)]);
+    cuff.position.y = -.06; g.add(cuff);
+    stockingGroup.add(g);
+  }
+}
+
+/* Rug */
+const rug = new THREE.Mesh(new THREE.CircleGeometry(3.4, 72), std(0xffffff, {roughness:1}));
+rug.rotation.x = -Math.PI/2; rug.position.y = .012; scene.add(rug);
+const RUGS = {
+  red:   (g,w) => { g.fillStyle='#9e1b1b'; g.fillRect(0,0,w,w); ring(g,w,.95,'#f5c542',10); ring(g,w,.8,'#f5c542',4); ring(g,w,.45,'#c23a2a',30); },
+  plaid: (g,w) => { g.fillStyle='#8e1b1b'; g.fillRect(0,0,w,w); for (let i=0;i<w;i+=64){ g.fillStyle='rgba(10,50,25,.55)'; g.fillRect(i,0,24,w); g.fillRect(0,i,w,24); g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(i+30,0,6,w); g.fillRect(0,i+30,w,6); g.fillStyle='rgba(245,197,66,.5)'; g.fillRect(i+50,0,2,w); g.fillRect(0,i+50,w,2);} ring(g,w,.97,'#3a0b0b',8); },
+  white: (g,w) => { g.fillStyle='#efe9df'; g.fillRect(0,0,w,w); for (let i=0;i<9000;i++){ g.fillStyle=`rgba(${Math.random()<.5?255:180},${Math.random()<.5?250:170},240,.25)`; g.fillRect(Math.random()*w,Math.random()*w,3,3);} },
+  braid: (g,w) => { const c=['#1e5a35','#a32020','#e9dfcc','#c2902a']; for (let r=1;r>0;r-=.06){ g.fillStyle=c[Math.round(r/.06)%4]; g.beginPath(); g.arc(w/2,w/2,w/2*r,0,7); g.fill(); } },
+};
+function ring(g, w, r, col, lw){ g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.arc(w/2, w/2, w/2*r - lw/2, 0, 7); g.stroke(); }
+function buildRug(){
+  rug.visible = T.room.rug !== 'none';
+  if (!rug.visible) return;
+  if (rug.material.map) rug.material.map.dispose();
+  rug.material.map = canvasTex(512, 512, RUGS[T.room.rug] || RUGS.red);
+  rug.material.needsUpdate = true;
+}
+
+/* =====================================================
+   THE TREE
+   ===================================================== */
+const tree = new THREE.Group(); scene.add(tree);
+const stand = new THREE.Mesh(new THREE.CylinderGeometry(.55, .45, .45, 20), std(0x9b1c1c, {roughness:.5}));
+stand.position.y = .22; tree.add(stand);
+const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.16, .22, 1.0, 10), std(0x4b2e1a));
+trunk.position.y = .6; tree.add(trunk);
+const TIERS = [];
+const foliage = [];
+const NT = 7, Y0 = .75, TOP = 5.25;
+for (let i = 0; i < NT; i++){
+  const t = i/(NT-1);
+  const r = 2.0 - 1.55*t, h = 1.55 - .55*t;
+  const yb = Y0 + i * ((TOP - Y0 - h*0.55) / (NT-1) );
+  const yt = (i === NT-1) ? TOP : yb + h;
+  const hh = yt - yb;
+  TIERS.push({r, yb, yt, h:hh});
+  const geo = new THREE.ConeGeometry(r, hh, 30, 4);
+  const pos = geo.attributes.position, v = new THREE.Vector3();
+  for (let k = 0; k < pos.count; k++){
+    v.fromBufferAttribute(pos, k);
+    const rad = Math.hypot(v.x, v.z);
+    if (rad > .001){
+      const ang = Math.atan2(v.z, v.x);
+      const atRim = v.y < -hh/2 + .01;
+      const seg = Math.round((ang + Math.PI) / (Math.PI*2) * 30);
+      let f = 1 + (Math.sin(ang*7 + i) * .03) + (Math.random() - .5) * .05;
+      if (atRim && seg % 2 === 0){ f *= 1.1; v.y -= .12; }
+      v.x *= f; v.z *= f;
+    }
+    pos.setXYZ(k, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  const col = new THREE.Color().setHSL(.36, .62, .095 + t*.035);
+  const m = new THREE.Mesh(geo, std(col, {flatShading:true, roughness:1, envMapIntensity:.12}));
+  m.position.y = yb + hh/2; tree.add(m); foliage.push(m);
+}
+/* Outer radius of the tree at height y (used for lights + ornaments) */
+function treeRadius(y){
+  let r = 0;
+  for (const t of TIERS) if (y >= t.yb - .1 && y <= t.yt) r = Math.max(r, t.r * (t.yt - y) / t.h);
+  return r;
+}
+
+/* --- Wrap the tree in lights --- */
+const lights = {};
+(function buildLights(){
+  const pts = [], TURNS = 9.5, y1 = .95, y2 = TOP - .35, STEPS = 900;
+  for (let i = 0; i <= STEPS; i++){
+    const s = i / STEPS, y = y1 + (y2 - y1) * s, a = s * TURNS * Math.PI * 2;
+    const r = treeRadius(y) * .93 + .05;
+    pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const wire = new THREE.Mesh(new THREE.TubeGeometry(curve, 1400, .012, 4, false), std(0x123d22));
+  tree.add(wire);
+  const N = 240, spaced = curve.getSpacedPoints(N);
+  const bulbGeo = new THREE.SphereGeometry(.042, 10, 8); bulbGeo.scale(1, 1.35, 1);
+  const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({toneMapped:false}), N);
+  const glowPos = new Float32Array(N * 3), glowCol = new Float32Array(N * 3);
+  const mtx = new THREE.Matrix4();
+  for (let i = 0; i < N; i++){
+    const p = spaced[i]; mtx.makeTranslation(p.x, p.y, p.z); bulbs.setMatrixAt(i, mtx);
+    glowPos.set([p.x, p.y, p.z], i*3);
+  }
+  const glowGeo = new THREE.BufferGeometry();
+  glowGeo.setAttribute('position', new THREE.BufferAttribute(glowPos, 3));
+  glowGeo.setAttribute('color', new THREE.BufferAttribute(glowCol, 3));
+  const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({size:.42, map:dotTex, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+  tree.add(bulbs); tree.add(glow);
+  const treeLight = new THREE.PointLight(0xffc880, 5, 9, 1); treeLight.position.set(0, 2.6, 0); tree.add(treeLight);
+  Object.assign(lights, {N, bulbs, glow, glowCol, treeLight, base:[], phase:Array.from({length:N}, () => rnd()*Math.PI*2), speed:Array.from({length:N}, () => 1.5 + rnd()*3)});
+})();
+const PALETTES = {
+  multi:    {label:'Multicolour', cols:['#ff2d2d','#2dff5a','#3a7bff','#ffb22d','#d34dff']},
+  warm:     {label:'Warm white',  cols:['#ffd28a']},
+  cool:     {label:'Icy blue',    cols:['#cfe6ff','#6fa8ff']},
+  redgreen: {label:'Red & green', cols:['#ff2a2a','#2aff5a']},
+  candy:    {label:'Candy cane',  cols:['#ff2a3a','#ffffff']},
+  gold:     {label:'Gold',        cols:['#ffb52e','#ffd76a']},
+};
+const EFFECTS = {steady:'Steady', twinkle:'Twinkle', chase:'Chase', glow:'Slow glow'};
+function applyPalette(){
+  const cols = PALETTES[T.lights.palette].cols.map(c => new THREE.Color(c));
+  lights.base = Array.from({length:lights.N}, (_, i) => cols[i % cols.length]);
+}
+const tmpC = new THREE.Color();
+function updateLights(t){
+  const on = T.lights.on, eff = T.lights.effect;
+  lights.glow.visible = on; lights.treeLight.visible = on;
+  for (let i = 0; i < lights.N; i++){
+    let b = 1;
+    if (!on) b = .12;
+    else if (eff === 'twinkle') b = .45 + .55 * Math.max(0, Math.sin(t * lights.speed[i] + lights.phase[i]));
+    else if (eff === 'chase') b = ((i - Math.floor(t * 14)) % 6 + 6) % 6 < 2 ? 1 : .25;
+    else if (eff === 'glow') b = .55 + .45 * Math.sin(t * 1.6 + i * .05);
+    tmpC.copy(lights.base[i]).multiplyScalar(on ? b * 1.6 : b);
+    lights.bulbs.setColorAt(i, tmpC);
+    lights.glowCol[i*3] = lights.base[i].r * b; lights.glowCol[i*3+1] = lights.base[i].g * b; lights.glowCol[i*3+2] = lights.base[i].b * b;
+  }
+  lights.bulbs.instanceColor.needsUpdate = true;
+  lights.glow.geometry.attributes.color.needsUpdate = true;
+  lights.treeLight.intensity = 5 * (eff === 'glow' ? (.7 + .3 * Math.sin(t*1.6)) : 1);
+}
+
+/* --- Topper --- */
+const topper = new THREE.Group(); topper.position.y = TOP + .12; tree.add(topper);
+function starShape(outer, inner, pts=5){
+  const s = new THREE.Shape();
+  for (let i = 0; i < pts*2; i++){
+    const r = i % 2 ? inner : outer, a = i / (pts*2) * Math.PI * 2 + Math.PI/2;
+    i ? s.lineTo(Math.cos(a)*r, Math.sin(a)*r) : s.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+  }
+  return s;
+}
+const topperGlow = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xffd76a, transparent:true, opacity:.8, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+topperGlow.scale.set(1.6, 1.6, 1);
+function buildTopper(){
+  topper.clear();
+  const kind = T.topper;
+  if (kind === 'star'){
+    const g = new THREE.ExtrudeGeometry(starShape(.42, .18), {depth:.1, bevelEnabled:true, bevelThickness:.04, bevelSize:.03, bevelSegments:2}); g.center();
+    const m = new THREE.Mesh(g, std(0xffd23f, {metalness:.8, roughness:.25, emissive:0xffb300, emissiveIntensity:.9}));
+    m.position.y = .32; topper.add(m); topperGlow.position.y = .32; topper.add(topperGlow);
+  } else if (kind === 'bow'){
+    const mat = std(0xc8102e, {roughness:.4, metalness:.1});
+    for (const s of [-1, 1]){
+      const loop = new THREE.Mesh(new THREE.TorusGeometry(.2, .07, 10, 24), mat);
+      loop.scale.set(1, .7, .6); loop.position.set(s*.2, .25, 0); loop.rotation.z = s * .35; topper.add(loop);
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(.1, .45, .04), mat); tail.position.set(s*.12, -.02, .05); tail.rotation.z = s * .4; topper.add(tail);
+    }
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(.1, 12, 10), mat); knot.position.y = .25; topper.add(knot);
+  } else if (kind === 'snowflake'){
+    const flake = makeSnowflake(std(0xdff3ff, {metalness:.6, roughness:.2, emissive:0x9fd4ff, emissiveIntensity:.5}), .5);
+    flake.position.y = .4; topper.add(flake);
+    topperGlow.position.y = .4; topper.add(topperGlow);
+  }
+}
+
+/* =====================================================
+   ORNAMENTS
+   ===================================================== */
+const ORN_TYPES = [
+  {id:'bauble',  ico:'🔴', label:'Bauble'},
+  {id:'striped', ico:'🎈', label:'Striped'},
+  {id:'bell',    ico:'🔔', label:'Bell'},
+  {id:'candy',   ico:'🍭', label:'Candy cane'},
+  {id:'star',    ico:'⭐', label:'Star'},
+  {id:'flake',   ico:'❄️', label:'Snowflake'},
+  {id:'gift',    ico:'🎁', label:'Mini gift'},
+];
+const COLOURS = ['#d62828','#f5c542','#c0c0c8','#2f6fb5','#7b3fa0','#1e9e55','#ff7eb6','#ffffff','#ff8a1f','#2ec4c4'];
+const G = {
+  ball: new THREE.SphereGeometry(.14, 24, 18),
+  cap: new THREE.CylinderGeometry(.035, .04, .05, 12),
+  hook: new THREE.TorusGeometry(.025, .007, 6, 12),
+  bell: (() => { const pts = []; for (let i = 0; i <= 12; i++){ const t = i/12; pts.push(new THREE.Vector2(.03 + .13 * Math.pow(t, 2.2) + (t > .9 ? (t-.9)*.4 : 0), .1 - t*.24)); } return new THREE.LatheGeometry(pts, 24); })(),
+  clapper: new THREE.SphereGeometry(.035, 10, 8),
+  star: (() => { const g = new THREE.ExtrudeGeometry(starShape(.16, .07), {depth:.04, bevelEnabled:true, bevelThickness:.015, bevelSize:.012, bevelSegments:1}); g.center(); return g; })(),
+  candy: (() => { const c = new THREE.CurvePath(); c.add(new THREE.LineCurve3(new THREE.Vector3(0,-.22,0), new THREE.Vector3(0,.08,0))); c.add(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0,.08,0), new THREE.Vector3(0,.2,0), new THREE.Vector3(.08,.19,0))); c.add(new THREE.QuadraticBezierCurve3(new THREE.Vector3(.08,.19,0), new THREE.Vector3(.15,.17,0), new THREE.Vector3(.14,.08,0))); return new THREE.TubeGeometry(c, 48, .028, 10, false); })(),
+  box: new THREE.BoxGeometry(.2, .2, .2),
+};
+const stripeTex = canvasTex(256, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0,0,w,h); g.fillStyle = 'rgba(255,255,255,1)'; for (let y = 0; y < h; y += 32){ g.fillStyle = '#ffffff'; g.fillRect(0,y,w,16); g.fillStyle = '#bbbbbb'; g.fillRect(0,y+16,w,16); } });
+const goldMat = std(0xd4af37, {metalness:.9, roughness:.3});
+
+function makeSnowflake(mat, size){
+  const g = new THREE.Group();
+  const arm = new THREE.BoxGeometry(size*.08, size, size*.05);
+  const br = new THREE.BoxGeometry(size*.06, size*.32, size*.04);
+  for (let i = 0; i < 6; i++){
+    const a = new THREE.Group(); a.rotation.z = i * Math.PI/3;
+    const m = new THREE.Mesh(arm, mat); m.position.y = size*.5; a.add(m);
+    for (const s of [-1, 1]){ const b = new THREE.Mesh(br, mat); b.position.set(s*size*.1, size*.62, 0); b.rotation.z = s * .8; a.add(b); }
+    g.add(a);
+  }
+  return g;
+}
+function candyMaterial(hex){
+  // white cane with coloured stripes: colour * (1 - map) trick via onBeforeCompile is overkill; use a coloured stripe texture
+  const c = new THREE.Color(hex);
+  const tex = canvasTex(256, 32, (g, w, h) => { g.fillStyle = '#ffffff'; g.fillRect(0,0,w,h); g.fillStyle = '#' + c.getHexString(); for (let x = -h; x < w; x += 24){ g.beginPath(); g.moveTo(x,0); g.lineTo(x+12,0); g.lineTo(x+12+h,h); g.lineTo(x+h,h); g.fill(); } }, [6, 1]);
+  return std(0xffffff, {map:tex, roughness:.35});
+}
+function makeOrnament(o){
+  const g = new THREE.Group();
+  const col = new THREE.Color(o.c);
+  const shiny = {metalness:.55, roughness:.18, envMapIntensity:1.4};
+  const top = (y) => { const cap = new THREE.Mesh(G.cap, goldMat); cap.position.y = y; g.add(cap); const h = new THREE.Mesh(G.hook, goldMat); h.position.y = y + .045; g.add(h); };
+  switch (o.t){
+    case 'bauble': { g.add(new THREE.Mesh(G.ball, std(col, shiny))); top(.15); break; }
+    case 'striped': { const m = std(col, {...shiny, map:stripeTex}); g.add(new THREE.Mesh(G.ball, m)); top(.15); break; }
+    case 'bell': { const m = std(col, {metalness:.7, roughness:.25}); g.add(new THREE.Mesh(G.bell, m)); const cl = new THREE.Mesh(G.clapper, goldMat); cl.position.y = -.13; g.add(cl); top(.11); break; }
+    case 'candy': { const m = candyMaterial(o.c); const cane = new THREE.Mesh(G.candy, m); cane.position.x = -.05; g.add(cane); break; }
+    case 'star': { g.add(new THREE.Mesh(G.star, std(col, {metalness:.6, roughness:.3, emissive:col, emissiveIntensity:.25}))); break; }
+    case 'flake': { g.add(makeSnowflake(std(col, {metalness:.4, roughness:.3, emissive:col, emissiveIntensity:.2}), .17)); break; }
+    case 'gift': {
+      const b = new THREE.Mesh(G.box, std(col, {roughness:.5})); g.add(b);
+      const rib = std(0xf5c542, {metalness:.6, roughness:.3});
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(.205, .205, .05), rib)); g.add(new THREE.Mesh(new THREE.BoxGeometry(.05, .205, .205), rib));
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(.04, .015, 6, 12), rib); bow.position.y = .12; g.add(bow);
+      break;
+    }
+  }
+  g.scale.setScalar(o.s || 1);
+  g.position.set(o.x, o.y, o.z);
+  g.rotation.y = o.ry || 0;
+  if (o.t === 'gift') g.rotation.y += .5;
+  return g;
+}
+const ornGroup = new THREE.Group(); tree.add(ornGroup);
+let ornObjs = [];
+function rebuildOrnaments(){
+  ornGroup.clear(); ornObjs = [];
+  T.ornaments.forEach((o, i) => { const m = makeOrnament(o); m.userData.idx = i; ornGroup.add(m); ornObjs.push(m); });
+  $('#countChip').textContent = `${T.ornaments.length} ornament${T.ornaments.length === 1 ? '' : 's'}`;
+  rebuildLabels();
+}
+
+/* --- Presents under the tree --- */
+const presents = new THREE.Group(); scene.add(presents);
+(function buildPresents(){
+  const cols = [0xc0392b, 0x2f6fb5, 0xf5c542, 0x1e7d4f, 0x7b3fa0, 0xe8e8e8, 0xd35400];
+  const ribs = [0xf5c542, 0xffffff, 0xc0392b];
+  for (let i = 0; i < 8; i++){
+    const a = i / 8 * Math.PI * 2 + .3, r = 1.55 + rnd()*.55;
+    const w = .45 + rnd()*.4, h = .3 + rnd()*.4, d = .45 + rnd()*.35;
+    const g = new THREE.Group(); g.position.set(Math.cos(a)*r, h/2, Math.sin(a)*r); g.rotation.y = rnd()*Math.PI;
+    const rc = ribs[i % 3];
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), std(cols[i % cols.length], {roughness:.55})));
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(w+.01, h+.01, .07), std(rc, {roughness:.4})));
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(.07, h+.01, d+.01), std(rc, {roughness:.4})));
+    for (const s of [-1, 1]){ const bow = new THREE.Mesh(new THREE.TorusGeometry(.07, .025, 8, 16), std(rc)); bow.position.set(s*.06, h/2 + .05, 0); bow.rotation.y = Math.PI/2; bow.rotation.x = s*.5; g.add(bow); }
+    presents.add(g);
+  }
+})();
+
+/* =====================================================
+   ROOM LIGHTING
+   ===================================================== */
+const hemi = new THREE.HemisphereLight(0xfff2dc, 0x3a2a20, .6); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff0dd, 1.1); sun.position.set(5, 9, 7); scene.add(sun);
+function applyRoom(){
+  const R = T.room;
+  const WALLS = {cream:0xf1e6cf, sage:0xa9bfa0, navy:0x2e3f63, red:0x8e2b2b, grey:0xb9b4ac, mint:0xcfe9dc};
+  wallMat.color.setHex(WALLS[R.wall] || WALLS.cream);
+  const dim = R.dim;
+  hemi.intensity = dim ? .12 : .55; sun.intensity = dim ? .03 : 1.1;
+  scene.environmentIntensity = dim ? .15 : .28;
+  flames.forEach(f => f.visible = R.fire); fireGlow.visible = R.fire; fireLight.visible = R.fire;
+  presents.visible = R.presents;
+  buildRug(); buildStockings();
+}
+
+/* =====================================================
+   INTERACTION
+   ===================================================== */
+let mode = 'decorate', curType = 'bauble', curColour = COLOURS[0], curSize = 1.2;
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+function setRay(e){
+  const r = canvas.getBoundingClientRect();
+  mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+}
+function placementFromHit(hit){
+  const p = hit.point.clone();
+  tree.worldToLocal(p);
+  const n = new THREE.Vector3(p.x, 0, p.z); if (n.lengthSq() < 1e-6) n.set(0, 0, 1); n.normalize();
+  const outward = .1 * curSize;
+  p.addScaledVector(n, outward);
+  p.y -= .04;
+  return {x:+p.x.toFixed(3), y:+p.y.toFixed(3), z:+p.z.toFixed(3), ry:+Math.atan2(n.x, n.z).toFixed(3)};
+}
+// Ghost preview that follows the mouse
+let ghost = null;
+function rebuildGhost(){
+  if (ghost) tree.remove(ghost);
+  ghost = makeOrnament({t:curType, c:curColour, s:curSize, x:0, y:-10, z:0});
+  ghost.traverse(o => { if (o.material){ o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = .55; o.material.depthWrite = false; } });
+  ghost.visible = false; tree.add(ghost);
+}
+let hoverIdx = -1;
+function setHover(idx){
+  if (hoverIdx === idx) return;
+  const paint = (i, on) => { const o = ornObjs[i]; if (!o) return; o.traverse(m => { if (m.material && m.material.emissive){ if (on){ m.userData.e = m.material.emissive.getHex(); m.userData.ei = m.material.emissiveIntensity; m.material.emissive.setHex(0xff2020); m.material.emissiveIntensity = .9; } else if (m.userData.e !== undefined){ m.material.emissive.setHex(m.userData.e); m.material.emissiveIntensity = m.userData.ei; } } }); };
+  if (hoverIdx >= 0 && mode === 'remove') paint(hoverIdx, false);
+  hoverIdx = idx;
+  if (hoverIdx >= 0 && mode === 'remove') paint(hoverIdx, true);
+}
+function ornamentHit(){
+  const hits = ray.intersectObjects(ornObjs, true);
+  if (!hits.length) return -1;
+  let o = hits[0].object; while (o && o.userData.idx === undefined) o = o.parent;
+  return o ? o.userData.idx : -1;
+}
+let down = null;
+canvas.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY, t:performance.now()}; });
+canvas.addEventListener('pointermove', e => {
+  setRay(e);
+  const idx = ornamentHit();
+  const tip = $('#tip');
+  if (idx >= 0 && T.ornaments[idx] && T.ornaments[idx].name && !showNames){ tip.textContent = T.ornaments[idx].name; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; tip.classList.remove('hidden'); }
+  else tip.classList.add('hidden');
+  if (mode === 'remove'){ setHover(idx); }
+  if (mode === 'decorate' && ghost && e.pointerType !== 'touch'){
+    const hit = ray.intersectObjects(foliage, false)[0];
+    if (hit){ const p = placementFromHit(hit); ghost.position.set(p.x, p.y, p.z); ghost.rotation.y = p.ry + (curType === 'gift' ? .5 : 0); ghost.visible = true; }
+    else ghost.visible = false;
+  }
+});
+canvas.addEventListener('pointerleave', () => { if (ghost) ghost.visible = false; $('#tip').classList.add('hidden'); });
+canvas.addEventListener('pointerup', e => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t;
+  down = null;
+  if (moved > 6 || dt > 600) return;   // that was a drag to look around
+  setRay(e);
+  if (mode === 'decorate'){
+    if (T.ornaments.length >= 400){ toast('The tree is full! (400 ornaments)'); return; }
+    const hit = ray.intersectObjects(foliage, false)[0];
+    if (!hit) return;
+    const o = {t:curType, c:curColour, s:curSize, ...placementFromHit(hit)};
+    const nm = $('#nameIn').value.trim(); if (nm) o.name = nm;
+    T.ornaments.push(o); undo.push({type:'add'});
+    save(); rebuildOrnaments(); sparkle(hit.point);
+  } else if (mode === 'remove'){
+    const idx = ornamentHit(); if (idx < 0) return;
+    const [o] = T.ornaments.splice(idx, 1); undo.push({type:'remove', o, idx});
+    hoverIdx = -1; save(); rebuildOrnaments();
+  }
+});
+const undo = [];
+$('#undoBtn').onclick = () => {
+  const a = undo.pop(); if (!a) { toast('Nothing to undo'); return; }
+  if (a.type === 'add') T.ornaments.pop();
+  else T.ornaments.splice(a.idx, 0, a.o);
+  save(); rebuildOrnaments();
+};
+
+/* little sparkle when an ornament is hung */
+const sparkles = [];
+function sparkle(p){
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xfff2a8, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+  s.position.copy(p); s.scale.setScalar(.2); scene.add(s); sparkles.push({s, t:0});
+}
+
+/* Name labels (all at once) */
+let showNames = false;
+const labelEls = [];
+function rebuildLabels(){
+  const box = $('#labels'); box.innerHTML = ''; labelEls.length = 0;
+  if (!showNames) return;
+  T.ornaments.forEach((o, i) => { if (!o.name) return; const d = document.createElement('div'); d.className = 'lbl'; d.textContent = o.name; box.appendChild(d); labelEls.push({d, i}); });
+}
+const v3 = new THREE.Vector3(), camDir = new THREE.Vector3();
+function updateLabels(){
+  if (!showNames || !labelEls.length) return;
+  camDir.set(camera.position.x, 0, camera.position.z).normalize();
+  for (const {d, i} of labelEls){
+    const o = T.ornaments[i]; if (!o) continue;
+    const front = (o.x * camDir.x + o.z * camDir.z) > -.1;
+    v3.set(o.x, o.y, o.z); tree.localToWorld(v3); v3.project(camera);
+    d.style.display = front && v3.z < 1 ? 'block' : 'none';
+    d.style.left = ((v3.x + 1) / 2 * innerWidth) + 'px';
+    d.style.top = ((1 - v3.y) / 2 * innerHeight) + 'px';
+  }
+}
+$('#namesBtn').onclick = () => { showNames = !showNames; $('#namesBtn').classList.toggle('on', showNames); rebuildLabels(); };
+
+/* =====================================================
+   UI
+   ===================================================== */
+function setMode(m){
+  mode = m; setHover(-1);
+  document.body.className = 'mode-' + m;
+  document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  $('#tray').classList.toggle('hidden', m !== 'decorate');
+  if (ghost) ghost.visible = false;
+  toast(m === 'decorate' ? 'Click the tree to hang an ornament · Drag to look around' : m === 'remove' ? 'Click an ornament to take it off' : 'Drag to walk around the tree · Scroll to zoom');
+}
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+const ornRow = $('#ornRow');
+ORN_TYPES.forEach(t => {
+  const b = document.createElement('button'); b.className = 'orn-btn' + (t.id === curType ? ' on' : '');
+  b.innerHTML = `<span class="ico">${t.ico}</span>${t.label}`;
+  b.onclick = () => { curType = t.id; ornRow.querySelectorAll('.orn-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); rebuildGhost(); };
+  ornRow.appendChild(b);
+});
+const colRow = $('#colRow');
+COLOURS.forEach(c => {
+  const b = document.createElement('button'); b.className = 'sw' + (c === curColour ? ' on' : ''); b.style.background = c; b.title = c;
+  b.onclick = () => { curColour = c; colRow.querySelectorAll('.sw').forEach(x => x.classList.remove('on')); b.classList.add('on'); rebuildGhost(); };
+  colRow.appendChild(b);
+});
+$('#sizeSeg').querySelectorAll('button').forEach(b => b.onclick = () => {
+  curSize = +b.dataset.s; $('#sizeSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); rebuildGhost();
+});
+$('#nameIn').addEventListener('keydown', e => e.stopPropagation());
+
+function optionRow(el, options, get, set){
+  const row = $(el); row.innerHTML = '';
+  for (const [val, label] of options){
+    const b = document.createElement('button'); b.className = 'opt' + (get() === val ? ' on' : ''); b.innerHTML = label;
+    b.onclick = () => { set(val); row.querySelectorAll('.opt').forEach(x => x.classList.remove('on')); b.classList.add('on'); save(); };
+    row.appendChild(b);
+  }
+}
+function buildDrawer(){
+  optionRow('#lightsOn', [[true,'💡 Lights on'],[false,'🌑 Lights off']], () => T.lights.on, v => T.lights.on = v);
+  optionRow('#paletteRow', Object.entries(PALETTES).map(([k, p]) => [k, `<span style="display:inline-flex;gap:2px;margin-right:6px">${p.cols.map(c => `<i style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block"></i>`).join('')}</span>${p.label}`]), () => T.lights.palette, v => { T.lights.palette = v; applyPalette(); });
+  optionRow('#effectRow', Object.entries(EFFECTS), () => T.lights.effect, v => T.lights.effect = v);
+  optionRow('#topperRow', [['star','⭐ Star'],['bow','🎀 Bow'],['snowflake','❄️ Snowflake'],['none','None']], () => T.topper, v => { T.topper = v; buildTopper(); });
+  optionRow('#roomLightRow', [[false,'☀️ Room lights on'],[true,'🌙 Lights out']], () => T.room.dim, v => { T.room.dim = v; applyRoom(); });
+  optionRow('#rugRow', [['red','Red & gold'],['plaid','Plaid'],['braid','Braided'],['white','Fluffy white'],['none','No rug']], () => T.room.rug, v => { T.room.rug = v; buildRug(); });
+  optionRow('#wallRow', [['cream','Cream'],['sage','Sage'],['mint','Mint'],['grey','Grey'],['navy','Navy'],['red','Cranberry']], () => T.room.wall, v => { T.room.wall = v; applyRoom(); });
+  optionRow('#fireRow', [[true,'🔥 Fire on'],[false,'Fire off']], () => T.room.fire, v => { T.room.fire = v; applyRoom(); });
+  optionRow('#presentRow', [[true,'🎁 Presents'],[false,'No presents']], () => T.room.presents, v => { T.room.presents = v; applyRoom(); });
+  $('#stockCount').value = T.room.stockings; $('#stockCountLbl').textContent = T.room.stockings;
+  $('#stockNames').value = T.room.names || '';
+}
+$('#stockCount').oninput = e => { T.room.stockings = +e.target.value; $('#stockCountLbl').textContent = T.room.stockings; buildStockings(); save(); };
+$('#stockNames').addEventListener('keydown', e => e.stopPropagation());
+$('#stockNames').oninput = e => {
+  T.room.names = e.target.value;
+  const n = e.target.value.split(',').filter(s => s.trim()).length;
+  if (n > T.room.stockings){ T.room.stockings = Math.min(8, n); $('#stockCount').value = T.room.stockings; $('#stockCountLbl').textContent = T.room.stockings; }
+  buildStockings(); save();
+};
+$('#clearBtn').onclick = () => {
+  if (!T.ornaments.length) return;
+  if (!confirm(`Take all ${T.ornaments.length} ornaments off the tree? This can't be undone.`)) return;
+  T.ornaments = []; undo.length = 0; save(); rebuildOrnaments();
+};
+$('#drawerBtn').onclick = () => $('#drawer').classList.toggle('open');
+$('#closeDrawer').onclick = () => $('#drawer').classList.remove('open');
+$('#spinBtn').onclick = () => { controls.autoRotate = !controls.autoRotate; $('#spinBtn').classList.toggle('on', controls.autoRotate); };
+$('#photoBtn').onclick = () => {
+  renderer.render(scene, camera);
+  const a = document.createElement('a');
+  a.download = `${className.replace(/[^\w-]+/g, '-')}-christmas-tree.png`;
+  a.href = canvas.toDataURL('image/png'); a.click();
+};
+$('#fsBtn').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(()=>{}); };
+if (EMBED){
+  $('#hubBtn').classList.remove('hidden'); $('#fsBtn').classList.add('hidden');
+  $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*');
+}
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = 0, 3500); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') $('#drawer').classList.remove('open');
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z'){ e.preventDefault(); $('#undoBtn').click(); }
+});
+
+/* =====================================================
+   START
+   ===================================================== */
+applyPalette(); buildTopper(); applyRoom(); buildDrawer(); rebuildOrnaments(); rebuildGhost(); setMode('decorate');
+$('#loading').remove();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  controls.update();
+  updateLights(t);
+  if (T.room.fire){
+    for (const f of flames){ const u = f.userData, k = .75 + .35 * Math.sin(t*u.sp + u.ph) * Math.sin(t*u.sp*.37 + u.ph*2); f.scale.set(1, k, 1); f.position.y = u.base * (.85 + k*.15); f.material.opacity = .45 + .35*k; }
+    fireLight.intensity = 5 + Math.sin(t*9)*.8 + Math.sin(t*23)*.5;
+  }
+  const sp = snow.geometry.attributes.position;
+  for (let i = 0; i < SNOW_N; i++){ let y = sp.getY(i) - dt*(.25 + (i%5)*.06); if (y < -WIN_H/2) y = WIN_H/2; sp.setY(i, y); sp.setX(i, sp.getX(i) + Math.sin(t + i)*.0015); }
+  sp.needsUpdate = true;
+  if (T.topper !== 'none' && topper.children[0]) topper.rotation.y = Math.sin(t*.6) * .5;
+  for (let i = sparkles.length - 1; i >= 0; i--){ const s = sparkles[i]; s.t += dt; s.s.scale.setScalar(.2 + s.t*2.2); s.s.material.opacity = 1 - s.t/.5; if (s.t > .5){ scene.remove(s.s); sparkles.splice(i, 1); } }
+  updateLabels();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
