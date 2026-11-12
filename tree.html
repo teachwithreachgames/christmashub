@@ -122,6 +122,9 @@ h1 span{color:var(--gold)}
   <div class="row" id="wallRow"></div>
   <div class="row" id="fireRow"></div>
   <div class="row" id="presentRow"></div>
+  <div class="row" id="trainRow"></div>
+  <div class="row" id="ceilRow"></div>
+  <div class="row" id="furnRow"></div>
 
   <h3>🧦 Stockings</h3>
   <div class="row">
@@ -151,7 +154,7 @@ const EMBED = params.has('embed');
 const defaultTree = () => ({
   ornaments: [], topper: 'star',
   lights: {on:true, palette:'multi', effect:'twinkle'},
-  room: {rug:'red', wall:'cream', fire:true, presents:true, dim:false, stockings:3, names:''}
+  room: {rug:'red', wall:'cream', fire:true, presents:true, dim:false, stockings:3, names:'', train:true, ceil:true, furniture:true}
 });
 let store;
 try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
@@ -629,6 +632,263 @@ const presents = new THREE.Group(); scene.add(presents);
 })();
 
 /* =====================================================
+   COZY EXTRAS: panelling, ceiling lights, garland, wreath,
+   candles, curtains, furniture, bookshelf, door, toy train
+   ===================================================== */
+const extras = new THREE.Group(); scene.add(extras);
+const furniture = new THREE.Group(); scene.add(furniture);
+const trim = std(0xf7f2ea, {roughness:.6});
+
+/* Panelled lower walls, chair rail and crown moulding */
+const panelTex = canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#f4efe6'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++){
+    const x = i*w/4 + 14, pw = w/4 - 28;
+    g.strokeStyle = 'rgba(0,0,0,.16)'; g.lineWidth = 6; g.strokeRect(x, 26, pw, h - 52);
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; g.strokeRect(x + 5, 31, pw - 10, h - 62);
+  }
+}, [5, 1]);
+const WAIN_H = 1.5;
+for (const w of walls){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, WAIN_H), std(0xffffff, {map:panelTex, roughness:.7}));
+  m.position.set(w.p[0], WAIN_H/2, w.p[2]); m.rotation.y = w.r; m.translateZ(.025); extras.add(m);
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(ROOM, .08, .08), trim);
+  rail.position.set(w.p[0], WAIN_H, w.p[2]); rail.rotation.y = w.r; rail.translateZ(.04); extras.add(rail);
+  const crown = new THREE.Mesh(new THREE.BoxGeometry(ROOM, .28, .16), trim);
+  crown.position.set(w.p[0], WALL_H - .14, w.p[2]); crown.rotation.y = w.r; crown.translateZ(.08); extras.add(crown);
+}
+
+/* Reusable "string of bulbs" (instanced bulbs + soft glow) */
+function bulbString(points, colours, size = .045, glowSize = .35){
+  const N = points.length, grp = new THREE.Group();
+  const geo = new THREE.SphereGeometry(size, 8, 6); geo.scale(1, 1.3, 1);
+  const bulbs = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({toneMapped:false}), N);
+  const pos = new Float32Array(N*3), col = new Float32Array(N*3), m = new THREE.Matrix4();
+  const base = points.map((p, i) => new THREE.Color(colours[i % colours.length]));
+  points.forEach((p, i) => { m.makeTranslation(p.x, p.y, p.z); bulbs.setMatrixAt(i, m); pos.set([p.x, p.y, p.z], i*3); bulbs.setColorAt(i, base[i]); });
+  const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); gg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const glow = new THREE.Points(gg, new THREE.PointsMaterial({size:glowSize, map:dotTex, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+  grp.add(bulbs, glow);
+  const phase = points.map(() => rnd()*6.28);
+  return {grp, bulbs, glow, base, phase, N,
+    update(t, speed = 1.2){
+      for (let i = 0; i < N; i++){
+        const b = .6 + .4 * Math.sin(t*speed + phase[i]);
+        tmpC.copy(base[i]).multiplyScalar(1.2 + b*.6); bulbs.setColorAt(i, tmpC);
+        col[i*3] = base[i].r*b; col[i*3+1] = base[i].g*b; col[i*3+2] = base[i].b*b;
+      }
+      bulbs.instanceColor.needsUpdate = true; gg.attributes.color.needsUpdate = true;
+    }};
+}
+
+/* Draped string lights around the ceiling */
+const ceilPts = [], ceilWire = [];
+{
+  const c = [[-HALF+.2,-HALF+.2],[HALF-.2,-HALF+.2],[HALF-.2,HALF-.2],[-HALF+.2,HALF-.2]];
+  for (let w = 0; w < 4; w++){
+    const [ax, az] = c[w], [bx, bz] = c[(w+1)%4];
+    for (let i = 0; i < 60; i++){
+      const s = i/60, sag = Math.sin(s*Math.PI*6) ** 2;
+      const p = new THREE.Vector3(ax + (bx-ax)*s, WALL_H - .42 - Math.abs(Math.sin(s*Math.PI*6))*.38, az + (bz-az)*s);
+      ceilWire.push(p); if (i % 2 === 0) ceilPts.push(p.clone().add(new THREE.Vector3(0, -.04, 0)));
+    }
+  }
+  ceilWire.push(ceilWire[0]);
+}
+const ceilLights = bulbString(ceilPts, ['#ffcf7a','#ffe3a8','#ffb85c'], .04, .38);
+ceilLights.grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ceilWire), new THREE.LineBasicMaterial({color:0x2a2a2a})));
+scene.add(ceilLights.grp);
+
+/* Mantel garland with lights */
+const greenery = std(0x1d5a32, {roughness:1, flatShading:true});
+{
+  const pts = [];
+  for (let i = 0; i <= 60; i++){ const s = i/60, x = -2.35 + 4.7*s; pts.push(new THREE.Vector3(x, 3.3 - Math.abs(Math.sin(s*Math.PI*3))*.22, .7)); }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const gar = new THREE.Mesh(new THREE.TubeGeometry(curve, 140, .075, 6), greenery);
+  const gpos = gar.geometry.attributes.position;
+  for (let i = 0; i < gpos.count; i++) gpos.setXYZ(i, gpos.getX(i) + (rnd()-.5)*.03, gpos.getY(i) + (rnd()-.5)*.03, gpos.getZ(i) + (rnd()-.5)*.03);
+  gar.geometry.computeVertexNormals(); fire.add(gar);
+  const gl = bulbString(curve.getSpacedPoints(26).map(p => p.add(new THREE.Vector3(0, 0, .07))), ['#ff3a3a','#ffd76a','#3aff6a','#5aa0ff'], .032, .26);
+  fire.add(gl.grp); extras.userData.garland = gl;
+}
+
+/* Wreath above the fireplace */
+function makeWreath(R){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(R, R*.32, 8, 28), greenery);
+  const p = ring.geometry.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i)*(1+(rnd()-.5)*.08), p.getY(i)*(1+(rnd()-.5)*.08), p.getZ(i)*(1+(rnd()-.5)*.3));
+  ring.geometry.computeVertexNormals(); g.add(ring);
+  const berry = new THREE.SphereGeometry(R*.07, 8, 6), bm = std(0xc8102e, {roughness:.3});
+  for (let i = 0; i < 14; i++){ const a = rnd()*6.28, rr = R*(.85 + rnd()*.3); const b = new THREE.Mesh(berry, bm); b.position.set(Math.cos(a)*rr, Math.sin(a)*rr, R*.25); g.add(b); }
+  const bowMat = std(0xc8102e, {roughness:.45});
+  for (const s of [-1, 1]){ const l = new THREE.Mesh(new THREE.TorusGeometry(R*.22, R*.08, 8, 16), bowMat); l.scale.set(1, .65, .5); l.position.set(s*R*.22, -R, R*.3); l.rotation.z = s*.3; g.add(l);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(R*.14, R*.6, .03), bowMat); tail.position.set(s*R*.15, -R*1.35, R*.3); tail.rotation.z = s*.3; g.add(tail); }
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(R*.11, 10, 8), bowMat); knot.position.set(0, -R, R*.32); g.add(knot);
+  return g;
+}
+{ const w = makeWreath(.55); w.position.set(0, 4.75, -.3); fire.add(w); }
+
+/* Candles on the mantel */
+const candles = [];
+for (const [x, h] of [[-2.0, .45], [-1.75, .3], [1.85, .38]]){
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(.07, .075, h, 14), std(0xfbf3dc, {roughness:.5}));
+  c.position.set(x, 3.31 + h/2, .1); fire.add(c);
+  const fl = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xffb347, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+  fl.position.set(x, 3.31 + h + .09, .1); fl.scale.set(.14, .24, 1); fire.add(fl);
+  candles.push({fl, ph:rnd()*9});
+}
+
+/* Window curtains, rod and valance */
+{
+  const cm = std(0x8e1b1b, {roughness:1, side:THREE.DoubleSide});
+  for (const s of [-1, 1]){
+    const geo = new THREE.PlaneGeometry(.85, WIN_H + .9, 28, 1), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i)*22) * .05);
+    geo.computeVertexNormals();
+    const c = new THREE.Mesh(geo, cm); c.position.set(s*(WIN_W/2 + .32), -.25, .22); win.add(c);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(.17, .025, 6, 16), std(0xd4af37, {metalness:.8, roughness:.3})); tie.scale.set(1.3, .5, 1); tie.position.set(s*(WIN_W/2 + .32), -.65, .26); win.add(tie);
+  }
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, WIN_W + 2.2, 10), std(0xd4af37, {metalness:.8, roughness:.3}));
+  rod.rotation.z = Math.PI/2; rod.position.set(0, WIN_H/2 + .45, .25); win.add(rod);
+  addBox(win, WIN_W + 2, .42, .1, 0, WIN_H/2 + .3, .3, cm);
+}
+
+/* Furniture */
+const fabric = c => std(c, {roughness:1});
+const wood = std(0x4a2c18, {roughness:.6});
+const plaidTex = canvasTex(256, 256, RUGS.plaid);
+function makeSeat(width, colour){
+  const g = new THREE.Group(), f = fabric(colour);
+  addBox(g, width, .42, 1.0, 0, .38, 0, f);
+  addBox(g, width - .44, .18, .86, 0, .66, .05, fabric(new THREE.Color(colour).offsetHSL(0, 0, .04)));
+  addBox(g, width, 1.0, .26, 0, .98, -.4, f);
+  for (const s of [-1, 1]){ addBox(g, .22, .62, 1.0, s*(width/2 - .11), .7, 0, f);
+    for (const z of [-.4, .4]){ const leg = new THREE.Mesh(new THREE.CylinderGeometry(.04, .03, .18, 8), wood); leg.position.set(s*(width/2 - .12), .09, z); g.add(leg); } }
+  return g;
+}
+function pillow(colour, map){ const m = new THREE.Mesh(new THREE.SphereGeometry(.24, 14, 10), std(colour, {roughness:1, map})); m.scale.set(1, .85, .38); return m; }
+const faceTo = (obj, x, z) => obj.rotation.y = Math.atan2(x - obj.position.x, z - obj.position.z);
+
+// Armchair by the fire, with a plaid blanket
+const chair = makeSeat(1.5, 0x7a1f24); chair.position.set(-7.4, 0, -5.9); faceTo(chair, -1.5, 0); furniture.add(chair);
+{ const bl = std(0xffffff, {roughness:1, map:plaidTex});
+  addBox(chair, .26, .02, .9, .64, 1.02, 0, bl); addBox(chair, .02, .55, .9, .76, .74, 0, bl); }
+// Couch along the right wall
+const couch = makeSeat(3.2, 0x1f5a3d); couch.position.set(8.9, 0, -1); couch.rotation.y = -Math.PI/2; furniture.add(couch);
+{ const p1 = pillow(0xb3122a); p1.position.set(-1.05, .95, -.22); p1.rotation.z = .2; couch.add(p1);
+  const p2 = pillow(0xffffff, plaidTex); p2.position.set(1.05, .95, -.22); p2.rotation.z = -.2; couch.add(p2);
+  const p3 = pillow(0xf5c542); p3.position.set(.6, .93, -.2); p3.rotation.z = -.1; p3.scale.multiplyScalar(.85); couch.add(p3); }
+// Side table, lamp and a mug of hot cocoa
+const table = new THREE.Group(); table.position.set(8.9, 0, 1.35); furniture.add(table);
+{ addBox(table, .02, .02, .02, 0, 0, 0, wood);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .06, 24), wood); top.position.y = .75; table.add(top);
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(.06, .1, .72, 10), wood); leg.position.y = .37; table.add(leg);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(.12, .16, .08, 14), std(0xd4af37, {metalness:.8, roughness:.3})); base.position.set(-.1, .82, -.1); table.add(base);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .7, 8), std(0xd4af37, {metalness:.8, roughness:.3})); pole.position.set(-.1, 1.2, -.1); table.add(pole);
+  const shade = new THREE.Mesh(new THREE.CylinderGeometry(.2, .34, .38, 20, 1, true), std(0xfff1d6, {side:THREE.DoubleSide, emissive:0xffc070, emissiveIntensity:.8}));
+  shade.position.set(-.1, 1.55, -.1); table.add(shade);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xffc070, transparent:true, opacity:.5, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false}));
+  glow.position.copy(shade.position); glow.scale.set(1.3, 1.3, 1); table.add(glow);
+  const mug = new THREE.Mesh(new THREE.CylinderGeometry(.07, .065, .14, 16), std(0xc0392b, {roughness:.4})); mug.position.set(.18, .85, .14); table.add(mug);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(.04, .012, 6, 12), std(0xc0392b)); handle.position.set(.26, .85, .14); table.add(handle);
+  const cocoa = new THREE.Mesh(new THREE.CircleGeometry(.062, 16), std(0x4a2615)); cocoa.rotation.x = -Math.PI/2; cocoa.position.set(.18, .915, .14); table.add(cocoa);
+  for (let i = 0; i < 3; i++){ const mm = new THREE.Mesh(new THREE.BoxGeometry(.03, .03, .03), std(0xffffff)); mm.position.set(.16 + i*.02, .925, .12 + (i%2)*.03); table.add(mm); } }
+// Framed winter paintings above the couch
+function painting(draw){
+  const g = new THREE.Group();
+  addBox(g, 1.45, 1.1, .06, 0, 0, 0, std(0xb8892f, {metalness:.6, roughness:.4}));
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(1.25, .9), std(0xffffff, {map:canvasTex(320, 230, draw), roughness:.9})); art.position.z = .035; g.add(art);
+  return g;
+}
+const cabin = painting((g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#26335e'); gr.addColorStop(1, '#8a8fc2'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#f2f5ff'; g.fillRect(0, h*.68, w, h); g.fillStyle = '#5a3420'; g.fillRect(w*.38, h*.45, w*.26, h*.25);
+  g.fillStyle = '#f2f5ff'; g.beginPath(); g.moveTo(w*.34, h*.47); g.lineTo(w*.51, h*.3); g.lineTo(w*.68, h*.47); g.fill();
+  g.fillStyle = '#ffd46b'; g.fillRect(w*.44, h*.53, w*.05, h*.07); g.fillRect(w*.53, h*.53, w*.05, h*.07);
+  g.fillStyle = '#17391f'; for (const x of [.12, .22, .82, .9]){ g.beginPath(); g.moveTo(w*x, h*.32); g.lineTo(w*x - 22, h*.7); g.lineTo(w*x + 22, h*.7); g.fill(); }
+  g.fillStyle = '#fff'; for (let i = 0; i < 70; i++) g.fillRect(rnd()*w, rnd()*h, 2, 2);
+});
+cabin.position.set(HALF - .05, 3.6, -1.85); cabin.rotation.y = -Math.PI/2; furniture.add(cabin);
+const deer = painting((g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#c0392b'); gr.addColorStop(1, '#f39c5a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fbe9c8'; g.beginPath(); g.arc(w*.7, h*.35, 38, 0, 7); g.fill();
+  g.fillStyle = '#3a1410'; g.fillRect(0, h*.78, w, h);
+  g.fillRect(w*.3, h*.55, w*.22, h*.1); g.fillRect(w*.31, h*.64, 6, h*.15); g.fillRect(w*.49, h*.64, 6, h*.15); g.fillRect(w*.5, h*.44, 8, h*.14); g.fillRect(w*.5, h*.42, w*.05, h*.05);
+  g.lineWidth = 3; g.strokeStyle = '#3a1410'; g.beginPath(); g.moveTo(w*.53, h*.42); g.lineTo(w*.5, h*.3); g.moveTo(w*.51, h*.35); g.lineTo(w*.47, h*.33); g.moveTo(w*.54, h*.42); g.lineTo(w*.58, h*.3); g.stroke();
+});
+deer.position.set(HALF - .05, 3.6, -.15); deer.rotation.y = -Math.PI/2; furniture.add(deer);
+// Bookshelf on the front wall
+const shelf = new THREE.Group(); shelf.position.set(-5.2, 0, HALF - .3); shelf.rotation.y = Math.PI; furniture.add(shelf);
+{ const sw = std(0x5a3520, {roughness:.7});
+  addBox(shelf, 2.4, 3.4, .06, 0, 1.7, -.25, sw); addBox(shelf, .08, 3.4, .55, -1.2, 1.7, 0, sw); addBox(shelf, .08, 3.4, .55, 1.2, 1.7, 0, sw);
+  const bookGeo = new THREE.BoxGeometry(1, 1, 1);
+  const books = new THREE.InstancedMesh(bookGeo, std(0xffffff, {roughness:.8}), 70);
+  const bcols = ['#8e1b1b','#1f5a3d','#2f4f8f','#c8a24a','#6b3f7a','#e8dcc0','#2a2a2a','#b5532a'].map(c => new THREE.Color(c));
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(); let n = 0;
+  for (let r = 0; r < 5; r++){
+    const y = .1 + r*.66; addBox(shelf, 2.36, .05, .52, 0, y, 0, sw);
+    let x = -1.1;
+    while (x < 1.05 && n < 70){
+      const bw = .07 + rnd()*.07, bh = .38 + rnd()*.18;
+      if (rnd() < .12){ x += .15; continue; }
+      ps.set(x + bw/2, y + .025 + bh/2, .02); sc.set(bw, bh, .36); q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rnd() < .08 ? .2 : 0);
+      m.compose(ps, q, sc); books.setMatrixAt(n, m); books.setColorAt(n, bcols[n % bcols.length]); n++; x += bw + .005;
+    }
+  }
+  books.count = n; shelf.add(books);
+  const snowman = new THREE.Group(); snowman.position.set(.6, 3.42, 0); shelf.add(snowman);
+  for (const [r, y] of [[.16, .14], [.12, .38], [.09, .56]]){ const s = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), std(0xffffff, {roughness:.9})); s.position.y = y; snowman.add(s); }
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .12, 12), std(0x1a1a1a)); hat.position.y = .7; snowman.add(hat);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(.02, .08, 8), std(0xff7f1f)); nose.rotation.x = Math.PI/2; nose.position.set(0, .56, .1); snowman.add(nose);
+}
+// Front door with a wreath
+{ const door = new THREE.Group(); door.position.set(4.5, 0, HALF - .05); door.rotation.y = Math.PI; extras.add(door);
+  addBox(door, 1.6, 2.9, .1, 0, 1.45, 0, trim);
+  addBox(door, 1.3, 2.7, .08, 0, 1.35, .05, std(0x7a1f24, {roughness:.5}));
+  for (const [y, h] of [[.75, .9], [2.05, .9]]) for (const x of [-.3, .3]) addBox(door, .45, h, .02, x, y, .1, std(0x8e2b2b, {roughness:.5}));
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), std(0xd4af37, {metalness:.9, roughness:.25})); knob.position.set(.5, 1.3, .14); door.add(knob);
+  const dw = makeWreath(.32); dw.position.set(0, 2.15, .18); door.add(dw); }
+
+/* Toy train around the tree */
+const train = new THREE.Group(); scene.add(train);
+const TRACK_R = 2.9;
+{
+  const rail = std(0x8a8f99, {metalness:.8, roughness:.35});
+  for (const r of [TRACK_R - .09, TRACK_R + .09]){ const t = new THREE.Mesh(new THREE.TorusGeometry(r, .014, 5, 120), rail); t.rotation.x = Math.PI/2; t.position.y = .05; train.add(t); }
+  const ties = new THREE.InstancedMesh(new THREE.BoxGeometry(.06, .03, .3), std(0x5a3520), 90), m = new THREE.Matrix4();
+  for (let i = 0; i < 90; i++){ const a = i/90*Math.PI*2; m.makeRotationY(-a); m.setPosition(Math.cos(a)*TRACK_R, .025, Math.sin(a)*TRACK_R); ties.setMatrixAt(i, m); }
+  train.add(ties);
+}
+function wheels(g, len, col){ const wg = new THREE.CylinderGeometry(.05, .05, .03, 12), wm = std(col, {metalness:.4, roughness:.4});
+  for (const x of [-len*.32, len*.32]) for (const z of [-.1, .1]){ const w = new THREE.Mesh(wg, wm); w.rotation.x = Math.PI/2; w.position.set(x, .07, z); g.add(w); } }
+const cars = [];
+{ const eng = new THREE.Group();
+  const black = std(0x1d1d22, {metalness:.5, roughness:.4}), red = std(0xc0392b, {roughness:.4}), gold = std(0xd4af37, {metalness:.8, roughness:.3});
+  const boiler = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .34, 16), black); boiler.rotation.z = Math.PI/2; boiler.position.set(.06, .2, 0); eng.add(boiler);
+  addBox(eng, .18, .2, .2, -.17, .25, 0, red); addBox(eng, .22, .03, .24, -.17, .36, 0, black); addBox(eng, .5, .05, .22, -.02, .1, 0, black);
+  const stack = new THREE.Mesh(new THREE.CylinderGeometry(.035, .025, .12, 10), black); stack.position.set(.17, .33, 0); eng.add(stack);
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), new THREE.MeshBasicMaterial({color:0xfff1a8, toneMapped:false})); lamp.position.set(.24, .22, 0); eng.add(lamp);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(.093, .093, .03, 16), gold); band.rotation.z = Math.PI/2; band.position.set(.12, .2, 0); eng.add(band);
+  wheels(eng, .5, 0xc0392b); eng.userData.stack = stack; train.add(eng); cars.push(eng);
+  const carCols = [0x1e7d4f, 0xc0392b, 0x2f6fb5];
+  carCols.forEach((c, i) => { const car = new THREE.Group();
+    addBox(car, .4, .05, .22, 0, .1, 0, black); addBox(car, .38, .16, .2, 0, .21, 0, std(c, {roughness:.45})); addBox(car, .4, .025, .22, 0, .3, 0, gold);
+    if (i === 1){ const gift = new THREE.Mesh(new THREE.BoxGeometry(.12, .12, .12), std(0xf5c542)); gift.position.set(-.06, .38, 0); car.add(gift); const g2 = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), std(0x2f6fb5)); g2.position.set(.09, .37, .02); g2.rotation.y = .5; car.add(g2); }
+    wheels(car, .4, 0x1d1d22); train.add(car); cars.push(car); });
+}
+const puffs = [];
+for (let i = 0; i < 14; i++){ const s = new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex, color:0xdddddd, transparent:true, opacity:0, depthWrite:false})); s.scale.setScalar(.1); train.add(s); puffs.push({s, life:1}); }
+let puffI = 0, puffT = 0, trainA = 0;
+function updateTrain(dt){
+  trainA += dt * .35;
+  cars.forEach((c, i) => { const a = trainA - i * .17; c.position.set(Math.cos(a)*TRACK_R, .02, Math.sin(a)*TRACK_R); c.rotation.y = -a - Math.PI/2; });
+  puffT += dt;
+  if (puffT > .22){ puffT = 0; const p = puffs[puffI++ % puffs.length]; cars[0].userData.stack.getWorldPosition(p.s.position); p.s.position.y += .08; p.life = 0; }
+  for (const p of puffs){ if (p.life >= 1) continue; p.life += dt / 1.6; p.s.position.y += dt * .35; p.s.scale.setScalar(.08 + p.life * .3); p.s.material.opacity = .55 * (1 - p.life); }
+}
+
+/* =====================================================
    ROOM LIGHTING
    ===================================================== */
 const hemi = new THREE.HemisphereLight(0xfff2dc, 0x3a2a20, .6); scene.add(hemi);
@@ -642,6 +902,7 @@ function applyRoom(){
   scene.environmentIntensity = dim ? .15 : .28;
   flames.forEach(f => f.visible = R.fire); fireGlow.visible = R.fire; fireLight.visible = R.fire;
   presents.visible = R.presents;
+  train.visible = R.train; ceilLights.grp.visible = R.ceil; furniture.visible = R.furniture;
   buildRug(); buildStockings();
 }
 
@@ -809,6 +1070,9 @@ function buildDrawer(){
   optionRow('#wallRow', [['cream','Cream'],['sage','Sage'],['mint','Mint'],['grey','Grey'],['navy','Navy'],['red','Cranberry']], () => T.room.wall, v => { T.room.wall = v; applyRoom(); });
   optionRow('#fireRow', [[true,'🔥 Fire on'],[false,'Fire off']], () => T.room.fire, v => { T.room.fire = v; applyRoom(); });
   optionRow('#presentRow', [[true,'🎁 Presents'],[false,'No presents']], () => T.room.presents, v => { T.room.presents = v; applyRoom(); });
+  optionRow('#trainRow', [[true,'🚂 Toy train'],[false,'No train']], () => T.room.train, v => { T.room.train = v; applyRoom(); });
+  optionRow('#ceilRow', [[true,'✨ Ceiling lights'],[false,'No ceiling lights']], () => T.room.ceil, v => { T.room.ceil = v; applyRoom(); });
+  optionRow('#furnRow', [[true,'🛋 Furniture'],[false,'Empty room']], () => T.room.furniture, v => { T.room.furniture = v; applyRoom(); });
   $('#stockCount').value = T.room.stockings; $('#stockCountLbl').textContent = T.room.stockings;
   $('#stockNames').value = T.room.names || '';
 }
@@ -865,6 +1129,10 @@ renderer.setAnimationLoop(() => {
   sp.needsUpdate = true;
   if (T.topper !== 'none' && topper.children[0]) topper.rotation.y = Math.sin(t*.6) * .5;
   for (let i = sparkles.length - 1; i >= 0; i--){ const s = sparkles[i]; s.t += dt; s.s.scale.setScalar(.2 + s.t*2.2); s.s.material.opacity = 1 - s.t/.5; if (s.t > .5){ scene.remove(s.s); sparkles.splice(i, 1); } }
+  if (T.room.train) updateTrain(dt);
+  if (T.room.ceil) ceilLights.update(t, .9);
+  extras.userData.garland.update(t, 1.6);
+  for (const c of candles){ const k = .85 + .15*Math.sin(t*13 + c.ph) * Math.sin(t*7.3 + c.ph); c.fl.scale.set(.14*k, .24*k, 1); }
   updateLabels();
   renderer.render(scene, camera);
 });
