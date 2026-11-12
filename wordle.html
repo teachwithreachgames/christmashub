@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Christmas Wordle | Teach With Reach Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#14402d; --bg2:#06140e; --cream:#fdf6e3; --gold:#f5c542; --red:#d64045;
+  --panel:rgba(255,255,255,.07); --line:rgba(255,255,255,.16);
+  --correct:#2fae66; --present:#e0b12f; --absent:#3d4a52; --tile:56px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--cream);background:radial-gradient(1400px 900px at 30% -10%,var(--bg1),var(--bg2));-webkit-user-select:none;user-select:none;display:flex;flex-direction:column}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+button,input{font:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;min-height:46px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.15)}
+.btn.gold{background:var(--gold);color:#2a1d00;border-color:transparent}
+.btn.red{background:var(--red);border-color:transparent}
+.btn.on{background:var(--gold);color:#2a1d00;border-color:transparent}
+.hidden{display:none!important}
+
+header{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-family:'Lilita One',cursive;font-weight:400;margin:0 6px;font-size:clamp(20px,2vw,30px);white-space:nowrap}
+h1 span{color:var(--gold)}
+.chip{font-weight:800;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{background:transparent;color:var(--cream);border:0;padding:9px 14px;font-weight:800;cursor:pointer;min-height:44px}
+.seg button.on{background:var(--gold);color:#2a1d00}
+.spacer{flex:1}
+
+main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:0;padding:10px}
+.status{display:flex;align-items:center;gap:12px;min-height:44px;flex-wrap:wrap;justify-content:center}
+.turn{font-family:'Lilita One',cursive;font-size:clamp(22px,2.4vw,34px);padding:4px 18px;border-radius:999px}
+.clue{background:rgba(245,197,66,.14);border:1px solid rgba(245,197,66,.5);border-radius:14px;padding:8px 16px;font-weight:800;font-size:clamp(16px,1.6vw,22px)}
+.clue .emo{font-size:1.4em;vertical-align:middle;margin-right:6px}
+.board{display:grid;gap:6px}
+.row{display:grid;gap:6px}
+.tile{width:var(--tile);height:var(--tile);border:3px solid rgba(255,255,255,.22);border-radius:10px;display:grid;place-items:center;font-family:'Lilita One',cursive;font-size:calc(var(--tile)*.55);text-transform:uppercase;background:rgba(0,0,0,.25);perspective:400px}
+.tile.filled{border-color:rgba(255,255,255,.6);animation:pop .1s}
+@keyframes pop{50%{transform:scale(1.08)}}
+.tile.correct{background:var(--correct);border-color:var(--correct)}
+.tile.present{background:var(--present);border-color:var(--present);color:#2a1d00}
+.tile.absent{background:var(--absent);border-color:var(--absent)}
+.tile.flip{animation:flip .5s ease forwards}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.row.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.tile.win{animation:bounce .6s ease}
+@keyframes bounce{30%{transform:translateY(-22px)}60%{transform:translateY(4px)}}
+
+.kb{position:relative;z-index:1;display:flex;flex-direction:column;gap:7px;padding:8px 10px 12px;align-items:center}
+.kb-row{display:flex;gap:6px;justify-content:center;width:100%}
+.key{flex:0 1 64px;height:clamp(48px,7vh,64px);border-radius:10px;border:0;background:#c9d4da;color:#102018;font-weight:800;font-size:clamp(16px,1.8vw,22px);cursor:pointer;text-transform:uppercase;touch-action:manipulation}
+.key.wide{flex:0 1 110px;font-size:clamp(13px,1.3vw,17px)}
+.key:active{transform:translateY(2px)}
+.key.correct{background:var(--correct);color:#fff}
+.key.present{background:var(--present);color:#2a1d00}
+.key.absent{background:var(--absent);color:rgba(255,255,255,.7)}
+
+.teams{display:flex;gap:10px}
+.team{background:rgba(0,0,0,.3);border:2px solid var(--line);border-radius:14px;padding:6px 14px;text-align:center;min-width:130px}
+.team .nm{font-weight:800;font-size:15px}
+.team .pts{font-family:'Lilita One',cursive;font-size:30px;line-height:1}
+.team.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,66,.25)}
+
+.toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);background:#fdf6e3;color:#102018;padding:10px 18px;border-radius:12px;font-weight:800;z-index:40;transition:opacity .4s;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(3,10,7,.82);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
+.sheet{width:min(640px,96vw);max-height:90vh;overflow:auto;background:#0f2a1e;border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center;-webkit-user-select:text;user-select:text}
+.sheet h2{font-family:'Lilita One',cursive;font-weight:400;margin:0 0 6px;font-size:34px}
+.big-emo{font-size:96px;line-height:1.1}
+.answer{font-family:'Lilita One',cursive;font-size:clamp(44px,7vw,80px);letter-spacing:6px;color:var(--gold)}
+.hint{opacity:.7;font-size:14px}
+.in{background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;width:100%;text-align:left}
+.form{display:grid;gap:10px;text-align:left;margin:14px 0}
+.form label{font-weight:800}
+.dist{display:grid;gap:6px;text-align:left;margin-top:14px}
+.dist .bar{display:flex;align-items:center;gap:8px}
+.dist .fill{background:var(--absent);padding:2px 8px;border-radius:6px;font-weight:800;min-width:26px;text-align:right}
+.dist .fill.hi{background:var(--correct)}
+.stats{display:flex;justify-content:center;gap:22px;margin:10px 0}
+.stats div{text-align:center}.stats b{display:block;font-family:'Lilita One',cursive;font-size:36px}
+.row-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.cf{position:fixed;width:12px;height:18px;z-index:60;pointer-events:none;border-radius:2px}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<header>
+  <button class="btn hidden" id="hubBtn">🏠 Hub</button>
+  <h1>🎄 Christmas <span>Wordle</span></h1>
+  <span class="chip" id="classChip"></span>
+  <div class="seg" id="levelSeg"><button data-l="elem">Elementary</button><button data-l="hs">High School</button></div>
+  <div class="spacer"></div>
+  <button class="btn" id="teamsBtn">👥 Teams</button>
+  <button class="btn" id="clueBtn">💡 Clue</button>
+  <button class="btn" id="revealBtn">🏳 Reveal</button>
+  <button class="btn" id="secretBtn">✏️ Secret word</button>
+  <button class="btn" id="statsBtn">📊</button>
+  <button class="btn gold" id="nextBtn">⏭ New word</button>
+</header>
+
+<main>
+  <div class="status">
+    <div class="teams hidden" id="teams"></div>
+    <div class="clue hidden" id="clue"></div>
+  </div>
+  <div class="board" id="board"></div>
+</main>
+<div class="kb" id="kb"></div>
+
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<!-- End of round -->
+<div class="overlay hidden" id="endModal">
+  <div class="sheet">
+    <div class="big-emo" id="endEmo"></div>
+    <h2 id="endTitle"></h2>
+    <div class="answer" id="endWord"></div>
+    <p id="endClue" style="font-size:18px;margin:6px 0"></p>
+    <p class="hint" id="endInfo"></p>
+    <div class="row-btns"><button class="btn" data-close>Look at the board</button><button class="btn gold" id="endNext">⏭ Next word</button></div>
+  </div>
+</div>
+
+<!-- Secret word -->
+<div class="overlay hidden" id="secretModal">
+  <div class="sheet">
+    <h2>✏️ Secret word</h2>
+    <p class="hint">Type your own word (3 to 8 letters), like this week's spelling word. Turn the screen away from the class first!</p>
+    <div class="form">
+      <label for="secretWord">Word</label>
+      <input class="in" id="secretWord" type="password" maxlength="8" autocomplete="off" placeholder="e.g. REINDEER">
+      <label for="secretClue">Clue (optional)</label>
+      <input class="in" id="secretClue" maxlength="80" placeholder="e.g. Rudolph is one of these">
+      <label for="secretEmo">Emoji (optional)</label>
+      <input class="in" id="secretEmo" maxlength="4" placeholder="🦌">
+    </div>
+    <div class="row-btns"><button class="btn" data-close>Cancel</button><button class="btn gold" id="secretGo">Play this word</button></div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="overlay hidden" id="statsModal">
+  <div class="sheet">
+    <h2>📊 Class stats</h2>
+    <div id="statsBody"></div>
+    <div class="row-btns"><button class="btn" id="resetScores">Reset team scores</button><button class="btn gold" data-close>Close</button></div>
+  </div>
+</div>
+
+<!-- Teams setup -->
+<div class="overlay hidden" id="teamsModal">
+  <div class="sheet">
+    <h2>👥 Teams</h2>
+    <p class="hint">Teams take turns guessing. The team that solves the word gets points: 6 for a first-guess solve, down to 1 on the last guess.</p>
+    <div class="form">
+      <label for="t1">Team 1</label><input class="in" id="t1" maxlength="20">
+      <label for="t2">Team 2</label><input class="in" id="t2" maxlength="20">
+    </div>
+    <div class="row-btns"><button class="btn" id="teamsOff">Play as one class</button><button class="btn gold" id="teamsOn">Play in teams</button></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* =====================================================
+   WORD LISTS  —  [word, emoji, clue]
+   Add your own words here (letters only).
+   ===================================================== */
+const WORDS = {
+  elem: [
+    ['TREE','🎄','We hang ornaments and lights on it'], ['SNOW','❄️','White flakes that fall from the sky'],
+    ['GIFT','🎁','Something wrapped up for someone special'], ['STAR','⭐','It goes on the very top of the tree'],
+    ['BELL','🔔','It rings: jingle, jingle!'], ['SLED','🛷','Ride it down a snowy hill'],
+    ['SOCK','🧦','Hang it on the fireplace… or wear it!'], ['COLD','🥶','How it feels outside in winter'],
+    ['TOYS','🧸','The elves make these in the workshop'], ['WRAP','🎀','What you do to a present before you give it'],
+    ['CARD','💌','You write a holiday message inside it'], ['COAL','⚫','Snowman eyes are often made of this'],
+    ['ELVES','🧝','Santa\'s little helpers'], ['SANTA','🎅','He says "Ho ho ho!"'],
+    ['CANDY','🍬','A sweet treat, like a candy cane'], ['MERRY','😊','"_____ Christmas!"'],
+    ['CHEER','📣','Happy holiday feelings'], ['JOLLY','😄','Happy and cheerful, just like Santa'],
+    ['SCARF','🧣','Wrap it around your neck to stay warm'], ['COCOA','☕','A hot chocolate drink'],
+    ['NORTH','🧭','Santa lives at the _____ Pole'], ['BOOTS','👢','Wear them to stomp in the snow'],
+    ['SKATE','⛸️','Glide across the ice'], ['TOQUE','🧢','A Canadian winter hat'],
+    ['LIGHT','💡','Strings of these make the tree glow'], ['HOLLY','🌿','Spiky green leaves with red berries'],
+    ['TREAT','🍪','A cookie is a yummy _____'], ['PARTY','🎉','A class celebration with snacks and games'],
+    ['FROST','🌨️','Icy patterns on the window on a cold morning'], ['CAROL','🎶','A holiday song people sing together'],
+    ['MITTS','🧤','Warm things for your hands'], ['SWEET','🍭','Candy tastes very _____'],
+  ],
+  hs: [
+    ['FROST','🌨️','Thin layer of ice crystals; Jack _____'], ['CIDER','🍎','Warm spiced apple drink'],
+    ['FEAST','🍗','A huge holiday meal'], ['SPICE','🫚','Cinnamon, nutmeg or clove'],
+    ['FUDGE','🍫','Rich, soft chocolate squares'], ['CHILL','🥶','A cold feeling in the air'],
+    ['FLAKE','❄️','No two snow_____s are alike'], ['POLAR','🐻‍❄️','The _____ Express'],
+    ['GLEAM','✨','To shine brightly'], ['COMET','☄️','A reindeer… and an icy object in space'],
+    ['VIXEN','🦌','A reindeer, and a female fox'], ['TOQUE','🧢','Canadian for a knit winter hat'],
+    ['CAROL','🎶','A festive song; also a Dickens Christmas story'], ['NORTH','🧭','The direction of Santa\'s workshop'],
+    ['TINSEL','✨','Shiny strands draped on the tree'], ['WREATH','🎄','A circle of greenery hung on the door'],
+    ['GRINCH','💚','He tried to steal Christmas'], ['EGGNOG','🥛','Creamy holiday drink'],
+    ['RIBBON','🎀','Tie it in a bow on a present'], ['CANDLE','🕯️','Wax and a wick'],
+    ['FROSTY','⛄','The snowman with a magic hat'], ['SLEIGH','🛷','Santa\'s ride across the sky'],
+    ['WINTER','🌨️','The season after fall'], ['GINGER','🍪','_____bread cookies'],
+    ['SPRUCE','🌲','A type of evergreen tree'], ['ICICLE','🧊','Frozen spike hanging from the roof'],
+    ['MITTEN','🧤','A glove with no separate fingers'], ['PARCEL','📦','A package delivered in the mail'],
+    ['DASHER','🦌','The first reindeer named in the famous poem'], ['MANTEL','🧦','The shelf above the fireplace'],
+    ['JINGLE','🔔','_____ Bell Rock'], ['BAUBLE','🔴','A shiny ball ornament (British word)'],
+    ['NUTMEG','🌰','Spice sprinkled on eggnog'], ['TOFFEE','🍬','Hard, buttery caramel candy'],
+    ['FROZEN','🧊','Turned to ice'], ['DANCER','🦌','One of Santa\'s reindeer, after Dasher'],
+  ],
+};
+const MAX = 6;
+
+/* =====================================================
+   SAVE DATA (per class)
+   ===================================================== */
+const KEY = 'twr-wordle-v1', HUB_KEY = 'twr-hub-v1';
+const params = new URLSearchParams(location.search), EMBED = params.has('embed');
+let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+if (!store || !store.classes) store = {classes:{}, current:'default'};
+let className = 'Our Class', hubLevel = null;
+(() => { let hub = null; try { hub = JSON.parse(localStorage.getItem(HUB_KEY)); } catch(e) {}
+  if (!hub || !Array.isArray(hub.classes) || !hub.classes.length) return;
+  const c = hub.classes.find(x => x.id === (params.get('class') || hub.current)) || hub.classes[0];
+  store.current = c.id; className = c.name; hubLevel = c.level; })();
+if (!store.classes[store.current]) store.classes[store.current] = {
+  level: hubLevel || 'hs', used:{elem:[], hs:[]}, game:null,
+  stats:{played:0, won:0, streak:0, best:0, dist:[0,0,0,0,0,0]},
+  teams:{on:false, names:['Team Holly','Team Ivy'], scores:[0,0], turn:0},
+};
+const C = store.classes[store.current];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
+$('#classChip').textContent = className;
+
+/* =====================================================
+   GAME
+   ===================================================== */
+function newGame(custom){
+  if (custom) C.game = {word:custom.word, emoji:custom.emoji || '🤫', clue:custom.clue || '', custom:true, guesses:[], typed:'', done:false, won:false, clueShown:false};
+  else {
+    const list = WORDS[C.level];
+    let left = list.map((_, i) => i).filter(i => !C.used[C.level].includes(i));
+    if (!left.length){ C.used[C.level] = []; left = list.map((_, i) => i); toast('You\'ve played every word! Starting the list again.'); }
+    const i = left[Math.floor(Math.random() * left.length)];
+    C.used[C.level].push(i);
+    const [word, emoji, clue] = list[i];
+    C.game = {word, emoji, clue, custom:false, guesses:[], typed:'', done:false, won:false, clueShown:false};
+  }
+  if (C.teams.on) C.teams.turn = (C.teams.firstNext = 1 - (C.teams.firstNext || 0));
+  save(); buildBoard(); renderAll();
+}
+const G = () => C.game;
+function score(guess, word){
+  const n = word.length, res = Array(n).fill('absent'), cnt = {};
+  for (let i = 0; i < n; i++){ if (guess[i] === word[i]) res[i] = 'correct'; else cnt[word[i]] = (cnt[word[i]] || 0) + 1; }
+  for (let i = 0; i < n; i++) if (res[i] !== 'correct' && cnt[guess[i]] > 0){ res[i] = 'present'; cnt[guess[i]]--; }
+  return res;
+}
+
+/* --- board --- */
+function fitTiles(){
+  const n = G().word.length;
+  const main = $('main').getBoundingClientRect();
+  const statusH = 84;
+  const byH = (main.height - statusH - 20 - (MAX-1)*6) / MAX;
+  const byW = (Math.min(innerWidth - 40, 900) - (n-1)*6) / n;
+  document.documentElement.style.setProperty('--tile', Math.max(34, Math.min(86, byH, byW)) + 'px');
+}
+function buildBoard(){
+  const n = G().word.length, b = $('#board');
+  b.innerHTML = '';
+  for (let r = 0; r < MAX; r++){
+    const row = document.createElement('div'); row.className = 'row'; row.style.gridTemplateColumns = `repeat(${n}, var(--tile))`;
+    for (let c = 0; c < n; c++){ const t = document.createElement('div'); t.className = 'tile'; row.appendChild(t); }
+    b.appendChild(row);
+  }
+  fitTiles();
+}
+function paintRow(r, guess, res, animate){
+  const row = $('#board').children[r]; if (!row) return Promise.resolve();
+  return new Promise(done => {
+    [...row.children].forEach((t, i) => {
+      t.textContent = guess[i] || '';
+      const apply = () => { t.classList.remove('filled'); t.classList.add(res[i]); };
+      if (!animate){ apply(); return; }
+      setTimeout(() => { t.classList.add('flip'); setTimeout(apply, 250); }, i * 260);
+    });
+    setTimeout(done, animate ? guess.length * 260 + 300 : 0);
+  });
+}
+function renderTyped(){
+  const g = G(), r = g.guesses.length, row = $('#board').children[r]; if (!row || g.done) return;
+  [...row.children].forEach((t, i) => { t.textContent = g.typed[i] || ''; t.classList.toggle('filled', !!g.typed[i]); });
+}
+function renderKeys(){
+  const best = {};
+  const rank = {correct:3, present:2, absent:1};
+  for (const gs of G().guesses){ const res = score(gs, G().word); [...gs].forEach((ch, i) => { if (!best[ch] || rank[res[i]] > rank[best[ch]]) best[ch] = res[i]; }); }
+  document.querySelectorAll('.key[data-k]').forEach(k => { k.classList.remove('correct', 'present', 'absent'); const s = best[k.dataset.k]; if (s) k.classList.add(s); });
+}
+function renderStatus(){
+  const g = G(), T = C.teams;
+  $('#clue').classList.toggle('hidden', !g.clueShown || !g.clue);
+  $('#clue').innerHTML = `<span class="emo">${esc(g.emoji)}</span>${esc(g.clue)}`;
+  // elementary always shows the picture clue
+  if (C.level === 'elem' && !g.custom && !g.clueShown){ $('#clue').classList.remove('hidden'); $('#clue').innerHTML = `<span class="emo">${esc(g.emoji)}</span><span class="hint">Tap 💡 Clue for a hint</span>`; }
+  $('#teams').classList.toggle('hidden', !T.on);
+  if (T.on) $('#teams').innerHTML = T.names.map((nm, i) => `<div class="team${i === T.turn && !g.done ? ' active' : ''}"><div class="nm">${i === T.turn && !g.done ? '👉 ' : ''}${esc(nm)}</div><div class="pts">${T.scores[i]}</div></div>`).join('');
+  $('#teamsBtn').classList.toggle('on', T.on);
+  document.querySelectorAll('#levelSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === C.level));
+}
+function renderAll(){
+  const g = G();
+  g.guesses.forEach((gs, r) => paintRow(r, gs, score(gs, g.word), false));
+  renderTyped(); renderKeys(); renderStatus();
+}
+
+/* --- input --- */
+let busy = false;
+function press(k){
+  const g = G(); if (busy || g.done) return;
+  if (k === 'ENTER') return submit();
+  if (k === 'BACK'){ g.typed = g.typed.slice(0, -1); renderTyped(); return; }
+  if (/^[A-Z]$/.test(k) && g.typed.length < g.word.length){ g.typed += k; renderTyped(); }
+}
+async function submit(){
+  const g = G(), n = g.word.length, r = g.guesses.length;
+  if (g.typed.length < n){ shakeRow(r); toast(`Need ${n} letters`); return; }
+  busy = true;
+  const guess = g.typed; g.guesses.push(guess); g.typed = '';
+  const res = score(guess, g.word);
+  save();
+  await paintRow(r, guess, res, true);
+  renderKeys();
+  const won = guess === g.word;
+  if (won || g.guesses.length >= MAX) finish(won);
+  else if (C.teams.on){ C.teams.turn = 1 - C.teams.turn; save(); renderStatus(); toast(`${C.teams.names[C.teams.turn]}'s turn!`); }
+  busy = false;
+}
+function shakeRow(r){ const row = $('#board').children[r]; if (!row) return; row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake'); }
+function finish(won, gaveUp){
+  const g = G(); g.done = true; g.won = won;
+  const S = C.stats; S.played++;
+  let teamMsg = '';
+  if (won){
+    S.won++; S.streak++; S.best = Math.max(S.best, S.streak); S.dist[g.guesses.length - 1]++;
+    if (C.teams.on){ const pts = MAX + 1 - g.guesses.length; C.teams.scores[C.teams.turn] += pts; teamMsg = `${C.teams.names[C.teams.turn]} gets ${pts} point${pts === 1 ? '' : 's'}!`; }
+    const row = $('#board').children[g.guesses.length - 1];
+    [...row.children].forEach((t, i) => setTimeout(() => t.classList.add('win'), i * 90));
+    confetti();
+  } else S.streak = 0;
+  save(); renderStatus();
+  const msgs = ['Genius! 🤯', 'Amazing!', 'Fantastic!', 'Great job!', 'Nice work!', 'Phew, just in time!'];
+  setTimeout(() => {
+    $('#endEmo').textContent = g.emoji;
+    $('#endTitle').textContent = won ? msgs[g.guesses.length - 1] : gaveUp ? 'Here\'s the word' : 'So close!';
+    $('#endWord').textContent = g.word;
+    $('#endClue').textContent = g.clue;
+    $('#endInfo').textContent = won ? `Solved in ${g.guesses.length}/${MAX}. ${teamMsg}` : `Class streak resets. Try the next one!`;
+    $('#endModal').classList.remove('hidden');
+  }, won ? 1100 : 400);
+}
+
+/* --- keyboard --- */
+const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', '+ZXCVBNM-'];
+$('#kb').innerHTML = ROWS.map(r => `<div class="kb-row">${[...r].map(ch => ch === '+' ? '<button class="key wide" data-k="ENTER">Enter</button>' : ch === '-' ? '<button class="key wide" data-k2="BACK">⌫ Back</button>' : `<button class="key" data-k="${ch}">${ch}</button>`).join('')}</div>`).join('');
+$('#kb').addEventListener('click', e => { const k = e.target.closest('.key'); if (!k) return; press(k.dataset.k || k.dataset.k2); });
+document.querySelector('[data-k="ENTER"]').removeAttribute('data-k');
+document.querySelector('.key.wide').dataset.k2 = 'ENTER';
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input')) return;
+  if (!document.querySelectorAll('.overlay:not(.hidden)').length){
+    if (e.key === 'Enter'){ e.preventDefault(); press('ENTER'); }
+    else if (e.key === 'Backspace'){ e.preventDefault(); press('BACK'); }
+    else if (/^[a-z]$/i.test(e.key) && !e.ctrlKey && !e.metaKey) press(e.key.toUpperCase());
+  }
+  if (e.key === 'Escape') document.querySelectorAll('.overlay').forEach(o => o.classList.add('hidden'));
+});
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.overlay').classList.add('hidden'));
+$('#nextBtn').onclick = () => {
+  const g = G();
+  if (!g.done && g.guesses.length && !confirm('Skip this word? It will count as not solved.')) return;
+  if (!g.done && g.guesses.length){ C.stats.played++; C.stats.streak = 0; }
+  newGame();
+};
+$('#endNext').onclick = () => { $('#endModal').classList.add('hidden'); newGame(); };
+$('#clueBtn').onclick = () => { const g = G(); if (!g.clue){ toast('No clue for this word'); return; } g.clueShown = true; save(); renderStatus(); };
+$('#revealBtn').onclick = () => { const g = G(); if (g.done) return; if (!confirm('Reveal the word? This round won\'t count as solved.')) return; finish(false, true); };
+document.querySelectorAll('#levelSeg button').forEach(b => b.onclick = () => {
+  if (C.level === b.dataset.l) return;
+  const g = G(); if (!g.done && g.guesses.length && !confirm('Switch level and start a new word?')) return;
+  C.level = b.dataset.l; newGame();
+});
+$('#secretBtn').onclick = () => { $('#secretWord').value = ''; $('#secretClue').value = ''; $('#secretEmo').value = ''; $('#secretModal').classList.remove('hidden'); setTimeout(() => $('#secretWord').focus(), 50); };
+$('#secretGo').onclick = () => {
+  const w = $('#secretWord').value.toUpperCase().replace(/[^A-Z]/g, '');
+  if (w.length < 3 || w.length > 8){ toast('Use 3 to 8 letters'); return; }
+  $('#secretModal').classList.add('hidden');
+  newGame({word:w, clue:$('#secretClue').value.trim(), emoji:$('#secretEmo').value.trim()});
+  toast(`Secret word ready: ${w.length} letters!`);
+};
+$('#secretWord').addEventListener('keydown', e => { if (e.key === 'Enter') $('#secretGo').click(); });
+$('#statsBtn').onclick = () => {
+  const S = C.stats, maxD = Math.max(1, ...S.dist);
+  $('#statsBody').innerHTML = `<div class="stats"><div><b>${S.played}</b>Played</div><div><b>${S.played ? Math.round(S.won / S.played * 100) : 0}%</b>Solved</div><div><b>${S.streak}</b>Streak</div><div><b>${S.best}</b>Best streak</div></div>
+    <p class="hint">Guesses needed</p><div class="dist">${S.dist.map((d, i) => `<div class="bar"><b style="width:14px">${i+1}</b><span class="fill${G().won && G().guesses.length === i+1 ? ' hi' : ''}" style="width:${8 + d / maxD * 82}%">${d}</span></div>`).join('')}</div>
+    ${C.teams.on ? `<p style="margin-top:14px"><b>${esc(C.teams.names[0])}</b> ${C.teams.scores[0]} · <b>${esc(C.teams.names[1])}</b> ${C.teams.scores[1]}</p>` : ''}`;
+  $('#statsModal').classList.remove('hidden');
+};
+$('#resetScores').onclick = () => { if (!confirm('Reset both team scores to 0?')) return; C.teams.scores = [0, 0]; save(); renderStatus(); $('#statsBtn').click(); };
+$('#teamsBtn').onclick = () => { $('#t1').value = C.teams.names[0]; $('#t2').value = C.teams.names[1]; $('#teamsModal').classList.remove('hidden'); };
+$('#teamsOn').onclick = () => { C.teams.on = true; C.teams.names = [$('#t1').value.trim() || 'Team 1', $('#t2').value.trim() || 'Team 2']; save(); renderStatus(); $('#teamsModal').classList.add('hidden'); };
+$('#teamsOff').onclick = () => { C.teams.on = false; save(); renderStatus(); $('#teamsModal').classList.add('hidden'); };
+if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*'); }
+
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.style.top = ($('#kb').getBoundingClientRect().top - 58) + 'px'; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 1800); }
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#f5c542','#d64045','#2fbf71','#ffffff','#4aa3ff'];
+  for (let i = 0; i < 120; i++){
+    const el = document.createElement('div'); el.className = 'cf';
+    el.style.left = innerWidth/2 + 'px'; el.style.top = innerHeight*.4 + 'px'; el.style.background = colors[i % 5];
+    document.body.appendChild(el);
+    const dx = (Math.random() - .5) * innerWidth, dy = -100 - Math.random() * 400, r = (Math.random() - .5) * 900;
+    el.animate([{transform:'translate(0,0)'}, {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, offset:.4}, {transform:`translate(${dx*1.2}px,${dy + 800}px) rotate(${r*2}deg)`, opacity:0}], {duration:1800 + Math.random()*900, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove();
+  }
+}
+addEventListener('resize', fitTiles);
+
+/* snowfall */
+(() => { const cv = $('#snow'), cx = cv.getContext('2d'); if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let W, H; const f = []; const size = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; }; size(); addEventListener('resize', size);
+  for (let i = 0; i < 70; i++) f.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+.6, s:Math.random()*.4+.2, d:Math.random()*6});
+  (function t(){ cx.clearRect(0,0,W,H); cx.fillStyle = 'rgba(255,255,255,.4)'; cx.beginPath(); for (const p of f){ p.y += p.s; p.d += .01; p.x += Math.sin(p.d)*.3; if (p.y > H) { p.y = -4; p.x = Math.random()*W; } cx.moveTo(p.x, p.y); cx.arc(p.x, p.y, p.r, 0, 6.28); } cx.fill(); requestAnimationFrame(t); })(); })();
+
+/* start: resume the class's current word, or pick a new one */
+if (!C.game || C.game.done) newGame(); else { buildBoard(); renderAll(); }
+</script>
+</body>
+</html>
