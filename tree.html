@@ -588,8 +588,23 @@ function makeOrnament(o){
 }
 const ornGroup = new THREE.Group(); tree.add(ornGroup);
 let ornObjs = [];
+/* Keep ornaments outside the branches: check the tree's outline across the
+   ornament's whole height and slide it outward until it's clear. */
+const ORN_R = {bauble:.16, striped:.16, bell:.15, candy:.19, star:.17, flake:.18, gift:.15};
+function clearOfTree(o){
+  const r = (ORN_R[o.t] || .16) * (o.s || 1);
+  let env = 0;
+  for (let y = o.y - r; y <= o.y + r*.6; y += .02) env = Math.max(env, treeRadius(y));
+  const need = env * 1.07 + r * .8;
+  let rad = Math.hypot(o.x, o.z);
+  if (rad < 1e-3){ o.z = need; rad = need; }
+  if (rad < need){ const k = need / rad; o.x *= k; o.z *= k; }
+  o.x = +o.x.toFixed(3); o.y = +o.y.toFixed(3); o.z = +o.z.toFixed(3);
+  return o;
+}
 function rebuildOrnaments(){
   ornGroup.clear(); ornObjs = [];
+  T.ornaments.forEach(clearOfTree);
   T.ornaments.forEach((o, i) => { const m = makeOrnament(o); m.userData.idx = i; ornGroup.add(m); ornObjs.push(m); });
   $('#countChip').textContent = `${T.ornaments.length} ornament${T.ornaments.length === 1 ? '' : 's'}`;
   rebuildLabels();
@@ -644,10 +659,10 @@ function placementFromHit(hit){
   const p = hit.point.clone();
   tree.worldToLocal(p);
   const n = new THREE.Vector3(p.x, 0, p.z); if (n.lengthSq() < 1e-6) n.set(0, 0, 1); n.normalize();
-  const outward = .1 * curSize;
-  p.addScaledVector(n, outward);
   p.y -= .04;
-  return {x:+p.x.toFixed(3), y:+p.y.toFixed(3), z:+p.z.toFixed(3), ry:+Math.atan2(n.x, n.z).toFixed(3)};
+  const o = {t:curType, s:curSize, x:p.x, y:p.y, z:p.z, ry:+Math.atan2(n.x, n.z).toFixed(3)};
+  clearOfTree(o);
+  return {x:o.x, y:o.y, z:o.z, ry:o.ry};
 }
 // Ghost preview that follows the mouse
 let ghost = null;
@@ -834,7 +849,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================
    START
    ===================================================== */
-applyPalette(); buildTopper(); applyRoom(); buildDrawer(); rebuildOrnaments(); rebuildGhost(); setMode('decorate');
+applyPalette(); buildTopper(); applyRoom(); buildDrawer(); rebuildOrnaments(); save(); rebuildGhost(); setMode('decorate');
 $('#loading').remove();
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
