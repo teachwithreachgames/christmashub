@@ -317,6 +317,8 @@ C.mode = C.mode || 'daily'; C.used = C.used || {elem:[], hs:[]}; C.daily = C.dai
 C.stats = C.stats || {played:0, won:0, streak:0, best:0, dist:[0,0,0,0,0,0]};
 C.teams = C.teams || {on:false, names:['Team Holly','Team Ivy'], scores:[0,0], turn:0};
 if (C.game && !WORDS[C.level].some(w => w[0] === C.game.word) && !C.game.custom) C.game = null;  // drop an unlimited word that is now a daily
+// Opened from the hub's "Today's puzzles": jump straight to that mode, at the class's grade level
+if (['daily','unlimited'].includes(params.get('mode'))){ C.mode = params.get('mode'); if (['elem','hs'].includes(params.get('level'))) C.level = params.get('level'); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
 $('#classChip').textContent = className;
 let dayIdx = todayIndex() >= 0 ? todayIndex() : (PREVIEW && new Date() < DAYS[0] ? 0 : lastUnlocked());

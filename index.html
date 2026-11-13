@@ -14,40 +14,62 @@
   --panel:rgba(255,255,255,.07); --line:rgba(255,255,255,.14);
 }
 *{box-sizing:border-box}
+html{background:#06140e}
 html,body{margin:0;min-height:100%}
-body{
-  font-family:Nunito,system-ui,sans-serif;color:var(--cream);
-  background:radial-gradient(1400px 900px at 30% -10%,var(--bg1),var(--bg2)) fixed;
-  -webkit-user-select:none;user-select:none;
-}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--cream);background:radial-gradient(1400px 900px at 30% -10%,var(--bg1),var(--bg2)) fixed;-webkit-user-select:none;user-select:none}
 body.activity-open{overflow:hidden}
 #snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 .app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
-
-header{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25);flex-wrap:wrap}
-.brand{font-family:'Lilita One',cursive;font-size:clamp(20px,2vw,30px);letter-spacing:.5px;white-space:nowrap}
-.brand span{color:var(--gold)}
-.spacer{flex:1}
+.hidden{display:none!important}
 button,select,input{font:inherit}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;
-  padding:10px 16px;font-weight:800;cursor:pointer;min-height:48px;white-space:nowrap
-}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;min-height:48px;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.14)}
 .btn.primary{background:var(--red);border-color:transparent}
 .btn.gold{background:var(--gold);color:#2a1d00;border-color:transparent}
 .btn.danger{border-color:#d64045;color:#ffb3b5}
-select.btn{padding-right:12px}
-select option{color:#111}
-.class-pick{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:14px;padding:4px 4px 4px 14px}
-.class-pick label{font-weight:800;opacity:.7;font-size:14px}
-.level-chip{font-size:13px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--gold);color:#2a1d00}
+.btn:disabled{opacity:.45;cursor:default}
+.brand{font-family:'Lilita One',cursive;font-size:clamp(20px,2vw,30px);letter-spacing:.5px;white-space:nowrap}
+.brand span{color:var(--gold)}
+.spacer{flex:1}
+.hint{opacity:.65;font-size:14px}
+.level-chip{font-size:13px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--gold);color:#2a1d00;white-space:nowrap}
 .level-chip.elem{background:#7fd6ff;color:#06222e}
+.in{background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:50px;width:100%;font-size:18px}
+.in::placeholder{color:rgba(253,246,227,.45)}
+select.in option{color:#111}
 
-main{padding:20px clamp(14px,2.5vw,36px) 40px;display:flex;flex-direction:column;gap:22px;max-width:1700px;width:100%;margin:0 auto}
+/* ===== Class screen ===== */
+.classes-screen{flex:1;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px;gap:26px}
+.welcome{text-align:center}
+.welcome h1{font-family:'Lilita One',cursive;font-weight:400;font-size:clamp(40px,5vw,72px);margin:0;line-height:1}
+.welcome h1 span{color:var(--gold)}
+.welcome p{font-size:clamp(17px,1.6vw,22px);opacity:.85;margin:10px 0 0}
+.mini-count{font-weight:800;color:var(--gold)}
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;width:min(1200px,100%)}
+.class-card{position:relative;text-align:left;color:var(--cream);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:2px solid var(--line);border-radius:22px;padding:20px;min-height:170px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .15s,border-color .15s}
+.class-card:hover{transform:translateY(-3px);border-color:var(--gold)}
+.class-card .nm{font-family:'Lilita One',cursive;font-size:30px;line-height:1.05;word-break:break-word}
+.class-card .today{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;font-weight:800;font-size:14px}
+.class-card .today span{background:rgba(0,0,0,.3);border-radius:999px;padding:3px 10px}
+.class-card .edit{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--cream);cursor:pointer;font-size:18px}
+.class-card.add{align-items:center;justify-content:center;border-style:dashed;text-align:center}
+.class-card.add .plus{font-size:48px;line-height:1}
+.onboard{width:min(620px,100%);background:rgba(0,0,0,.3);border:2px solid rgba(245,197,66,.5);border-radius:24px;padding:28px}
+.onboard h2{font-family:'Lilita One',cursive;font-weight:400;font-size:34px;margin:0 0 4px}
+.lvl-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 18px}
+.lvl-opt{background:rgba(255,255,255,.06);border:3px solid var(--line);border-radius:16px;padding:16px;color:var(--cream);cursor:pointer;text-align:center;font-weight:800}
+.lvl-opt .e{font-size:40px;display:block}
+.lvl-opt small{display:block;font-weight:600;opacity:.7;margin-top:4px}
+.lvl-opt.on{border-color:var(--gold);background:rgba(245,197,66,.15)}
+footer{position:relative;z-index:1;text-align:center;padding:14px;opacity:.6;font-size:14px}
+footer a{color:var(--gold)}
 
-/* Hero */
+/* ===== Hub screen ===== */
+header{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25);flex-wrap:wrap}
+.class-btn{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:14px;padding:6px 8px 6px 14px;color:var(--cream);cursor:pointer;font-weight:800;min-height:48px}
+.class-btn:hover{border-color:var(--gold)}
+.class-btn .nm{font-size:18px}
+main{padding:20px clamp(14px,2.5vw,36px) 30px;display:flex;flex-direction:column;gap:22px;max-width:1700px;width:100%;margin:0 auto}
 .hero{display:grid;grid-template-columns:1fr 1.15fr;gap:20px}
 .card{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:22px;padding:22px 26px}
 .clock{display:flex;flex-direction:column;justify-content:center}
@@ -71,18 +93,22 @@ main{padding:20px clamp(14px,2.5vw,36px) 40px;display:flex;flex-direction:column
 .countdown.is-xmas .xmas-day{display:block}
 .tree-deco{position:absolute;right:-10px;bottom:-24px;font-size:140px;opacity:.12;pointer-events:none}
 
-/* Activities */
 .section-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .section-head h2{font-family:'Lilita One',cursive;font-weight:400;margin:0;font-size:clamp(24px,2.3vw,36px)}
+.today-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:14px}
+.daily{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,rgba(245,197,66,.16),rgba(0,0,0,.25));border:2px solid rgba(245,197,66,.45);border-radius:22px;padding:18px 22px;color:var(--cream);text-align:left;cursor:pointer;transition:transform .15s}
+.daily:hover{transform:translateY(-3px)}
+.daily.done{background:linear-gradient(135deg,rgba(47,191,113,.2),rgba(0,0,0,.25));border-color:rgba(47,191,113,.6)}
+.daily.off{cursor:default;opacity:.85}
+.daily.off:hover{transform:none}
+.daily .e{font-size:54px;line-height:1}
+.daily h3{font-family:'Lilita One',cursive;font-weight:400;font-size:26px;margin:0}
+.daily .st{font-weight:800;margin-top:4px}
+.daily .go{margin-left:auto}
 .toggle{display:flex;align-items:center;gap:8px;font-weight:800;opacity:.85;cursor:pointer}
 .toggle input{width:22px;height:22px;accent-color:var(--gold)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
-.act{
-  position:relative;text-align:left;color:var(--cream);cursor:pointer;
-  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
-  border:1px solid var(--line);border-radius:20px;padding:18px;min-height:170px;
-  display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .15s,background .15s
-}
+.act{position:relative;text-align:left;color:var(--cream);cursor:pointer;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:20px;padding:18px;min-height:170px;display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .15s}
 .act:hover{transform:translateY(-3px);border-color:var(--gold)}
 .act .emoji{font-size:48px;line-height:1}
 .act h3{font-family:'Lilita One',cursive;font-weight:400;font-size:24px;margin:6px 0 0}
@@ -90,75 +116,100 @@ main{padding:20px clamp(14px,2.5vw,36px) 40px;display:flex;flex-direction:column
 .act .tags{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;padding-top:10px}
 .tag{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.12)}
 .tag.ready{background:var(--green);color:#03210f}
+.tag.daily{background:var(--gold);color:#2a1d00}
 .act.soon{cursor:default;opacity:.55}
 .act.soon:hover{transform:none;border-color:var(--line)}
-.empty{opacity:.6}
 
-/* Activity overlay */
 #activity{position:fixed;inset:0;z-index:400;background:#06140e}
 #activity iframe{width:100%;height:100%;border:0;display:block}
-.hidden{display:none!important}
 
-/* Modal */
 .overlay{position:fixed;inset:0;z-index:500;background:rgba(3,10,7,.86);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
 .sheet{width:min(760px,96vw);max-height:90vh;overflow:auto;background:#0f2a1e;border:1px solid var(--line);border-radius:18px;padding:22px;-webkit-user-select:text;user-select:text}
 .sheet h2{font-family:'Lilita One',cursive;font-weight:400;margin:0 0 4px;font-size:30px}
-.hint{opacity:.65;font-size:14px}
 .class-row{display:grid;grid-template-columns:1fr 190px auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-.in{background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;width:100%}
-select.in option{color:#111}
+.class-row .in{font-size:16px;min-height:46px}
 .sheet-foot{display:flex;gap:10px;justify-content:space-between;margin-top:16px;flex-wrap:wrap}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-
 @media (max-width:980px){ .hero{grid-template-columns:1fr} }
-@media (max-width:560px){ .class-row{grid-template-columns:1fr} }
+@media (max-width:560px){ .class-row{grid-template-columns:1fr} .lvl-pick{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
 <canvas id="snow"></canvas>
 <div class="app">
-  <header>
-    <div class="brand">🎄 Christmas <span>Hub</span></div>
-    <div class="spacer"></div>
-    <div class="class-pick">
-      <label for="classSelect">Class</label>
-      <select class="btn" id="classSelect"></select>
-      <span class="level-chip" id="levelChip"></span>
+
+  <!-- ================= CLASS SCREEN ================= -->
+  <section class="classes-screen" id="classScreen">
+    <div class="welcome">
+      <h1>🎄 Christmas <span>Hub</span></h1>
+      <p id="welcomeLine">Pick a class to get started.</p>
     </div>
-    <button class="btn" id="manageBtn">⚙ Classes</button>
-    <button class="btn" id="fsBtn" title="Fullscreen">⛶</button>
-  </header>
 
-  <main>
-    <section class="hero">
-      <div class="card clock">
-        <div class="time" id="time">--:--</div>
-        <div class="date" id="date"></div>
-        <div class="greet" id="greet"></div>
+    <!-- First visit: set up a class -->
+    <div class="onboard hidden" id="onboard">
+      <h2>👋 Welcome! Let's set up your first class.</h2>
+      <p class="hint" style="font-size:16px">Each class keeps its own progress in every activity: tier lists, trees, snowmen, puzzles and streaks. You can add more classes any time.</p>
+      <label style="font-weight:800;display:block;margin-top:14px">Class name
+        <input class="in" id="obName" maxlength="30" placeholder="e.g. Period 2, Room 12, Ms. Lee's Grade 3">
+      </label>
+      <p style="font-weight:800;margin:16px 0 0">Grade level</p>
+      <div class="lvl-pick">
+        <button class="lvl-opt" data-lvl="elem"><span class="e">🧒</span>Elementary<small>Picture clues, easier words, Build-a-Snowman</small></button>
+        <button class="lvl-opt" data-lvl="hs"><span class="e">🎓</span>High School<small>Harder words, trick puzzles, song tier list</small></button>
       </div>
-      <div class="card countdown" id="countdown">
-        <div class="tree-deco">🎄</div>
-        <h2 id="cdTitle">Countdown to Christmas</h2>
-        <div class="cd-boxes">
-          <div class="cd-box"><div class="cd-num" id="cdD">0</div><div class="cd-lbl">Days</div></div>
-          <div class="cd-box"><div class="cd-num" id="cdH">0</div><div class="cd-lbl">Hours</div></div>
-          <div class="cd-box"><div class="cd-num" id="cdM">0</div><div class="cd-lbl">Minutes</div></div>
-          <div class="cd-box"><div class="cd-num" id="cdS">0</div><div class="cd-lbl">Seconds</div></div>
+      <button class="btn gold" id="obGo" style="width:100%;font-size:20px;min-height:58px" disabled>Create class &amp; open the hub →</button>
+    </div>
+
+    <div class="class-grid hidden" id="classGrid"></div>
+    <div class="row hidden" id="classTools"><button class="btn" id="manageBtn2">⚙ Edit classes</button></div>
+  </section>
+
+  <!-- ================= HUB SCREEN ================= -->
+  <section class="hidden" id="hubScreen" style="display:flex;flex-direction:column;flex:1">
+    <header>
+      <div class="brand">🎄 Christmas <span>Hub</span></div>
+      <div class="spacer"></div>
+      <button class="class-btn" id="switchBtn" title="Switch class"><span class="nm" id="classNm"></span><span class="level-chip" id="levelChip"></span><span>⇄</span></button>
+      <button class="btn" id="fsBtn" title="Fullscreen">⛶</button>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="card clock">
+          <div class="time" id="time">--:--</div>
+          <div class="date" id="date"></div>
+          <div class="greet" id="greet"></div>
         </div>
-        <div class="sleeps"><div class="cd-num" id="sleepNum">0</div><div class="word" id="sleepWord">sleeps to go!</div></div>
-        <div class="xmas-day">🎅 Merry Christmas!</div>
-      </div>
-    </section>
+        <div class="card countdown" id="countdown">
+          <div class="tree-deco">🎄</div>
+          <h2 id="cdTitle">Countdown to Christmas</h2>
+          <div class="cd-boxes">
+            <div class="cd-box"><div class="cd-num" id="cdD">0</div><div class="cd-lbl">Days</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdH">0</div><div class="cd-lbl">Hours</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdM">0</div><div class="cd-lbl">Minutes</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdS">0</div><div class="cd-lbl">Seconds</div></div>
+          </div>
+          <div class="sleeps"><div class="cd-num" id="sleepNum">0</div><div class="word" id="sleepWord">sleeps to go!</div></div>
+          <div class="xmas-day">🎅 Merry Christmas!</div>
+        </div>
+      </section>
 
-    <section>
-      <div class="section-head">
-        <h2 id="actTitle">Activities</h2>
-        <div class="spacer"></div>
-        <label class="toggle"><input type="checkbox" id="showAll"> Show activities for all grades</label>
-      </div>
-      <div class="grid" id="grid" style="margin-top:14px"></div>
-    </section>
-  </main>
+      <section>
+        <div class="section-head"><h2 id="todayTitle">🧩 Today's puzzles</h2><span class="hint" id="todayHint"></span></div>
+        <div class="today-grid" id="todayGrid"></div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2 id="actTitle">Activities</h2>
+          <div class="spacer"></div>
+          <label class="toggle"><input type="checkbox" id="showAll"> Show activities for all grades</label>
+        </div>
+        <div class="grid" id="grid" style="margin-top:14px"></div>
+      </section>
+    </main>
+  </section>
+
+  <footer>Made by <a href="https://teachwithreachgames.com" target="_blank" rel="noopener">Teach With Reach Games</a> · Progress is saved in this browser</footer>
 </div>
 
 <!-- Activity frame -->
@@ -167,114 +218,206 @@ select.in option{color:#111}
 <!-- Class manager -->
 <div class="overlay hidden" id="manager">
   <div class="sheet">
-    <h2>⚙ Your Classes</h2>
-    <p class="hint">Each class keeps its own progress in every activity (tier lists, trees, scores). The grade level decides which activities show first. Everything saves in this browser.</p>
+    <h2>⚙ Your classes</h2>
+    <p class="hint">Rename classes, change grade levels, or remove a class. The grade level decides which activities and puzzles each class sees.</p>
     <div id="classRows"></div>
     <div class="sheet-foot">
       <button class="btn" id="addClassBtn">＋ Add class</button>
-      <div class="row">
-        <button class="btn" id="cancelManager">Cancel</button>
-        <button class="btn primary" id="saveManager">Save</button>
-      </div>
+      <div class="row"><button class="btn" id="cancelManager">Cancel</button><button class="btn primary" id="saveManager">Save</button></div>
     </div>
   </div>
 </div>
 
 <script>
 /* ================= Activities =================
-   Add new activities here. levels: 'elem', 'hs'.
-   Set url to a page in the same folder once it's built. */
+   levels: 'elem', 'hs'.  url: page in this folder (leave out until it's built).
+   daily: true shows a "Daily" tag.  */
 const ACTIVITIES = [
-  {id:'tierlist',  emoji:'🎁', title:'25 Songs of Christmas', desc:'Unwrap a mystery song and rank it S to F as a class.', levels:['hs'],          url:'tier-list.html'},
-  {id:'tree',      emoji:'🎄', title:'Class Christmas Tree',  desc:'Decorate a 3D tree together, then walk around it.',   levels:['elem','hs'], url:'tree.html'},
-  {id:'tune',      emoji:'🎵', title:'Name That Tune',        desc:'Guess the song from a few seconds of the intro.',     levels:['elem','hs']},
-  {id:'radio',     emoji:'📻', title:'Reach Radio',           desc:'Classroom-safe Christmas stations for work time.',    levels:['elem','hs']},
-  {id:'freeze',    emoji:'❄️', title:'Freeze Dance',          desc:'Dance until the music stops. Then FREEZE!',           levels:['elem']},
-  {id:'wyr',       emoji:'🤔', title:'Would You Rather',      desc:'Pick a side of the room and see the class vote.',     levels:['elem']},
-  {id:'snowflake', emoji:'✂️', title:'Snowflake Cutter',      desc:'Fold, cut and unfold a paper snowflake.',             levels:['elem']},
-  {id:'snowman',   emoji:'⛄', title:'Build-a-Snowman',        desc:'Take turns adding hats, scarves and buttons.',        levels:['elem'], url:'snowman.html'},
-  {id:'wordle',    emoji:'🔤', title:'Christmas Wordle',      desc:'Guess the holiday word in 6 tries, as a class or in teams.', levels:['elem','hs'], url:'wordle.html'},
-  {id:'connections', emoji:'🔗', title:'Christmas Connections', desc:'Sort the tiles into groups of four. Watch out for traps!', levels:['elem','hs'], url:'connections.html'},
-  {id:'trivia',    emoji:'🏆', title:'Holiday Trivia',        desc:'Jeopardy-style team showdown.',                       levels:['hs']},
-  {id:'hottakes',  emoji:'🔥', title:'Hot Takes',             desc:'"Die Hard is a Christmas movie." Agree or disagree?', levels:['hs']},
-  {id:'emoji',     emoji:'😎', title:'Emoji Decode',          desc:'Name the song or movie from emojis.',                 levels:['hs']},
+  {id:'wordle',      emoji:'🔤', title:'Christmas Wordle',      desc:'Guess the holiday word in 6 tries. New daily word every school day.', levels:['elem','hs'], url:'wordle.html', daily:true},
+  {id:'connections', emoji:'🔗', title:'Christmas Connections', desc:'Sort the tiles into groups. New daily puzzle every school day.',      levels:['elem','hs'], url:'connections.html', daily:true},
+  {id:'tierlist',    emoji:'🎁', title:'25 Songs of Christmas', desc:'Unwrap a mystery song and rank it S to F as a class.',                levels:['hs'],        url:'tier-list.html'},
+  {id:'tree',        emoji:'🎄', title:'Class Christmas Tree',  desc:'Decorate a 3D tree together, then walk around it.',                   levels:['elem','hs'], url:'tree.html'},
+  {id:'snowman',     emoji:'⛄', title:'Build-a-Snowman',        desc:'Take turns adding hats, scarves and buttons.',                        levels:['elem'],      url:'snowman.html'},
+  {id:'tune',        emoji:'🎵', title:'Name That Tune',        desc:'Guess the song from a few seconds of the intro.',                     levels:['elem','hs']},
+  {id:'freeze',      emoji:'❄️', title:'Freeze Dance',          desc:'Dance until the music stops. Then FREEZE!',                           levels:['elem']},
+  {id:'hottakes',    emoji:'🔥', title:'Hot Takes',             desc:'"Die Hard is a Christmas movie." Agree or disagree?',                 levels:['hs']},
 ];
 
-/* ================= Classes (shared with every activity) ================= */
-const HUB_KEY = 'twr-hub-v1';
-const TIER_KEY = 'twr-xmas-tierlist-v1';
+/* ================= Shared helpers ================= */
+const HUB_KEY = 'twr-hub-v1', TIER_KEY = 'twr-xmas-tierlist-v1';
 const LEVELS = {elem:'Elementary', hs:'High School'};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2,9);
+const readJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } };
+const PREVIEW = new URLSearchParams(location.search).has('preview');
 
+/* School-day calendar used by the daily puzzles: Nov 25 – Dec 24, Mon–Fri */
+const SEASON_YEAR = (() => { const t = new Date(); return t.getMonth() < 10 ? t.getFullYear() - 1 : t.getFullYear(); })();
+const DAYS = (() => { const out = [], d = new Date(SEASON_YEAR, 10, 25), end = new Date(SEASON_YEAR, 11, 24); while (d <= end){ const w = d.getDay(); if (w > 0 && w < 6) out.push(new Date(d)); d.setDate(d.getDate() + 1); } return out; })();
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDay = d => d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'});
+const todayIndex = () => { const k = ymd(new Date()); return DAYS.findIndex(d => ymd(d) === k); };
+const nextDayIndex = () => { const now = new Date(); return DAYS.findIndex(d => d > now); };
+
+/* ================= Classes ================= */
 function loadHub(){
-  let h = null;
-  try { h = JSON.parse(localStorage.getItem(HUB_KEY)); } catch(e) {}
-  if (h && Array.isArray(h.classes) && h.classes.length){
-    if (!h.classes.some(c => c.id === h.current)) h.current = h.classes[0].id;
+  const h = readJSON(HUB_KEY);
+  if (h && Array.isArray(h.classes)){
+    if (h.classes.length && !h.classes.some(c => c.id === h.current)) h.current = h.classes[0].id;
     return h;
   }
-  // First run: adopt classes already made in the tier list, so nothing is lost.
-  let classes = [];
-  try {
-    const t = JSON.parse(localStorage.getItem(TIER_KEY));
-    if (t && t.classes) classes = Object.entries(t.classes).map(([id,c]) => ({id, name:c.name||'Class', level:'hs'}));
-    if (classes.length) return {classes, current: t.classes[t.current] ? t.current : classes[0].id};
-  } catch(e) {}
-  const id = uid();
-  return {classes:[{id, name:'My Class', level:'hs'}], current:id};
+  // First visit: bring in classes already made in the tier list (older version), otherwise start empty.
+  const t = readJSON(TIER_KEY);
+  if (t && t.classes && Object.keys(t.classes).length){
+    const classes = Object.entries(t.classes).map(([id, c]) => ({id, name:c.name || 'Class', level:'hs'}));
+    return {classes, current:classes[0].id};
+  }
+  return {classes:[], current:null};
 }
 let hub = loadHub();
 function saveHub(){ try { localStorage.setItem(HUB_KEY, JSON.stringify(hub)); } catch(e) {} }
-saveHub();
 const curClass = () => hub.classes.find(c => c.id === hub.current) || hub.classes[0];
 
-/* ================= Rendering ================= */
-function renderClassPicker(){
-  $('#classSelect').innerHTML = hub.classes.map(c => `<option value="${c.id}"${c.id===hub.current?' selected':''}>${esc(c.name)}</option>`).join('');
+/* ================= Daily puzzle status (read from each game's save) ================= */
+function dailyStatus(game, cls){
+  const i = todayIndex();
+  if (i < 0) return null;
+  const key = ymd(DAYS[i]);
+  if (game === 'wordle'){
+    const s = readJSON('twr-wordle-v1'), C = s && s.classes && s.classes[cls.id];
+    const g = C && C.daily && C.daily[cls.level] && C.daily[cls.level][key];
+    if (!g || !g.guesses || !g.guesses.length) return {state:'new', n:i + 1};
+    if (!g.done) return {state:'playing', n:i + 1, text:`${g.guesses.length}/6 guesses so far`};
+    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? `Solved in ${g.guesses.length}/6` : 'Not solved'};
+  } else {
+    const s = readJSON('twr-connections-v1'), C = s && s.classes && s.classes[cls.id];
+    const pool = cls.level === 'hs' ? 'hs' : 'elem';
+    const g = C && C.daily && C.daily[pool] && C.daily[pool][key];
+    if (!g || !(g.solved.length || g.mistakes || g.done)) return {state:'new', n:i + 1};
+    if (!g.done) return {state:'playing', n:i + 1, text:`${g.solved.length} of ${g.puz.groups.length} groups found`};
+    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? (g.mistakes ? `Solved · ${g.mistakes} mistake${g.mistakes === 1 ? '' : 's'}` : 'Perfect! 🌟') : 'Not solved'};
+  }
+}
+const statusIcon = s => !s ? '' : s.state === 'won' ? '✅' : s.state === 'lost' ? '❌' : s.state === 'playing' ? '✏️' : '⬜';
+
+/* ================= Class screen ================= */
+let obLevel = null;
+function showClassScreen(){
+  closeActivity();
+  $('#hubScreen').classList.add('hidden'); $('#classScreen').classList.remove('hidden');
+  const none = !hub.classes.length;
+  $('#onboard').classList.toggle('hidden', !none);
+  $('#classGrid').classList.toggle('hidden', none);
+  $('#classTools').classList.toggle('hidden', none);
+  const i = todayIndex();
+  $('#welcomeLine').innerHTML = none ? 'Free Christmas activities and daily puzzles for your class.'
+    : i >= 0 ? `Pick a class. <span class="mini-count">Daily puzzle #${i + 1}</span> is ready today!` : 'Pick a class to get started.';
+  if (none){ setTimeout(() => $('#obName').focus(), 50); return; }
+  $('#classGrid').innerHTML = hub.classes.map(c => {
+    const w = dailyStatus('wordle', c), k = dailyStatus('connections', c);
+    return `<div class="class-card" data-id="${c.id}" role="button" tabindex="0">
+      <button class="edit" data-edit title="Edit classes">✏️</button>
+      <span class="level-chip${c.level === 'elem' ? ' elem' : ''}" style="align-self:flex-start">${LEVELS[c.level]}</span>
+      <div class="nm">${esc(c.name)}</div>
+      ${w ? `<div class="today"><span>${statusIcon(w)} Wordle</span><span>${statusIcon(k)} Connections</span></div>` : '<div class="today"></div>'}
+    </div>`;
+  }).join('') + `<button class="class-card add" id="addCard"><span class="plus">＋</span><b>New class</b></button>`;
+  $('#classGrid').querySelectorAll('.class-card[data-id]').forEach(card => {
+    card.onclick = e => { if (e.target.closest('[data-edit]')){ openManager(); return; } enterHub(card.dataset.id); };
+    card.onkeydown = e => { if (e.key === 'Enter') enterHub(card.dataset.id); };
+  });
+  $('#addCard').onclick = () => { openManager(true); };
+}
+function enterHub(id){
+  hub.current = id; saveHub();
+  $('#classScreen').classList.add('hidden'); $('#hubScreen').classList.remove('hidden');
+  renderHub(); scrollTo(0, 0);
+}
+// onboarding
+document.querySelectorAll('.lvl-opt').forEach(b => b.onclick = () => { obLevel = b.dataset.lvl; document.querySelectorAll('.lvl-opt').forEach(x => x.classList.toggle('on', x === b)); checkOb(); });
+$('#obName').oninput = checkOb;
+function checkOb(){ $('#obGo').disabled = !($('#obName').value.trim() && obLevel); }
+$('#obName').onkeydown = e => { if (e.key === 'Enter' && !$('#obGo').disabled) $('#obGo').click(); };
+$('#obGo').onclick = () => {
+  const c = {id:uid(), name:$('#obName').value.trim(), level:obLevel};
+  hub.classes.push(c); saveHub(); enterHub(c.id);
+};
+$('#manageBtn2').onclick = () => openManager();
+
+/* ================= Hub screen ================= */
+function renderHub(){
   const c = curClass();
-  const chip = $('#levelChip');
-  chip.textContent = LEVELS[c.level];
-  chip.className = 'level-chip' + (c.level === 'elem' ? ' elem' : '');
+  $('#classNm').textContent = c.name;
+  $('#levelChip').textContent = LEVELS[c.level];
+  $('#levelChip').className = 'level-chip' + (c.level === 'elem' ? ' elem' : '');
   $('#countdown').classList.toggle('elem', c.level === 'elem');
+  renderToday(); renderGrid(); tick();
+}
+function renderToday(){
+  const c = curClass(), i = todayIndex(), grid = $('#todayGrid');
+  const games = [['wordle','🔤','Christmas Wordle'], ['connections','🔗','Christmas Connections']];
+  if (i < 0){
+    const n = nextDayIndex();
+    if (n === 0){
+      const days = Math.ceil((DAYS[0] - new Date()) / 86400000);
+      $('#todayHint').textContent = '';
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="unlimited"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">Daily puzzles start ${fmtDay(DAYS[0])} (${days} day${days === 1 ? '' : 's'})</div><div class="hint">Tap to play Unlimited now</div></div></button>`).join('');
+    } else if (n > 0){
+      $('#todayHint').textContent = 'No new puzzle today (weekend). Catch up on any missed days!';
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">Daily #${n + 1} unlocks ${fmtDay(DAYS[n])}</div><div class="hint">Tap to play earlier days</div></div></button>`).join('');
+    } else {
+      $('#todayHint').textContent = 'The daily puzzles are done for this year. Merry Christmas!';
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">All ${DAYS.length} dailies are in the archive</div><div class="hint">Tap to replay any day, or try Unlimited</div></div></button>`).join('');
+    }
+  } else {
+    $('#todayHint').textContent = `${fmtDay(DAYS[i])} · Daily #${i + 1} of ${DAYS.length}`;
+    grid.innerHTML = games.map(([id, e, t]) => {
+      const s = dailyStatus(id, c), done = s.state === 'won' || s.state === 'lost';
+      const st = s.state === 'new' ? 'Not played yet' : s.text;
+      return `<button class="daily${done ? ' done' : ''}" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t} #${s.n}</h3><div class="st">${statusIcon(s)} ${esc(st)}</div></div><span class="btn gold go">${s.state === 'new' ? '▶ Play' : s.state === 'playing' ? '▶ Continue' : 'View'}</span></button>`;
+    }).join('');
+  }
+  grid.querySelectorAll('.daily').forEach(b => b.onclick = () => openActivity(b.dataset.id, b.dataset.mode));
 }
 function renderGrid(){
   const c = curClass(), all = $('#showAll').checked;
-  const list = ACTIVITIES
-    .filter(a => all || a.levels.includes(c.level))
-    .sort((a,b) => (!!b.url - !!a.url));
+  const list = ACTIVITIES.filter(a => all || a.levels.includes(c.level)).sort((a, b) => (!!b.url - !!a.url));
   $('#actTitle').textContent = all ? 'All activities' : `Activities for ${LEVELS[c.level]}`;
-  $('#grid').innerHTML = list.length ? list.map(a => `
-    <button class="act${a.url?'':' soon'}" data-id="${a.id}" ${a.url?'':'aria-disabled="true"'}>
+  $('#grid').innerHTML = list.map(a => `
+    <button class="act${a.url ? '' : ' soon'}" data-id="${a.id}">
       <div class="emoji">${a.emoji}</div>
       <h3>${esc(a.title)}</h3>
       <p>${esc(a.desc)}</p>
       <div class="tags">
-        ${a.url ? '<span class="tag ready">▶ Ready</span>' : '<span class="tag">Coming soon</span>'}
+        ${a.url ? '<span class="tag ready">▶ Ready</span>' : '<span class="tag">Coming in December</span>'}
+        ${a.daily ? '<span class="tag daily">📅 Daily</span>' : ''}
         ${a.levels.map(l => `<span class="tag">${LEVELS[l]}</span>`).join('')}
       </div>
-    </button>`).join('') : '<p class="empty">No activities yet for this grade.</p>';
+    </button>`).join('');
   $('#grid').querySelectorAll('.act').forEach(b => b.onclick = () => openActivity(b.dataset.id));
 }
-function renderAll(){ renderClassPicker(); renderGrid(); }
-
-$('#classSelect').onchange = e => { hub.current = e.target.value; saveHub(); renderAll(); };
 $('#showAll').onchange = renderGrid;
+$('#switchBtn').onclick = showClassScreen;
 
 /* ================= Activities open in a full-screen frame ================= */
-function openActivity(id){
+function openActivity(id, mode){
   const a = ACTIVITIES.find(x => x.id === id);
   if (!a || !a.url) return;
   const c = curClass();
-  $('#actFrame').src = `${a.url}?embed=1&class=${encodeURIComponent(c.id)}`;
+  let src = `${a.url}?embed=1&class=${encodeURIComponent(c.id)}&level=${c.level}`;
+  if (mode) src += `&mode=${mode}`;
+  if (PREVIEW) src += '&preview=1';
+  $('#actFrame').src = src;
   $('#activity').classList.remove('hidden');
   document.body.classList.add('activity-open');
 }
 function closeActivity(){
+  if ($('#activity').classList.contains('hidden')) return;
   $('#activity').classList.add('hidden');
-  $('#actFrame').src = 'about:blank';   // stops any music
+  $('#actFrame').src = 'about:blank';
   document.body.classList.remove('activity-open');
+  if (!$('#hubScreen').classList.contains('hidden')) renderToday();
 }
 window.addEventListener('message', e => {
   if (e.origin !== location.origin && location.protocol !== 'file:') return;
@@ -283,54 +426,49 @@ window.addEventListener('message', e => {
 
 /* ================= Class manager ================= */
 let draft = [];
-function openManager(){
+function openManager(addNew){
   draft = hub.classes.map(c => ({...c}));
+  if (addNew) draft.push({id:uid(), name:'', level: (curClass() || {}).level || 'hs'});
   renderRows();
   $('#manager').classList.remove('hidden');
+  if (addNew){ const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length - 1].focus(); }
 }
 function renderRows(){
-  $('#classRows').innerHTML = draft.map((c,i) => `
+  $('#classRows').innerHTML = draft.map((c, i) => `
     <div class="class-row">
       <input class="in" data-name="${i}" value="${esc(c.name)}" placeholder="Class name (e.g. Period 2)">
       <select class="in" data-level="${i}">
-        <option value="elem"${c.level==='elem'?' selected':''}>Elementary</option>
-        <option value="hs"${c.level==='hs'?' selected':''}>High School</option>
+        <option value="elem"${c.level === 'elem' ? ' selected' : ''}>Elementary</option>
+        <option value="hs"${c.level === 'hs' ? ' selected' : ''}>High School</option>
       </select>
-      <button class="btn danger" data-del="${i}" ${draft.length<2?'disabled title="You need at least one class"':''}>Delete</button>
-    </div>`).join('');
+      <button class="btn danger" data-del="${i}">Delete</button>
+    </div>`).join('') || '<p class="hint">No classes. Add one below.</p>';
   $('#classRows').querySelectorAll('[data-name]').forEach(el => el.oninput = () => draft[el.dataset.name].name = el.value);
   $('#classRows').querySelectorAll('[data-level]').forEach(el => el.onchange = () => draft[el.dataset.level].level = el.value);
   $('#classRows').querySelectorAll('[data-del]').forEach(el => el.onclick = () => {
     const c = draft[el.dataset.del];
-    if (!confirm(`Delete "${c.name || 'this class'}"? Its progress in every activity will be hidden.`)) return;
+    if (c.name && !confirm(`Delete "${c.name}"? Its progress will be hidden.`)) return;
     draft.splice(el.dataset.del, 1); renderRows();
   });
 }
-$('#addClassBtn').onclick = () => {
-  draft.push({id:uid(), name:'', level: curClass().level});
-  renderRows();
-  const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length-1].focus();
-};
+$('#addClassBtn').onclick = () => { draft.push({id:uid(), name:'', level:(curClass() || {}).level || 'hs'}); renderRows(); const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length - 1].focus(); };
 $('#cancelManager').onclick = () => $('#manager').classList.add('hidden');
 $('#saveManager').onclick = () => {
-  draft.forEach((c,i) => { c.name = (c.name||'').trim() || `Class ${i+1}`; });
-  hub.classes = draft;
-  if (!hub.classes.some(c => c.id === hub.current)) hub.current = hub.classes[0].id;
-  saveHub(); renderAll();
-  $('#manager').classList.add('hidden');
+  hub.classes = draft.filter(c => (c.name || '').trim()).map(c => ({...c, name:c.name.trim()}));
+  if (!hub.classes.some(c => c.id === hub.current)) hub.current = hub.classes.length ? hub.classes[0].id : null;
+  saveHub(); $('#manager').classList.add('hidden'); showClassScreen();
 };
-$('#manageBtn').onclick = openManager;
 
 /* ================= Clock + countdown ================= */
 const pad = n => String(n).padStart(2,'0');
 function tick(){
+  if ($('#hubScreen').classList.contains('hidden') || !curClass()) return;
   const now = new Date();
   let h = now.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
   $('#time').innerHTML = `${h}:${pad(now.getMinutes())}<small>${ap}</small>`;
   $('#date').textContent = now.toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric', year:'numeric'});
   const hr = now.getHours();
   $('#greet').textContent = (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') + ', ' + curClass().name + '!';
-
   const y = now.getFullYear();
   const isXmas = now.getMonth() === 11 && now.getDate() === 25;
   let target = new Date(y, 11, 25);
@@ -343,25 +481,19 @@ function tick(){
     const hh = Math.floor(s / 3600); s -= hh*3600;
     const mm = Math.floor(s / 60); s -= mm*60;
     $('#cdD').textContent = d; $('#cdH').textContent = pad(hh); $('#cdM').textContent = pad(mm); $('#cdS').textContent = pad(s);
-    // "Sleeps" = nights left, counted by calendar date
     const today = new Date(y, now.getMonth(), now.getDate());
     const sleeps = Math.round((target - today) / 86400000);
     $('#sleepNum').textContent = sleeps;
     $('#sleepWord').textContent = sleeps === 1 ? 'more sleep!' : 'sleeps to go!';
   }
 }
-tick(); setInterval(tick, 1000);
+setInterval(tick, 1000);
+let lastDay = ymd(new Date());
+setInterval(() => { const k = ymd(new Date()); if (k !== lastDay){ lastDay = k; if (!$('#hubScreen').classList.contains('hidden')) renderToday(); } }, 60000);
 
 /* ================= Misc ================= */
-$('#fsBtn').onclick = () => {
-  if (document.fullscreenElement) document.exitFullscreen();
-  else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{});
-};
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  if (!$('#manager').classList.contains('hidden')) $('#manager').classList.add('hidden');
-});
-
+$('#fsBtn').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(()=>{}); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#manager').classList.add('hidden'); });
 (() => {
   const cv = $('#snow'), cx = cv.getContext('2d');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -372,18 +504,15 @@ document.addEventListener('keydown', e => {
   (function frame(){
     if (!document.body.classList.contains('activity-open')){
       cx.clearRect(0,0,W,H); cx.fillStyle = 'rgba(255,255,255,.55)'; cx.beginPath();
-      for (const f of flakes){
-        f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .3;
-        if (f.y > H + 5){ f.y = -5; f.x = Math.random()*W; }
-        cx.moveTo(f.x, f.y); cx.arc(f.x, f.y, f.r, 0, 6.28);
-      }
+      for (const f of flakes){ f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .3; if (f.y > H + 5){ f.y = -5; f.x = Math.random()*W; } cx.moveTo(f.x, f.y); cx.arc(f.x, f.y, f.r, 0, 6.28); }
       cx.fill();
     }
     requestAnimationFrame(frame);
   })();
 })();
 
-renderAll();
+saveHub();
+showClassScreen();
 </script>
 </body>
 </html>

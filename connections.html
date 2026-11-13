@@ -318,6 +318,12 @@ if (!store.classes[store.current]) store.classes[store.current] = {
 };
 const C = store.classes[store.current];
 C.mode = C.mode || 'daily'; C.daily = C.daily || {elem:{}, hs:{}};
+// Opened from the hub's "Today's puzzles": jump straight to that mode, at the class's grade level
+if (['daily','unlimited'].includes(params.get('mode'))){
+  C.mode = params.get('mode');
+  const lv = params.get('level');
+  if (lv === 'hs') C.level = 'hs'; else if (lv === 'elem' && C.level === 'hs') C.level = 'harder';
+}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
 $('#classChip').textContent = className;
 const isElem = () => C.level !== 'hs';
