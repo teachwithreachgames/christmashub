@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Name That Tune | Teach With Reach Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#5a1424;--bg2:#1a0509;--cream:#fdf6e3;--gold:#f5c542;--red:#d64045;--green:#2fbf71;--panel:rgba(255,255,255,.08);--line:rgba(255,255,255,.18)}
+*{box-sizing:border-box}
+html{background:var(--bg2)}
+html,body{margin:0;min-height:100%}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--cream);background:radial-gradient(1300px 800px at 50% -10%,var(--bg1),var(--bg2)) fixed;user-select:none;-webkit-user-select:none}
+button,input{font:inherit}
+.hidden{display:none!important}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;min-height:46px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.on,.btn.gold{background:var(--gold);color:#2a1d00;border-color:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-family:'Lilita One',cursive;font-weight:400;margin:0 6px;font-size:clamp(20px,2vw,30px);white-space:nowrap}
+h1 span{color:var(--gold)}
+.spacer{flex:1}
+.count{font-weight:900;opacity:.85}
+
+main{display:grid;grid-template-columns:1fr auto;gap:20px;padding:18px;max-width:1500px;margin:0 auto}
+main.noteams{grid-template-columns:1fr}
+.stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.screen{position:relative;width:min(760px,100%,calc((100vh - 330px) * 16 / 9));aspect-ratio:16/9;border-radius:22px;overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.screen #player,.screen iframe{position:absolute;inset:0;width:100%;height:100%}
+.cover{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a6b45,#0e2a1b);transition:opacity .6s}
+.cover.open{opacity:0;pointer-events:none}
+.gift{position:relative;width:44%;aspect-ratio:1.1;transform-origin:50% 100%}
+.gift .box{position:absolute;left:0;right:0;bottom:0;height:72%;background:#d64045;border-radius:10px;box-shadow:inset 0 -12px 0 rgba(0,0,0,.15)}
+.gift .lid{position:absolute;left:-5%;right:-5%;top:14%;height:20%;background:#e85a5f;border-radius:10px;box-shadow:inset 0 -8px 0 rgba(0,0,0,.12);transition:transform .7s cubic-bezier(.3,1.6,.5,1)}
+.gift .rib-v{position:absolute;left:44%;width:12%;top:14%;bottom:0;background:var(--gold)}
+.gift .bow{position:absolute;left:50%;top:0;width:44%;height:22%;transform:translateX(-50%)}
+.gift .bow::before,.gift .bow::after{content:'';position:absolute;top:0;width:50%;height:100%;border:10px solid var(--gold);border-radius:50% 50% 10% 50%}
+.gift .bow::before{left:0;transform:rotate(-16deg)}.gift .bow::after{right:0;transform:rotate(16deg) scaleX(-1)}
+.gift .q{position:absolute;left:0;right:0;bottom:16%;text-align:center;font-family:'Lilita One',cursive;font-size:clamp(40px,7vw,96px);color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.2)}
+.screen.playing .gift{animation:bop .45s ease-in-out infinite alternate}
+@keyframes bop{from{transform:rotate(-3deg) scale(1)}to{transform:rotate(3deg) scale(1.04)}}
+.notes{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.notes i{position:absolute;bottom:-40px;font-style:normal;font-size:42px;animation:rise 2.2s linear forwards}
+@keyframes rise{to{transform:translateY(-120vh) rotate(25deg);opacity:0}}
+.bar{position:absolute;left:0;bottom:0;height:10px;background:var(--gold);width:0;transition:width .08s linear;z-index:3}
+.msg{position:absolute;inset:auto 0 16px 0;text-align:center;font-weight:900;font-size:18px;text-shadow:0 2px 6px #000;z-index:3}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.big{font-family:'Lilita One',cursive;font-size:clamp(20px,2vw,28px);font-weight:400;padding:12px 24px;min-height:64px;border-radius:18px}
+.play{background:var(--green);color:#052b16;border:0;box-shadow:0 6px 0 #1a7a46}
+.reveal{background:var(--gold);color:#2a1d00;border:0;box-shadow:0 6px 0 #a8841f}
+.next{background:var(--red);color:#fff;border:0;box-shadow:0 6px 0 #8e2226}
+.big:active{transform:translateY(3px)}
+.answer{text-align:center}
+.answer .t{font-family:'Lilita One',cursive;font-size:clamp(30px,3.6vw,52px);line-height:1.1}
+.answer .a{font-weight:800;font-size:clamp(18px,1.6vw,24px);opacity:.85}
+
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(900px,100%)}
+.choice{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.1);border:3px solid var(--line);color:var(--cream);border-radius:16px;padding:12px 16px;font-weight:900;font-size:clamp(17px,1.6vw,23px);cursor:pointer;text-align:left;min-height:68px}
+.choice b{font-size:1.6em}
+.choice:hover{background:rgba(255,255,255,.18)}
+.choice.right{background:rgba(47,191,113,.35);border-color:var(--green)}
+.choice.wrong{background:rgba(214,64,69,.3);border-color:var(--red);opacity:.7}
+
+.teams{width:260px;display:flex;flex-direction:column;gap:10px}
+.team{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.team .n{flex:1;font-weight:900;font-size:19px}
+.team .s{font-family:'Lilita One',cursive;font-size:34px;min-width:44px;text-align:right}
+.team button{min-height:36px;padding:4px 10px;border-radius:10px}
+.award{background:rgba(245,197,66,.14);border:1px solid rgba(245,197,66,.5);border-radius:16px;padding:12px;text-align:center}
+.award p{margin:0 0 8px;font-weight:900}
+.award .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:20;padding:16px}
+.sheet{background:#2a0d14;border:1px solid var(--line);border-radius:20px;padding:18px 20px;width:min(900px,100%);max-height:90vh;overflow:auto;user-select:text;-webkit-user-select:text}
+.sheet h2{font-family:'Lilita One',cursive;font-weight:400;margin:0 0 10px;color:var(--gold)}
+.srow{display:grid;grid-template-columns:28px 1.3fr 1.6fr 70px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.srow input[type=text],.srow input[type=number]{width:100%;background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.srow input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold)}
+.hint{opacity:.7;font-size:14px}
+.opt{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--cream);color:#2a0d14;padding:10px 18px;border-radius:12px;font-weight:900;z-index:40;transition:opacity .4s;pointer-events:none}
+@media (max-width:980px){ main{grid-template-columns:1fr} .teams{width:100%;flex-direction:row;flex-wrap:wrap} .team{flex:1 1 200px} }
+</style>
+<script data-goatcounter="https://teachwithreach.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+<header>
+  <button class="btn hidden" id="hubBtn">🏠 Hub</button>
+  <h1>🎵 Name That <span>Tune</span></h1>
+  <span class="count" id="count"></span>
+  <div class="spacer"></div>
+  <button class="btn" id="choicesBtn" title="Show four answer choices">🔤 Choices</button>
+  <button class="btn" id="teamsBtn" title="Keep score in teams">👥 Teams: Off</button>
+  <button class="btn" id="setBtn" title="Songs and links">⚙ Songs</button>
+</header>
+
+<main id="main">
+  <section class="stage">
+    <div class="screen" id="screen">
+      <div id="player"></div>
+      <div class="cover" id="cover">
+        <div class="gift" id="gift"><div class="box"></div><div class="rib-v"></div><div class="lid" id="lid"></div><div class="bow"></div><div class="q">?</div></div>
+        <div class="notes" id="notes"></div>
+      </div>
+      <div class="bar" id="bar"></div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="answer hidden" id="answer"><div class="t" id="ansT"></div><div class="a" id="ansA"></div></div>
+    <div class="controls" id="controls"></div>
+    <div class="choices hidden" id="choices"></div>
+  </section>
+  <aside class="teams" id="teams"></aside>
+</main>
+
+<div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const params = new URLSearchParams(location.search), EMBED = params.has('embed');
+function track(name){ try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:'event/' + name, title:name, event:true}); } catch(e) {} }
+
+/* =====================================================
+   SONGS (elementary). yt = main video, alt = backup if the main one won't embed.
+   ===================================================== */
+const SONGS = [
+  {id:'rudolph',  e:'🦌', title:'Rudolph the Red-Nosed Reindeer',    artist:'Gene Autry',              yt:'RasL_erhu4Y', alt:'bDx89N03mPw'},
+  {id:'frosty',   e:'⛄', title:'Frosty the Snowman',                artist:'Gene Autry',              yt:'oda3A5j5du4', alt:'-BLPMsoGbWA'},
+  {id:'jingle',   e:'🔔', title:'Jingle Bells',                      artist:'Frank Sinatra',           yt:'-aQw3DoGuqs', alt:'hLf0-lro8X8'},
+  {id:'comin',    e:'🎅', title:"Santa Claus Is Comin' to Town",     artist:'The Jackson 5',           yt:'nYmPZrvThW8', alt:'nI9Bg38BKCk'},
+  {id:'herecomes',e:'🛷', title:'Here Comes Santa Claus',            artist:'Gene Autry',              yt:'oNwG28tZDsg', alt:'JhcLpwlA-ZA'},
+  {id:'wewish',   e:'🎶', title:'We Wish You a Merry Christmas',     artist:'Gene Autry',              yt:'YCVE2JuOeBo', alt:'LwAyfuaOjUE'},
+  {id:'deck',     e:'🌿', title:'Deck the Halls',                    artist:'Nat King Cole',           yt:'wQlQQ55wNyA', alt:'kORRidv-p0Y'},
+  {id:'housetop', e:'🏠', title:'Up on the Housetop',                artist:'Gene Autry',              yt:'ISqjyIdmZQs', alt:'5xSlmQkIz8w'},
+  {id:'holly',    e:'🎄', title:'A Holly Jolly Christmas',           artist:'Burl Ives',               yt:'P_dI6fVZwd0', alt:'9QEK4K-KWT8'},
+  {id:'jbrock',   e:'🎸', title:'Jingle Bell Rock',                  artist:'Bobby Helms',             yt:'ZnDmmiiFSUU', alt:'Z0ajuTaHBtM'},
+  {id:'rockin',   e:'💃', title:"Rockin' Around the Christmas Tree", artist:'Brenda Lee',              yt:'TFsZy9t-qDc', alt:'O1x-hOOrl5E'},
+  {id:'feliz',    e:'🪅', title:'Feliz Navidad',                     artist:'José Feliciano',          yt:'N8NcQzMQN_U', alt:''},
+  {id:'letitsnow',e:'❄️', title:'Let It Snow! Let It Snow! Let It Snow!', artist:'Dean Martin',        yt:'Rnil5LyK_B0', alt:'2TA3IKH8Y5c'},
+  {id:'mariah',   e:'🎁', title:'All I Want for Christmas Is You',   artist:'Mariah Carey',            yt:'aAkMkVFwAoo', alt:'fRyhqobl0sk'},
+  {id:'grinch',   e:'💚', title:"You're a Mean One, Mr. Grinch",     artist:'Thurl Ravenscroft',       yt:'cGSneujgGT8', alt:'60CYXuc7ATk'},
+  {id:'mustbe',   e:'🧔', title:'Must Be Santa',                     artist:'Bob Dylan',               yt:'Hoh7m3qHqf0', alt:'a8qE6WQmNus'},
+  {id:'runrudolph',e:'🏃', title:'Run Rudolph Run',                  artist:'Chuck Berry',             yt:'YiadNVhaGwk', alt:'3tQLBSt80Ac'},
+  {id:'sleigh',   e:'🐴', title:'Sleigh Ride',                       artist:'The Ronettes',            yt:'XZTzai1H9DM', alt:'oH4WG1x_KR8'},
+  {id:'chipmunk', e:'🐿️', title:"The Chipmunk Song (Christmas Don't Be Late)", artist:'Alvin & the Chipmunks', yt:'mDtOwSjIDFw', alt:'N7xALO9ocvo'},
+  {id:'silent',   e:'⭐', title:'Silent Night',                      artist:'Bing Crosby',             yt:'moHobaO9TlM', alt:'bmJnKCr1dNk'},
+];
+const STEPS = [2, 5, 10];          // seconds of music for each "listen" press
+const POINTS = [3, 2, 1];          // team points for guessing after each step
+const TEAM_NAMES = [['🦌', 'Reindeer'], ['⛄', 'Snowmen'], ['🧝', 'Elves'], ['🐧', 'Penguins']];
+
+/* =====================================================
+   SAVE: songs/links are per browser; game progress is per class
+   ===================================================== */
+const KEY = 'twr-tune-v1';
+let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+if (!store || !store.classes) store = {classes:{}, songs:{}, choices:true};
+let classId = 'default';
+try { const hub = JSON.parse(localStorage.getItem('twr-hub-v1')); if (hub && hub.classes && hub.classes.length){ const w = params.get('class') || hub.current; classId = (hub.classes.find(c => c.id === w) || hub.classes[0]).id; } } catch(e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
+function song(id){
+  const s = SONGS.find(x => x.id === id), o = store.songs[id] || {};
+  const custom = o.yt && o.yt !== s.yt;
+  return {...s, yt:o.yt || s.yt, alt:custom ? '' : s.alt, start:+o.start || 0, off:!!o.off};
+}
+const activeSongs = () => SONGS.map(s => song(s.id)).filter(s => !s.off);
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function C(){
+  const c = store.classes[classId] = store.classes[classId] || {};
+  if (!Array.isArray(c.order) || !c.order.length) newDeck(c);
+  if (!c.teams) c.teams = {n:0, scores:[0, 0, 0, 0]};
+  return c;
+}
+function newDeck(c){ c.order = shuffle(activeSongs().map(s => s.id)); c.idx = 0; }
+
+/* =====================================================
+   YOUTUBE PLAYER (IFrame API)
+   ===================================================== */
+let player = null, playerReady = false, cur = null, triedAlt = false;
+let step = 0, revealed = false, clipEnd = null, poll = null, wantPlay = false;
+const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player('player', {
+    width:'100%', height:'100%',
+    playerVars:{playsinline:1, rel:0, controls:0, disablekb:1, fs:0, iv_load_policy:3, origin:/^https?:/.test(location.protocol) ? location.origin : undefined},
+    events:{
+      onReady:() => { playerReady = true; loadSong(); },
+      onStateChange:e => {
+        const playing = e.data === YT.PlayerState.PLAYING;
+        $('#screen').classList.toggle('playing', playing && !revealed);
+        if (playing && !revealed) startNotes(); else stopNotes();
+        if (e.data === YT.PlayerState.ENDED && revealed) renderControls();
+      },
+      onError:e => {
+        if (!triedAlt && cur && cur.alt){ triedAlt = true; player.cueVideoById({videoId:cur.alt, startSeconds:cur.start}); msg('Trying a backup video…'); return; }
+        msg('⚠ This video won’t play here. Change its link in ⚙ Songs, or press Next.');
+      },
+    }
+  });
+};
+function loadSong(){
+  const c = C();
+  if (c.idx >= c.order.length){ renderDone(); return; }
+  cur = song(c.order[c.idx]); triedAlt = false; step = 0; revealed = false; clipEnd = null; stopPoll();
+  $('#cover').classList.remove('open'); $('#answer').classList.add('hidden'); msg('');
+  $('#bar').style.width = '0';
+  if (playerReady) player.cueVideoById({videoId:cur.yt, startSeconds:cur.start});
+  renderCount(); renderControls(); renderChoices(); renderTeams();
+}
+function vidId(){ return triedAlt && cur.alt ? cur.alt : cur.yt; }
+function playClip(){
+  if (!playerReady){ msg('Loading the music player…'); return; }
+  const secs = STEPS[Math.min(step, STEPS.length - 1)];
+  clipEnd = cur.start + secs;
+  player.seekTo(cur.start, true); player.playVideo();
+  stopPoll();
+  // stop by the video's own clock, so buffering or an ad doesn't use up the clip
+  poll = setInterval(() => {
+    let t = 0; try { t = player.getCurrentTime(); } catch(e) {}
+    $('#bar').style.width = Math.max(0, Math.min(1, (t - cur.start) / secs)) * 100 + '%';
+    if (t >= clipEnd - .05){ player.pauseVideo(); stopPoll(); clipEnd = null; step = Math.min(step + 1, STEPS.length); renderControls(); }
+  }, 50);
+  track('tune-play');
+  renderControls();
+}
+function stopPoll(){ clearInterval(poll); poll = null; }
+function reveal(){
+  revealed = true; stopPoll(); clipEnd = null;
+  $('#cover').classList.add('open'); $('#bar').style.width = '0';
+  $('#ansT').textContent = cur.e + ' ' + cur.title; $('#ansA').textContent = cur.artist; $('#answer').classList.remove('hidden');
+  if (playerReady){ player.seekTo(cur.start, true); player.playVideo(); }
+  $('#choices').classList.add('hidden');
+  confetti(); renderControls(); renderTeams(); setTimeout(renderControls, 800);
+}
+function next(){
+  if (playerReady) try { player.stopVideo(); } catch(e) {}
+  const c = C(); c.idx++; save(); loadSong();
+}
+
+/* =====================================================
+   UI
+   ===================================================== */
+function msg(t){ $('#msg').textContent = t; }
+function renderCount(){ const c = C(); $('#count').textContent = c.idx < c.order.length ? `Song ${c.idx + 1} of ${c.order.length}` : ''; }
+function renderControls(){
+  const busy = !!clipEnd;
+  let h = '';
+  if (!revealed){
+    const label = step === 0 ? '▶ Play 2 seconds' : step < STEPS.length ? `▶ Play ${STEPS[step]} seconds` : '🔁 Play again (10 s)';
+    h = `<button class="btn big play" id="playBtn"${busy ? ' disabled' : ''}>${busy ? '🎵 Listen…' : label}</button>
+      <button class="btn big reveal" id="revealBtn"${step === 0 ? ' disabled' : ''}>🎁 Reveal</button>`;
+  } else {
+    let st = -1; try { st = player.getPlayerState(); } catch(e) {}
+    h = `<button class="btn big" id="ppBtn">${st === 1 ? '⏸ Pause' : '▶ Play'}</button>
+      <button class="btn big next" id="nextBtn">⏭ Next song</button>`;
+  }
+  $('#controls').innerHTML = h;
+  const pb = $('#playBtn'); if (pb) pb.onclick = playClip;
+  const rb = $('#revealBtn'); if (rb) rb.onclick = reveal;
+  const nb = $('#nextBtn'); if (nb) nb.onclick = next;
+  const pp = $('#ppBtn'); if (pp) pp.onclick = () => { try { player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo(); } catch(e) {} setTimeout(renderControls, 300); };
+}
+function renderChoices(){
+  const box = $('#choices');
+  if (!store.choices || !cur){ box.classList.add('hidden'); return; }
+  const others = shuffle(activeSongs().filter(s => s.id !== cur.id)).slice(0, 3);
+  const opts = shuffle([cur, ...others]);
+  box.innerHTML = opts.map(s => `<button class="choice" data-id="${s.id}"><b>${s.e}</b><span>${esc(s.title)}</span></button>`).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('.choice').forEach(b => b.onclick = () => {
+    if (revealed) return;
+    if (b.dataset.id === cur.id){ b.classList.add('right'); toast('🎉 Yes!'); reveal(); }
+    else { b.classList.add('wrong'); toast('Not that one! Listen again…'); }
+  });
+}
+function renderTeams(){
+  const c = C(), t = c.teams, aside = $('#teams');
+  $('#teamsBtn').textContent = '👥 Teams: ' + (t.n ? t.n : 'Off'); $('#teamsBtn').classList.toggle('on', !!t.n);
+  $('#main').classList.toggle('noteams', !t.n);
+  if (!t.n){ aside.innerHTML = ''; aside.classList.add('hidden'); return; }
+  aside.classList.remove('hidden');
+  const pts = POINTS[Math.max(0, Math.min(step, STEPS.length) - 1)] || 1;
+  let h = '';
+  if (revealed && !cur.awarded){
+    h += `<div class="award"><p>Who guessed it? (+${pts})</p><div class="row">${TEAM_NAMES.slice(0, t.n).map(([e, n], i) => `<button class="btn" data-award="${i}">${e} ${n}</button>`).join('')}<button class="btn" data-award="-1">Nobody</button></div></div>`;
+  }
+  h += TEAM_NAMES.slice(0, t.n).map(([e, n], i) => `<div class="team"><span class="n">${e} ${n}</span><button class="btn" data-adj="${i}" data-d="-1" title="Take a point away">−</button><span class="s">${t.scores[i]}</span><button class="btn" data-adj="${i}" data-d="1" title="Add a point">+</button></div>`).join('');
+  h += `<button class="btn" id="resetScores">🧹 Reset scores</button>`;
+  aside.innerHTML = h;
+  aside.querySelectorAll('[data-award]').forEach(b => b.onclick = () => { const i = +b.dataset.award; if (i >= 0){ t.scores[i] += pts; toast(`+${pts} for the ${TEAM_NAMES[i][1]}!`); } cur.awarded = true; save(); renderTeams(); });
+  aside.querySelectorAll('[data-adj]').forEach(b => b.onclick = () => { const i = +b.dataset.adj; t.scores[i] = Math.max(0, t.scores[i] + +b.dataset.d); save(); renderTeams(); });
+  $('#resetScores').onclick = () => { if (confirm('Reset all team scores to 0?')){ t.scores = [0, 0, 0, 0]; save(); renderTeams(); } };
+}
+function renderDone(){
+  cur = null; $('#count').textContent = '';
+  $('#cover').classList.remove('open'); $('#answer').classList.remove('hidden');
+  $('#ansT').textContent = '🎉 You played every song!'; $('#ansA').textContent = 'Shuffle them up and play again?';
+  $('#choices').classList.add('hidden');
+  $('#controls').innerHTML = '<button class="btn big next" id="againBtn">🔀 Play again</button>';
+  $('#againBtn').onclick = () => { newDeck(C()); save(); loadSong(); };
+  renderTeams();
+}
+
+/* teams + choices toggles */
+$('#teamsBtn').onclick = () => { const t = C().teams; t.n = t.n === 0 ? 2 : t.n === 4 ? 0 : t.n + 1; save(); renderTeams(); };
+$('#choicesBtn').onclick = () => { store.choices = !store.choices; save(); $('#choicesBtn').classList.toggle('on', store.choices); if (!revealed) renderChoices(); };
+$('#choicesBtn').classList.toggle('on', !!store.choices);
+
+/* settings: songs, links, start times */
+function parseLink(str){
+  str = (str || '').trim(); if (!str) return {yt:'', start:null};
+  if (/^[\w-]{11}$/.test(str)) return {yt:str, start:null};
+  try {
+    const u = new URL(str); let id = '';
+    if (u.hostname.includes('youtu.be')) id = u.pathname.slice(1);
+    else if (u.pathname.startsWith('/embed/') || u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2];
+    else id = u.searchParams.get('v') || '';
+    const t = u.searchParams.get('t') || u.searchParams.get('start');
+    return {yt:/^[\w-]{11}$/.test(id) ? id : '', start:t ? parseInt(t, 10) : null};
+  } catch(e){ return {yt:'', start:null}; }
+}
+$('#setBtn').onclick = () => {
+  const rows = SONGS.map(s0 => { const s = song(s0.id); return `<div class="srow"><input type="checkbox" data-on="${s.id}"${s.off ? '' : ' checked'} title="Include this song"><span>${s.e} <b>${esc(s.title)}</b><br><span class="hint">${esc(s.artist)}</span></span><input type="text" data-link="${s.id}" value="https://youtu.be/${s.yt}" aria-label="YouTube link"><input type="number" min="0" data-start="${s.id}" value="${s.start}" aria-label="Start at (seconds)" title="Start at (seconds)"></div>`; }).join('');
+  $('#sheet').innerHTML = `<h2>⚙ Songs</h2>
+    <p class="hint">Untick a song to leave it out. Paste any YouTube link to swap a video. The last box is where the clip starts, in seconds. Use it if a video has a long quiet intro.</p>
+    <div class="srow" style="font-weight:900"><span></span><span>Song</span><span>YouTube link</span><span>Start (s)</span></div>${rows}
+    <div class="opt" style="margin-top:14px"><button class="btn gold" id="saveSongs">✅ Save</button><button class="btn" id="resetSongs">↩ Reset to defaults</button><button class="btn" id="reshuffle">🔀 Start over with a new shuffle</button><div class="spacer"></div><button class="btn" id="closeSet">Close</button></div>`;
+  $('#modal').classList.remove('hidden');
+  $('#closeSet').onclick = () => $('#modal').classList.add('hidden');
+  $('#saveSongs').onclick = () => {
+    SONGS.forEach(s => {
+      const link = parseLink(document.querySelector(`[data-link="${s.id}"]`).value), st = +document.querySelector(`[data-start="${s.id}"]`).value || 0, on = document.querySelector(`[data-on="${s.id}"]`).checked;
+      const o = {};
+      if (link.yt && link.yt !== s.yt) o.yt = link.yt;
+      o.start = link.start != null && link.yt !== s.yt ? link.start : st;
+      if (!o.start) delete o.start;
+      if (!on) o.off = true;
+      if (Object.keys(o).length) store.songs[s.id] = o; else delete store.songs[s.id];
+    });
+    if (activeSongs().length < 4){ toast('Keep at least 4 songs ticked'); return; }
+    const c = C(); const act = new Set(activeSongs().map(s => s.id));
+    const playedOk = c.order.slice(0, c.idx).filter(id => act.has(id));
+    c.order = [...playedOk, ...shuffle([...act].filter(id => !playedOk.includes(id)))]; c.idx = Math.min(c.idx, playedOk.length);
+    save(); $('#modal').classList.add('hidden'); toast('Saved!'); loadSong();
+  };
+  $('#resetSongs').onclick = () => { if (confirm('Put every song back to its original link?')){ store.songs = {}; save(); $('#setBtn').onclick(); } };
+  $('#reshuffle').onclick = () => { newDeck(C()); save(); $('#modal').classList.add('hidden'); loadSong(); toast('New shuffle!'); };
+};
+$('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); };
+
+/* floating music notes while a clip plays */
+let noteT = null;
+function startNotes(){ if (noteT) return; noteT = setInterval(() => { const n = document.createElement('i'); n.textContent = ['🎵', '🎶', '🔔', '✨'][Math.floor(Math.random() * 4)]; n.style.left = (5 + Math.random() * 90) + '%'; $('#notes').appendChild(n); setTimeout(() => n.remove(), 2300); }, 260); }
+function stopNotes(){ clearInterval(noteT); noteT = null; }
+
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 1800); }
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#f5c542', '#d64045', '#2fbf71', '#4aa3ff', '#ff8fc7'];
+  for (let i = 0; i < 90; i++){
+    const el = document.createElement('div'); el.style.cssText = `position:fixed;width:12px;height:18px;z-index:30;pointer-events:none;border-radius:2px;left:${innerWidth / 2}px;top:${innerHeight * .35}px;background:${colors[i % 5]}`;
+    document.body.appendChild(el);
+    const dx = (Math.random() - .5) * innerWidth, dy = -100 - Math.random() * 400, r = (Math.random() - .5) * 900;
+    try { el.animate([{transform:'translate(0,0)'}, {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, offset:.4}, {transform:`translate(${dx * 1.2}px,${dy + 800}px) rotate(${r * 2}deg)`, opacity:0}], {duration:2000, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove(); } catch(e) { el.remove(); }
+  }
+}
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || !$('#modal').classList.contains('hidden')) return;
+  if (e.key === ' '){ e.preventDefault(); if (!revealed && !clipEnd && cur) playClip(); }
+  if (e.key === 'Enter'){ e.preventDefault(); if (cur && !revealed && step > 0) reveal(); else if (revealed) next(); }
+});
+if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => { try { player && player.stopVideo(); } catch(e) {} window.parent.postMessage({type:'twr-close'}, '*'); }; }
+if (location.protocol === 'file:'){
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:900;background:#d64045;color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:92vw;text-align:center';
+  bar.textContent = '⚠ Songs won’t play when this file is opened from your computer. Upload it to your website (GitHub Pages) and open it from there.';
+  document.body.appendChild(bar);
+}
+// draw the first song right away; the player hooks in when YouTube is ready
+loadSong();
+</script>
+</body>
+</html>
