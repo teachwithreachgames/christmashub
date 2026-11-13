@@ -91,7 +91,7 @@ body.board .paper{width:min(1200px,100%)}
 .key i{width:22px;height:22px;border-radius:5px;border:2px solid #111;display:inline-block}
 
 #printArea{display:none}
-.toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:#fdf6e3;color:#102018;padding:10px 18px;border-radius:12px;font-weight:900;z-index:40;transition:opacity .4s;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#fdf6e3;color:#102018;padding:10px 18px;border-radius:12px;font-weight:900;z-index:40;transition:opacity .4s;pointer-events:none}
 
 @media print{
   @page{size:letter portrait;margin:.45in}
@@ -277,7 +277,8 @@ function bindSearch(){
    ===================================================== */
 let CW = null;
 function makeCrossword(){
-  const entries = currentEntries().filter(([w, c]) => c).map(([w, clue]) => ({show:w, w:w.replace(/ /g, ''), clue})).slice(0, 14);
+  const entries = currentEntries().map(([w, clue]) => ({show:w, w:w.replace(/ /g, ''), clue:clue || ''})).slice(0, 16);
+  if (!entries.length){ CW = null; return; }
   let best = null;
   for (let attempt = 0; attempt < 60; attempt++){
     const list = attempt === 0 ? [...entries].sort((a, b) => b.w.length - a.w.length) : [...entries].sort(() => Math.random() - .5).sort((a, b) => (b.w.length > 6) - (a.w.length > 6));
@@ -332,6 +333,8 @@ function makeCrossword(){
   CW = best;
 }
 function cwPage(answers, interactive){
+  if (!CW) return `<div class="paper"><p class="pnote" style="margin:40px 0">Add some words in the panel on the left, then press ✅ Use these words.</p></div>`;
+  const bank = CW.placed.some(p => !p.clue) ? `<div class="key" style="border:2px dashed #111;border-radius:10px;padding:10px;margin:16px auto 0;max-width:700px"><span style="width:100%;justify-content:center">Word Bank</span>${[...CW.placed].sort((a, b) => a.show.localeCompare(b.show)).map(p => `<span style="font-weight:800">${esc(p.show)}</span>`).join('')}</div>` : '';
   const maxW = interactive ? (board ? 760 : 560) : 640, maxH = interactive ? (board ? 620 : 520) : 520;
   const cell = Math.min(46, Math.floor(maxW / CW.w), Math.floor(maxH / CW.h));
   const g = `<div class="cw" style="grid-template-columns:repeat(${CW.w},${cell}px);grid-auto-rows:${cell}px;font-size:${Math.round(cell*.55)}px">` +
@@ -342,13 +345,14 @@ function cwPage(answers, interactive){
       const inner = interactive && !answers ? `<input maxlength="1" data-r="${r}" data-c="${c}" value="${val}" aria-label="row ${r+1} column ${c+1}">` : `<div style="display:grid;place-items:center;height:100%;font-weight:900">${val}</div>`;
       return `<div class="c" data-r="${r}" data-c="${c}">${num ? `<span class="n">${num}</span>` : ''}${inner}</div>`;
     })).join('') + '</div>';
-  const clueList = dir => CW.placed.filter(p => p.dir === dir).sort((a, b) => a.n - b.n).map(p => `<li data-n="${p.n}" data-d="${dir}"><b>${p.n}.</b> ${esc(p.clue)} <span style="opacity:.6">(${p.w.length})</span></li>`).join('');
+  const clueList = dir => CW.placed.filter(p => p.dir === dir).sort((a, b) => a.n - b.n).map(p => `<li data-n="${p.n}" data-d="${dir}"><b>${p.n}.</b> ${p.clue ? esc(p.clue) + ' <span style="opacity:.6">(' + p.w.length + ')</span>' : p.w.length + ' letters'}</li>`).join('');
   return `<div class="paper">
     <h2 class="ptitle">${esc(pageTitle(THEMES[S.theme] && !S.useCustom ? THEMES[S.theme].name + ' Crossword' : 'Crossword'))}${answers ? ' · Answer Key' : ''}</h2>
     ${answers ? '' : '<div class="pline"><span>Name:</span><span style="flex:.5">Date:</span></div>'}
     ${g}
+    ${bank}
     <div class="clues"><div><h4>Across →</h4><ol>${clueList('across')}</ol></div><div><h4>Down ↓</h4><ol>${clueList('down')}</ol></div></div>
-    ${CW.missing.length && interactive ? `<p class="hint noprint" style="color:#b00">Couldn't fit: ${CW.missing.map(esc).join(', ')}.${S.useCustom ? ' Words need a clue, and need to share letters with other words.' : ''}</p>` : ''}
+    ${CW.missing.length && interactive ? `<p class="hint noprint" style="color:#b00">Couldn't fit: ${CW.missing.map(esc).join(', ')}. Words need to share a letter with another word. Try 🔀 New layout.</p>` : ''}
   </div>`;
 }
 let cwDir = 'across', cwFocus = null;
@@ -533,11 +537,11 @@ function opts(id, list, cur, onPick){
 function wordSettings(){
   return `<h3>📚 Words</h3>
     <label>Theme</label>
-    ${opts('#themeOpts', [...Object.entries(THEMES).map(([k, t]) => [k, t.name]), ['custom', '✏️ My own words']], S.useCustom ? 'custom' : S.theme, v => { if (v === 'custom'){ S.useCustom = true; } else { S.useCustom = false; S.theme = v; } save(); fresh(); renderSettings(); })}
+    ${opts('#themeOpts', [...Object.entries(THEMES).map(([k, t]) => [k, t.name]), ['custom', '✏️ My own words']], S.useCustom ? 'custom' : S.theme, v => { if (v === 'custom'){ S.useCustom = true; } else { S.useCustom = false; S.theme = v; } save(); renderSettings(); fresh(); })}
     <div class="${S.useCustom ? '' : 'hidden'}">
       <label for="customIn">Your words, one per line</label>
       <textarea class="in" id="customIn" placeholder="${S.tab === 'cross' ? 'SNOW - White flakes from the sky\nSLED - Ride it down a hill\nMITTENS - Warm covers for your hands' : 'SNOW\nSLED\nMITTENS'}">${esc(S.custom)}</textarea>
-      <p class="hint">${S.tab === 'cross' ? 'Crosswords need a clue for each word: <b>WORD - clue</b>.' : 'Spelling words work great. For crosswords, add a clue: <b>WORD - clue</b>.'}</p>
+      <p class="hint">Spelling words work great. Add a clue after a word for crosswords: <b>WORD - clue</b>. Words without clues go in a word bank instead.</p>
       <button class="btn" id="useCustom" style="width:100%">✅ Use these words</button>
     </div>
     <label for="titleIn">Page title (optional)</label>
@@ -574,6 +578,7 @@ function renderToolbar(){
 }
 let showKey = false;
 function action(a){
+  if (S.tab === 'cross' && !CW && a !== 'new') return;
   if (a === 'new'){ fresh(); return; }
   if (a === 'key'){ showKey = !showKey; render(); return; }
   if (a === 'wipe'){ fills[S.pic] = {}; render(); return; }
@@ -587,9 +592,11 @@ function action(a){
    ===================================================== */
 function fresh(){
   showKey = false;
-  if (S.tab === 'search') makeSearch();
-  if (S.tab === 'cross') makeCrossword();
-  if (S.tab === 'math') makeMath();
+  try {
+    if (S.tab === 'search') makeSearch();
+    if (S.tab === 'cross') makeCrossword();
+    if (S.tab === 'math') makeMath();
+  } catch(e){ console.error(e); }
   render();
 }
 function render(){
@@ -602,14 +609,14 @@ function render(){
   if (S.tab === 'math') h = colourPage(showKey, true);
   $('#screen').innerHTML = h;
   if (S.tab === 'search') bindSearch();
-  if (S.tab === 'cross'){ bindCross(); cwHighlight(); }
+  if (S.tab === 'cross' && CW){ bindCross(); cwHighlight(); }
   if (S.tab === 'colour' || S.tab === 'math') bindColour();
 }
 $('#printBtn').onclick = () => {
   let pages = [];
   const savedFound = WS && WS.found, savedTyped = CW && CW.typed;
   if (S.tab === 'search'){ WS.found = []; pages = [wsPage(false, false), wsPage(true, false)]; WS.found = savedFound; }
-  if (S.tab === 'cross'){ CW.typed = {}; pages = [cwPage(false, false), cwPage(true, false)]; CW.typed = savedTyped; }
+  if (S.tab === 'cross'){ if (!CW) return toast('Add some words first'); CW.typed = {}; pages = [cwPage(false, false), cwPage(true, false)]; CW.typed = savedTyped; }
   if (S.tab === 'colour'){ const f = fills[S.pic]; fills[S.pic] = {}; pages = [colourPage(false, false)]; fills[S.pic] = f; }
   if (S.tab === 'math'){ const f = fills[S.pic]; fills[S.pic] = {}; pages = [colourPage(false, false), colourPage(true, false)]; fills[S.pic] = f; }
   $('#printArea').innerHTML = pages.join('');
