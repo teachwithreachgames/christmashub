@@ -25,7 +25,8 @@ h1 span{color:var(--gold)}
 .pill{font-weight:900;background:rgba(255,255,255,.1);border-radius:999px;padding:6px 12px;white-space:nowrap}
 
 .wrap{flex:1;display:grid;grid-template-columns:1fr minmax(340px,400px);min-height:0}
-#scene{width:100%;height:100%;display:block}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fatal{position:fixed;inset:0;display:grid;place-items:center;background:#0d1530;color:#fff;font-size:22px;text-align:center;padding:30px;z-index:50}
 .stagebox{position:relative;min-height:0}
 .panel{background:rgba(0,0,0,.35);border-left:1px solid var(--line);padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
 .item{background:var(--cream);color:#1b2240;border-radius:20px;padding:16px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
@@ -81,18 +82,20 @@ h1 span{color:var(--gold)}
   <h1>🏔️ Santa <span>Summit</span></h1>
   <span class="pill" id="roundPill"></span>
   <div class="spacer"></div>
-  <button class="btn" id="teamsBtn" title="Play as one class or in teams">👥 Class</button>
+  <button class="btn" id="teamsBtn" title="Play as one class or in 2–4 teams">👥 Teams: Off</button>
   <button class="btn" id="sndBtn" title="Sound on/off">🔊</button>
   <button class="btn" id="setBtn">⚙ Items</button>
 </header>
 <div class="wrap">
-  <div class="stagebox"><svg id="scene" viewBox="0 0 1100 720" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div class="stagebox"><canvas id="c"></canvas></div>
   <aside class="panel" id="panel"></aside>
 </div>
 <div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast" style="opacity:0"></div>
 
-<script>
+<script type="module">
+import * as THREE from './vendor/three-bundle.min.js';
+
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const params = new URLSearchParams(location.search), EMBED = params.has('embed');
@@ -126,6 +129,25 @@ const ITEMS = [
   {id:'falcon',  e:'🚀', n:'LEGO Millennium Falcon (UCS)',     d:'7,541-piece Star Wars set 75192',                p:1049.99, step:25,   tier:3, src:'LEGO.com Canada'},
   {id:'iphone',  e:'📱', n:'iPhone 17',                        d:'Starting price, Apple.ca',                       p:1299.00, step:25,   tier:3, src:'Apple Canada pricing, Sept 2026'},
   {id:'corolla', e:'🚗', n:'A brand-new Toyota Corolla',       d:'2026 Corolla L, starting MSRP (before fees)',    p:24520,   step:500,  tier:3, src:'Toyota Canada'},
+  {id:'applemus',e:'🎵', n:'Apple Music, one month',           d:'Individual plan in Canada',                      p:10.99,   step:1,    tier:1, src:'Apple Music Canada'},
+  {id:'netprem', e:'🎬', n:'Netflix Premium, one month',       d:'4K plan in Canada',                              p:23.99,   step:1,    tier:1, src:'Netflix Canada'},
+  {id:'primemo', e:'📦', n:'Amazon Prime, one month',          d:'Monthly membership in Canada',                   p:9.99,    step:0.50, tier:1, src:'Amazon.ca'},
+  {id:'fedwage', e:'🍁', n:'Federal minimum wage, one hour',   d:'For federally regulated jobs (from Apr 1, 2026)', p:18.15,  step:0.50, tier:1, src:'Government of Canada'},
+  {id:'primeyr', e:'🚚', n:'Amazon Prime, one year',           d:'Annual membership in Canada',                    p:99.00,   step:5,    tier:2, src:'Amazon.ca'},
+  {id:'primestu',e:'🎒', n:'Prime Student, one year',          d:'Half-price student membership',                  p:49.00,   step:2,    tier:2, src:'Amazon.ca'},
+  {id:'gta6',    e:'🌴', n:'Grand Theft Auto VI',              d:'Standard Edition, Canadian price',               p:109.99,  step:5,    tier:2, src:'Rockstar pre-order pricing, June 2026'},
+  {id:'gta6u',   e:'💎', n:'GTA VI Ultimate Edition',          d:'The deluxe version with bonus content',          p:139.99,  step:5,    tier:2, src:'Rockstar pre-order pricing, June 2026'},
+  {id:'vader',   e:'🪖', n:'LEGO Darth Vader Helmet',          d:'Star Wars helmet set 75304',                     p:99.99,   step:5,    tier:2, src:'LEGO.com Canada'},
+  {id:'passp5',  e:'🧳', n:'A 5-year Canadian passport',       d:'Adult passport, applying in Canada',             p:122.50,  step:5,    tier:2, src:'Government of Canada (IRCC)'},
+  {id:'airpodsw',e:'🔋', n:'AirPods 5 with Wireless Charging Case', d:'The upgraded AirPods 5 version',            p:209.00,  step:5,    tier:2, src:'Apple Canada pricing, Sept 2026'},
+  {id:'ps5dig',  e:'🎮', n:'PlayStation 5 Digital Edition',    d:'No disc drive, Sony recommended price',          p:749.99,  step:25,   tier:3, src:'Sony, price from Apr 2, 2026'},
+  {id:'mkbundle',e:'🏎️', n:'Switch 2 + Mario Kart World bundle', d:'Console, game and 3 months of Switch Online',  p:749.99,  step:25,   tier:3, src:'Nintendo of Canada'},
+  {id:'xboxx',   e:'🟩', n:'Xbox Series X',                    d:'1TB console with disc drive, Microsoft Store',   p:999.99,  step:25,   tier:3, src:'Microsoft Store Canada, Oct 2026'},
+  {id:'xboxs',   e:'⬜', n:'Xbox Series S (512GB)',            d:'The smaller digital-only Xbox, Microsoft Store', p:649.99,  step:25,   tier:3, src:'Microsoft Store Canada, Oct 2026'},
+  {id:'rent',    e:'🏢', n:'One month of rent in Canada',      d:'Average asking rent, all homes for rent (June 2026)', p:2033, step:50, tier:3, src:'Rentals.ca National Rent Report'},
+  {id:'tuition', e:'🎓', n:'One year of university tuition',   d:'Average for a Canadian undergrad, 2026/27',      p:8021,    step:200,  tier:3, src:'Statistics Canada'},
+  {id:'tuitint', e:'🌍', n:'University tuition for an international student', d:'Average undergrad, one year, 2026/27', p:42062, step:1000, tier:3, src:'Statistics Canada'},
+  {id:'house',   e:'🏠', n:'An average home in Canada',        d:'National average sale price, September 2026',    p:666538,  step:10000, tier:3, src:'Canadian Real Estate Association'},
 ];
 const TEAMS = [
   {name:'Team Santa',   col:'#d64045', who:'santa'},
@@ -171,98 +193,227 @@ function newRound(){
 const H = () => store.height;
 
 /* =====================================================
-   SVG SCENE
+   3D SCENE (Three.js)
+   The staircase climbs left to right toward a sheer cliff.
+   Step k stands at x = X0 + k*DX, y = k*DY. Lanes run along z.
    ===================================================== */
-const SVGNS = 'http://www.w3.org/2000/svg';
-const scene = $('#scene');
-// staircase geometry: step k (0..H) has a standing point
-const BASE = {x:120, y:640}, TOPP = {x:760, y:150};
-const stepPt = k => ({x:BASE.x + (TOPP.x - BASE.x) * k / H(), y:BASE.y + (TOPP.y - BASE.y) * k / H()});
-const CLIFF = {x:820, y:150}, LAND = {x:975, y:655};
-function drawScene(){
-  const h = H();
-  let stairs = '';
-  for (let k = 0; k < h; k++){
-    const a = stepPt(k), b = stepPt(k + 1);
-    stairs += `<path d="M${a.x - 12} ${a.y} L${a.x - 12} ${b.y} L${b.x - 12} ${b.y}" fill="none" stroke="#7d8fb3" stroke-width="5" stroke-linejoin="round"/>`;
-  }
-  let marks = '';
-  for (let k = 5; k <= h; k += 5){ const p = stepPt(k); marks += `<g transform="translate(${p.x - 58} ${p.y - 6})"><rect x="-22" y="-16" width="44" height="28" rx="8" fill="${k === h ? '#d64045' : '#1b2240'}"/><text x="0" y="5" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="18" fill="#fff">${k}</text></g>`; }
-  let stars = '';
-  for (let i = 0; i < 60; i++){ stars += `<circle cx="${(i * 197) % 1100}" cy="${(i * 89) % 300}" r="${(i % 3) * .6 + .6}" fill="#fff" opacity="${.3 + (i % 5) * .12}"/>`; }
-  scene.innerHTML = `
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1f4e"/><stop offset=".6" stop-color="#5a4a8a"/><stop offset="1" stop-color="#c98fb0"/></linearGradient>
-    <linearGradient id="mtn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d6ee"/></linearGradient>
-    <linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9fb0d6"/><stop offset="1" stop-color="#6f7fa8"/></linearGradient>
-  </defs>
-  <rect width="1100" height="720" fill="url(#sky)"/>${stars}
-  <circle cx="960" cy="90" r="38" fill="#fff6d8" opacity=".9"/>
-  <path d="M-20 720 L180 380 L300 470 L470 260 L560 330 L700 120 L820 150 L820 720 Z" fill="#8193c0" opacity=".45"/>
-  <path d="M0 720 L0 660 L${BASE.x - 30} 640 L${TOPP.x - 40} 150 L${CLIFF.x} 150 L${CLIFF.x + 10} 180 L${CLIFF.x - 6} 260 L${CLIFF.x + 8} 360 L${CLIFF.x - 4} 470 L${CLIFF.x + 12} 600 L${CLIFF.x + 4} 720 Z" fill="url(#mtn)" stroke="#aebbe0" stroke-width="3"/>
-  <path d="M${CLIFF.x} 150 L${CLIFF.x + 10} 180 L${CLIFF.x - 6} 260 L${CLIFF.x + 8} 360 L${CLIFF.x - 4} 470 L${CLIFF.x + 12} 600 L${CLIFF.x + 4} 720 L${CLIFF.x - 40} 720 L${CLIFF.x - 30} 300 Z" fill="url(#shade)" opacity=".5"/>
-  ${stairs}${marks}
-  <g transform="translate(${CLIFF.x - 18} 112)"><rect x="-3" y="0" width="6" height="40" fill="#5a3420"/><rect x="-46" y="-26" width="92" height="30" rx="6" fill="#f5c542" stroke="#5a3420" stroke-width="3"/><text x="0" y="-6" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="17" fill="#5a3420">⚠ CLIFF</text></g>
-  <path d="M870 720 Q930 640 990 660 Q1050 640 1100 690 L1100 720 Z" fill="#fff"/>
-  <ellipse cx="${LAND.x}" cy="${LAND.y + 14}" rx="70" ry="16" fill="#e3ecfb"/>
-  <text x="${LAND.x}" y="712" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="15" fill="#6f7fa8">snowbank</text>
-  <path d="M0 690 Q120 650 260 680 Q360 700 470 672 L470 720 L0 720 Z" fill="#fff"/>
-  ${pine(60, 640, 1)}${pine(30, 660, .8)}${pine(950, 600, .9)}${pine(1060, 620, 1.1)}
-  <g id="climbers"></g>
-  <g id="fx"></g>`;
+let renderer;
+try { renderer = new THREE.WebGLRenderer({canvas:$('#c'), antialias:true}); }
+catch(e){ document.body.insertAdjacentHTML('beforeend', '<div class="fatal">This browser can\'t show 3D graphics (WebGL is off). Try Chrome or Edge, or another computer.</div>'); throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene3 = new THREE.Scene();
+scene3.background = new THREE.Color(0x2a2d6a);
+scene3.fog = new THREE.Fog(0x4a3f80, 90, 230);
+const camera = new THREE.PerspectiveCamera(40, 1, .1, 800);
+scene3.add(new THREE.HemisphereLight(0xdfe8ff, 0x6a5a8a, 1.7));
+const moon = new THREE.DirectionalLight(0xfff1dc, 2.3);
+moon.position.set(-40, 80, 60); moon.castShadow = true; moon.shadow.mapSize.set(2048, 2048);
+Object.assign(moon.shadow.camera, {left:-70, right:70, top:60, bottom:-30, near:1, far:250});
+scene3.add(moon);
+const M = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({color, roughness:.85}, o));
+const SNOW = M(0xf7faff, {roughness:.95}), ROCK = M(0x8c93b0, {flatShading:true}), DARK = M(0x5e6690, {flatShading:true});
+function mesh(geo, mat, x = 0, y = 0, z = 0, shadow = true){ const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (shadow){ m.castShadow = true; m.receiveShadow = true; } return m; }
+function addTo(parent, geo, mat, x, y, z, rot){ const m = mesh(geo, mat, x, y, z); if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0); parent.add(m); return m; }
+function textSprite(text, {size = 64, color = '#ffffff', bg = 'rgba(27,34,64,.92)', scale = 1.6} = {}){
+  const c = document.createElement('canvas'), ctx = c.getContext('2d');
+  ctx.font = `900 ${size}px "Lilita One", Nunito, Arial`;
+  const w = Math.ceil(ctx.measureText(text).width) + size * .9, hh = Math.ceil(size * 1.45);
+  c.width = w; c.height = hh; ctx.font = `900 ${size}px "Lilita One", Nunito, Arial`;
+  if (bg){ ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(0, 0, w, hh, hh * .3); ctx.fill(); }
+  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, w / 2, hh / 2 + 2);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false}));
+  s.scale.set(scale * w / hh, scale, 1); s.renderOrder = 10; return s;
 }
-function pine(x, y, s){ return `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-5" y="0" width="10" height="16" fill="#5a3420"/><path d="M0 -70 L28 -20 L14 -20 L34 8 L-34 8 L-14 -20 L-28 -20Z" fill="#1f6b3d"/><path d="M0 -70 L10 -52 L-10 -52Z" fill="#fff"/></g>`; }
-function charSVG(who, col){
-  if (who === 'santa') return `<ellipse cx="0" cy="-22" rx="17" ry="20" fill="#d64045"/><rect x="-17" y="-24" width="34" height="5" fill="#222"/><circle cx="0" cy="-48" r="12" fill="#f2c7a5"/><path d="M-12 -46 Q0 -28 12 -46 Q8 -36 0 -34 Q-8 -36 -12 -46Z" fill="#fff"/><path d="M-12 -54 L0 -78 L14 -56Z" fill="#d64045"/><circle cx="15" cy="-72" r="5" fill="#fff"/><rect x="-13" y="-58" width="26" height="6" rx="3" fill="#fff"/><circle cx="-4" cy="-49" r="1.8" fill="#222"/><circle cx="4" cy="-49" r="1.8" fill="#222"/><rect x="-12" y="-4" width="9" height="6" fill="#222"/><rect x="3" y="-4" width="9" height="6" fill="#222"/>`;
-  if (who === 'elf') return `<rect x="-13" y="-38" width="26" height="34" rx="10" fill="#2fbf71"/><rect x="-13" y="-22" width="26" height="4" fill="#7a4a1e"/><circle cx="0" cy="-48" r="11" fill="#f2c7a5"/><path d="M-11 -52 Q0 -60 11 -52 L-2 -82 Z" fill="#d64045"/><circle cx="-2" cy="-83" r="4" fill="#f5c542"/><path d="M-11 -48 L-17 -54 L-10 -44Z M11 -48 L17 -54 L10 -44Z" fill="#f2c7a5"/><circle cx="-4" cy="-48" r="1.8" fill="#222"/><circle cx="4" cy="-48" r="1.8" fill="#222"/><rect x="-11" y="-4" width="8" height="6" rx="2" fill="#7a4a1e"/><rect x="3" y="-4" width="8" height="6" rx="2" fill="#7a4a1e"/>`;
-  if (who === 'snowman') return `<circle cx="0" cy="-16" r="16" fill="#fff" stroke="#bcd" stroke-width="2"/><circle cx="0" cy="-44" r="12" fill="#fff" stroke="#bcd" stroke-width="2"/><rect x="-10" y="-64" width="20" height="12" fill="#222"/><rect x="-14" y="-54" width="28" height="4" fill="#222"/><path d="M0 -44 L13 -42 L0 -40Z" fill="#f8961e"/><circle cx="-4" cy="-47" r="1.8" fill="#222"/><circle cx="4" cy="-47" r="1.8" fill="#222"/><path d="M-12 -33 L12 -33 L10 -28 L-10 -28Z" fill="${col}"/><circle cx="0" cy="-18" r="2" fill="#222"/><circle cx="0" cy="-10" r="2" fill="#222"/>`;
-  return `<ellipse cx="0" cy="-22" rx="18" ry="15" fill="#a0612f"/><rect x="-14" y="-12" width="6" height="14" fill="#7a4a1e"/><rect x="8" y="-12" width="6" height="14" fill="#7a4a1e"/><ellipse cx="8" cy="-44" rx="11" ry="12" fill="#a0612f"/><path d="M2 -54 L-6 -72 M-2 -64 L-12 -66 M12 -54 L18 -74 M16 -66 L26 -68" stroke="#5a3420" stroke-width="3" stroke-linecap="round"/><circle cx="19" cy="-41" r="5" fill="#ff3b3b"/><circle cx="6" cy="-47" r="1.8" fill="#222"/>`;
+
+/* fixed world: ground, distant peaks, trees, stars, snowbank */
+const X0 = -24, SPAN_X = 40, SPAN_Y = 24, LANES = [3.6, 1.2, -1.2, -3.6];
+const DX = () => SPAN_X / H(), DY = () => SPAN_Y / H();
+const stepPos = (k, lane) => new THREE.Vector3(X0 + k * DX(), k * DY(), LANES[lane]);
+const TOP_X = X0 + SPAN_X, CLIFF_X = TOP_X + 5, LAND = new THREE.Vector3(CLIFF_X + 9, 0, 0);
+{
+  const g = mesh(new THREE.PlaneGeometry(500, 300), SNOW); g.rotation.x = -Math.PI / 2; scene3.add(g);
+  // distant low-poly peaks
+  const peak = (x, z, r, h, c) => { const geo = new THREE.ConeGeometry(r, h, 7, 3); const p = geo.attributes.position; for (let i = 0; i < p.count; i++){ if (p.getY(i) < h / 2 - .1) { p.setX(i, p.getX(i) * (0.85 + Math.random() * .3)); p.setZ(i, p.getZ(i) * (0.85 + Math.random() * .3)); } } geo.computeVertexNormals(); const m = mesh(geo, M(c, {flatShading:true}), x, h / 2, z, false); scene3.add(m); const cap = mesh(new THREE.ConeGeometry(r * .32, h * .3, 7), SNOW, x, h * .86, z, false); scene3.add(cap); };
+  peak(-70, -90, 45, 70, 0x6c6aa6); peak(-10, -110, 55, 90, 0x5f5d9a); peak(60, -95, 40, 64, 0x6c6aa6); peak(110, -120, 50, 80, 0x5f5d9a); peak(-120, -70, 35, 50, 0x7774b0);
+  // stars + moon
+  const sg = new THREE.BufferGeometry(), sp = [];
+  for (let i = 0; i < 600; i++){ const a = Math.random() * Math.PI * 2, e = .15 + Math.random() * .8, r = 380; sp.push(Math.cos(a) * Math.cos(e) * r, Math.sin(e) * r, -Math.abs(Math.sin(a) * Math.cos(e) * r)); }
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+  scene3.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff, size:1.4, sizeAttenuation:false})));
+  scene3.add(mesh(new THREE.SphereGeometry(9, 24, 16), new THREE.MeshBasicMaterial({color:0xfff6d8}), 90, 95, -200, false));
+  // pines
+  const pine = (x, z, s) => { const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(s); addTo(t, new THREE.CylinderGeometry(.3, .4, 1.4), M(0x5a3420), 0, .7, 0); [[2, 2.6, 2.2], [1.6, 2.2, 3.5], [1.1, 1.9, 4.7]].forEach(([r, hh, y]) => addTo(t, new THREE.ConeGeometry(r, hh, 8), M(0x1f6b3d), 0, y, 0)); addTo(t, new THREE.ConeGeometry(.8, .8, 8), SNOW, 0, 5.5, 0); scene3.add(t); };
+  for (let i = 0; i < 40; i++){ const x = -80 + Math.random() * 170, z = -12 - Math.random() * 45; pine(x, z, .7 + Math.random() * .8); }
+  [[-34, 6], [-38, -2], [-32, -8], [LAND.x + 9, -6], [LAND.x + 10, 4]].forEach(([x, z]) => pine(x, z, 1 + Math.random() * .4));
+  // snowbank at the bottom of the cliff
+  [[0, 0, 0, 5], [3, 0, 2, 3.5], [-3, 0, -2, 3.8], [2, 0, -3, 3], [-2, 0, 3, 3.2]].forEach(([x, y, z, r]) => { const b = mesh(new THREE.SphereGeometry(r, 16, 10), SNOW, LAND.x + x, -r * .45, z); b.scale.y = .6; scene3.add(b); });
+  const sign = new THREE.Group(); sign.position.set(LAND.x, 0, 7);
+  addTo(sign, new THREE.BoxGeometry(.25, 3, .25), M(0x5a3420), 0, 1.5, 0); const sl = textSprite('SNOWBANK', {size:44, scale:1.2, bg:'rgba(245,197,66,.95)', color:'#5a3420'}); sl.position.set(0, 3.4, 0); sign.add(sl);
+  scene3.add(sign);
+}
+/* the mountain + stairs (rebuilt when the height setting changes) */
+const mountain = new THREE.Group(); scene3.add(mountain);
+function buildMountain(){
+  mountain.clear();
+  const h = H(), dx = DX(), dy = DY();
+  // side profile: staircase on top, sheer cliff on the right, extruded through the lanes
+  const s = new THREE.Shape();
+  s.moveTo(X0 - 14, 0);
+  s.lineTo(X0 - 1, 0);
+  for (let k = 1; k <= h; k++){ const x = X0 + (k - .5) * dx, y = k * dy; s.lineTo(x, (k - 1) * dy); s.lineTo(x, y); }
+  s.lineTo(CLIFF_X, h * dy);
+  // jagged cliff face going down
+  const cy = h * dy;
+  [[.6, .85], [-.4, .7], [.8, .52], [-.2, .35], [.5, .18], [0, 0]].forEach(([ox, f]) => s.lineTo(CLIFF_X + ox, cy * f));
+  s.lineTo(X0 - 14, 0);
+  const geo = new THREE.ExtrudeGeometry(s, {depth:10, bevelEnabled:false}); geo.translate(0, 0, -5);
+  mountain.add(mesh(geo, ROCK));
+  // snow on every tread + numbers every 5 steps
+  for (let k = 0; k <= h; k++){
+    const x = X0 + k * dx, y = k * dy;
+    const w = k === h ? (CLIFF_X - x + dx / 2) : dx;
+    mountain.add(mesh(new THREE.BoxGeometry(w + .02, .35, 10.2), SNOW, x + (k === h ? (CLIFF_X - x - dx / 2) / 2 : 0), y + .02, 0));
+    if (k && k % 5 === 0){ const t = textSprite(String(k), {size:60, scale:2.1, bg:k === h ? 'rgba(214,64,69,.95)' : 'rgba(27,34,64,.92)'}); t.position.set(x - dx / 2, y + 1.6, 6.4); mountain.add(t); }
+  }
+  // rock mass behind the stairs so it reads as a mountain, not a wall
+  const back = new THREE.Shape(); back.moveTo(X0 - 22, 0); back.lineTo(X0 + SPAN_X * .45, h * dy + 10); back.lineTo(X0 + SPAN_X * .62, h * dy + 4); back.lineTo(CLIFF_X + 2, h * dy + 6); back.lineTo(CLIFF_X + 8, 0);
+  const bg = new THREE.ExtrudeGeometry(back, {depth:8, bevelEnabled:false}); bg.translate(0, 0, -13);
+  mountain.add(mesh(bg, DARK, 0, 0, 0, false));
+  const capS = new THREE.Shape(); capS.moveTo(X0 + SPAN_X * .32, h * dy + 5); capS.lineTo(X0 + SPAN_X * .45, h * dy + 10); capS.lineTo(X0 + SPAN_X * .62, h * dy + 4); capS.lineTo(X0 + SPAN_X * .55, h * dy + 2.5); capS.lineTo(X0 + SPAN_X * .45, h * dy + 6);
+  const cg = new THREE.ExtrudeGeometry(capS, {depth:8.2, bevelEnabled:false}); cg.translate(0, 0, -13.1); mountain.add(mesh(cg, SNOW, 0, 0, 0, false));
+  // cliff warning sign + red flag
+  const sign = new THREE.Group(); sign.position.set(CLIFF_X - 1.2, h * dy, -4.2);
+  addTo(sign, new THREE.BoxGeometry(.25, 3.4, .25), M(0x5a3420), 0, 1.7, 0);
+  const st = textSprite('⚠ CLIFF', {size:52, scale:1.6, bg:'rgba(245,197,66,.97)', color:'#5a3420'}); st.position.set(0, 3.9, 0); sign.add(st);
+  mountain.add(sign);
+}
+
+/* the climbers */
+function makeChar(who, col){
+  const g = new THREE.Group(), b = new THREE.Group(); g.add(b); g.userData.body = b;
+  const skin = M(0xf2c7a5), red = M(0xd64045), white = M(0xffffff), black = M(0x222222);
+  if (who === 'santa'){
+    const body = addTo(b, new THREE.SphereGeometry(.62, 18, 14), red, 0, .95, 0); body.scale.set(1, 1.1, 1);
+    addTo(b, new THREE.TorusGeometry(.6, .08, 8, 22), black, 0, .9, 0, [Math.PI / 2]);
+    addTo(b, new THREE.SphereGeometry(.38, 16, 12), skin, 0, 1.85, 0);
+    const beard = addTo(b, new THREE.SphereGeometry(.34, 14, 10), white, .12, 1.72, 0); beard.scale.set(.75, 1, 1.05);
+    addTo(b, new THREE.ConeGeometry(.36, .7, 14), red, -.05, 2.38, 0, [0, 0, .35]);
+    addTo(b, new THREE.TorusGeometry(.34, .09, 8, 18), white, 0, 2.1, 0, [Math.PI / 2]);
+    addTo(b, new THREE.SphereGeometry(.12, 8, 6), white, -.28, 2.68, 0);
+    [-.25, .25].forEach(z => addTo(b, new THREE.BoxGeometry(.32, .35, .26), black, .05, .17, z));
+  } else if (who === 'elf'){
+    addTo(b, new THREE.CylinderGeometry(.42, .5, 1.1, 14), M(0x2fbf71), 0, .85, 0);
+    addTo(b, new THREE.TorusGeometry(.47, .07, 8, 20), M(0x7a4a1e), 0, .75, 0, [Math.PI / 2]);
+    addTo(b, new THREE.SphereGeometry(.36, 16, 12), skin, 0, 1.7, 0);
+    addTo(b, new THREE.ConeGeometry(.34, 1.1, 14), red, -.15, 2.4, 0, [0, 0, .45]);
+    addTo(b, new THREE.SphereGeometry(.1, 8, 6), M(0xf5c542), -.42, 2.9, 0);
+    [-.38, .38].forEach(z => addTo(b, new THREE.ConeGeometry(.08, .35, 6), skin, 0, 1.78, z, [z > 0 ? Math.PI / 2.4 : -Math.PI / 2.4]));
+    [-.2, .2].forEach(z => addTo(b, new THREE.BoxGeometry(.4, .3, .22), M(0x7a4a1e), .08, .15, z));
+  } else if (who === 'snowman'){
+    addTo(b, new THREE.SphereGeometry(.62, 18, 14), white, 0, .62, 0);
+    addTo(b, new THREE.SphereGeometry(.42, 16, 12), white, 0, 1.5, 0);
+    addTo(b, new THREE.CylinderGeometry(.27, .27, .5, 14), black, 0, 2.15, 0);
+    addTo(b, new THREE.CylinderGeometry(.42, .42, .06, 18), black, 0, 1.9, 0);
+    addTo(b, new THREE.ConeGeometry(.08, .45, 8), M(0xf8961e), .55, 1.52, 0, [0, 0, -Math.PI / 2]);
+    addTo(b, new THREE.TorusGeometry(.36, .1, 8, 18), M(new THREE.Color(col).getHex()), 0, 1.18, 0, [Math.PI / 2]);
+    [0, .35, -.35].forEach((y, i) => i < 2 && addTo(b, new THREE.SphereGeometry(.06, 8, 6), black, .6, .7 + y * .6, 0));
+  } else {
+    const fur = M(0xa0612f);
+    const body = addTo(b, new THREE.SphereGeometry(.6, 16, 12), fur, 0, 1.0, 0); body.scale.set(1.35, .85, .85);
+    [[-.45, -.25], [-.45, .25], [.45, -.25], [.45, .25]].forEach(([x, z]) => addTo(b, new THREE.CylinderGeometry(.09, .09, .6), M(0x7a4a1e), x, .3, z));
+    addTo(b, new THREE.SphereGeometry(.34, 14, 10), fur, .8, 1.55, 0);
+    addTo(b, new THREE.SphereGeometry(.11, 10, 8), M(0xff2a2a, {emissive:0xff2a2a, emissiveIntensity:.6}), 1.12, 1.5, 0);
+    [-.15, .15].forEach(z => { addTo(b, new THREE.CylinderGeometry(.04, .04, .6), M(0x5a3420), .7, 2.05, z * 1.4, [z > 0 ? .4 : -.4, 0, .2]); addTo(b, new THREE.CylinderGeometry(.03, .03, .3), M(0x5a3420), .62, 2.25, z * 2.4, [z > 0 ? 1.1 : -1.1, 0, 0]); });
+  }
+  return g;
+}
+function countSprite(n, col){
+  const s = textSprite(n > H() ? '💥' : String(n), {size:64, scale:1.15, bg:col});
+  return s;
 }
 let actors = [];
+const climberGroup = new THREE.Group(); scene3.add(climberGroup);
 function buildClimbers(){
-  drawScene();
-  const g = scene.querySelector('#climbers');
+  buildMountain();
+  climberGroup.clear(); puffs.forEach(p => scene3.remove(p)); puffs.length = 0;
   actors = R.climbers.map((c, i) => {
-    const t = TEAMS[i];
-    const el = document.createElementNS(SVGNS, 'g');
-    el.innerHTML = `<g class="body">${charSVG(t.who, t.col)}</g><g transform="translate(0 -96)"><rect x="-22" y="-13" width="44" height="22" rx="8" fill="${t.col}" stroke="#fff" stroke-width="2"/><text class="cnt" x="0" y="4" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="15" fill="#fff">0</text></g>`;
-    g.appendChild(el);
-    const a = {el, i, x:0, y:0, rot:0, scale:1.3};
-    place(a, 0); return a;
+    const t = TEAMS[i], g = makeChar(t.who, t.col); g.scale.setScalar(1.9);
+    climberGroup.add(g);
+    const a = {g, i, tag:null, rot:0};
+    setCount(a, 0); place(a, 0); return a;
   });
-  // back-to-front so front climbers are drawn last
-  actors.slice().reverse().forEach(a => g.appendChild(a.el));
+  focus = null;
 }
-const laneOff = i => ({x:-i * 20, y:i * 11});
-function place(a, k){ const p = stepPt(k), o = laneOff(a.i); a.x = p.x + o.x; a.y = p.y + o.y; draw(a); }
-function draw(a){ a.el.setAttribute('transform', `translate(${a.x} ${a.y}) rotate(${a.rot}) scale(${a.scale})`); }
-function setCount(a, n){ a.el.querySelector('.cnt').textContent = n > H() ? '💥' : n; }
-
-/* tween helper (rAF, safe on SVG everywhere) */
+function place(a, k){ a.g.position.copy(stepPos(k, a.i)); a.g.rotation.set(0, 0, 0); a.g.userData.body.rotation.set(0, 0, 0); }
+function setCount(a, n){
+  if (a.tag){ a.g.remove(a.tag); a.tag.material.map.dispose(); }
+  a.tag = countSprite(n, TEAMS[a.i].col); a.tag.scale.multiplyScalar(.75); a.tag.position.set(0, 3.4, 0); a.g.add(a.tag);
+}
+/* tween helper */
 function tween(ms, fn){ return new Promise(res => { const t0 = performance.now(); const f = now => { const p = Math.min(1, (now - t0) / ms); fn(p); if (p < 1) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); }); }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function hopTo(a, k){
-  const s = stepPt(k - 1), e = stepPt(k), o = laneOff(a.i);
-  await tween(150, p => { a.x = s.x + o.x + (e.x - s.x) * p; a.y = s.y + o.y + (e.y - s.y) * p - Math.sin(p * Math.PI) * 14; draw(a); });
+  const s = stepPos(k - 1, a.i), e = stepPos(k, a.i);
+  await tween(170, p => { a.g.position.lerpVectors(s, e, p); a.g.position.y += Math.sin(p * Math.PI) * 1.4; a.g.userData.body.rotation.z = Math.sin(p * Math.PI) * .15; });
 }
+async function cheer(a){ const y = a.g.position.y; await tween(500, p => { a.g.position.y = y + Math.sin(p * Math.PI * 2) * .6 * (1 - p); a.g.rotation.y = p * Math.PI * 2; }); a.g.rotation.y = 0; }
+let focus = null;
 async function fall(a){
-  const o = laneOff(a.i), top = stepPt(H());
-  // teeter at the edge
-  await tween(300, p => { a.x = top.x + o.x + (CLIFF.x - 10 - top.x) * p; a.y = top.y + o.y; draw(a); });
-  for (let w = 0; w < 3; w++){ await tween(140, p => { a.rot = Math.sin(p * Math.PI) * (w % 2 ? -18 : 18); draw(a); }); }
+  focus = a;
+  const top = stepPos(H(), a.i), edge = new THREE.Vector3(CLIFF_X - .3, top.y, a.g.position.z);
+  await tween(380, p => { a.g.position.lerpVectors(top, edge, p); a.g.position.y = top.y + Math.abs(Math.sin(p * Math.PI * 3)) * .25; });
+  for (let w = 0; w < 4; w++) await tween(150, p => { a.g.userData.body.rotation.z = Math.sin(p * Math.PI) * (w % 2 ? -.5 : .5); });
   sfx.fall();
-  const sx = a.x, sy = a.y, ex = LAND.x + o.x * .6 - 10, ey = LAND.y + o.y * .3;
-  await tween(1100, p => { a.x = sx + (ex - sx) * p; a.y = sy + (ey - sy) * p * p - Math.sin(p * Math.PI) * 60; a.rot = p * 450; draw(a); });
-  a.rot = 90; draw(a); sfx.thud(); puff(ex, ey);
+  const s = a.g.position.clone(), e = new THREE.Vector3(LAND.x - 3 + a.i * 2, 1.2, a.g.position.z * .6);
+  await tween(1300, p => {
+    a.g.position.set(s.x + (e.x - s.x) * p, s.y + (e.y - s.y) * p * p + Math.sin(p * Math.PI) * 3, s.z + (e.z - s.z) * p);
+    a.g.rotation.z = -p * Math.PI * 3.5; a.g.rotation.x = p * 1.2;
+  });
+  a.g.rotation.set(0, .4 * a.i, -Math.PI / 2); a.g.position.y = 1.4;
+  sfx.thud(); puff(e);
+  await wait(700); focus = null;
 }
-function puff(x, y){
-  const fx = scene.querySelector('#fx');
-  for (let i = 0; i < 14; i++){
-    const c = document.createElementNS(SVGNS, 'circle'); c.setAttribute('r', 8 + Math.random() * 8); c.setAttribute('fill', '#fff'); fx.appendChild(c);
-    const dx = (Math.random() - .5) * 140, dy = -20 - Math.random() * 60;
-    tween(700, p => { c.setAttribute('cx', x + dx * p); c.setAttribute('cy', y + dy * p + 40 * p * p); c.setAttribute('opacity', 1 - p); }).then(() => c.remove());
+const puffs = [];
+function puff(at){
+  for (let i = 0; i < 26; i++){
+    const m = mesh(new THREE.SphereGeometry(.3 + Math.random() * .4, 8, 6), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true}), at.x, at.y, at.z, false);
+    m.userData.v = new THREE.Vector3((Math.random() - .5) * 10, 4 + Math.random() * 8, (Math.random() - .5) * 10); m.userData.life = 1;
+    scene3.add(m); puffs.push(m);
   }
 }
+/* falling snow */
+const SN = 1200, snowGeo = new THREE.BufferGeometry(), snowArr = new Float32Array(SN * 3);
+for (let i = 0; i < SN; i++){ snowArr[i * 3] = -70 + Math.random() * 140; snowArr[i * 3 + 1] = Math.random() * 60; snowArr[i * 3 + 2] = -30 + Math.random() * 60; }
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowArr, 3));
+scene3.add(new THREE.Points(snowGeo, new THREE.PointsMaterial({color:0xffffff, size:.25, transparent:true, opacity:.85, depthWrite:false})));
+
+/* camera: a wide shot of the whole mountain; it leans toward anyone falling */
+const camPos = new THREE.Vector3(14, 18, 70), camLook = new THREE.Vector3(5, 10, 0);
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  let want, look;
+  const aspect = camera.aspect, wide = 60 * Math.max(1, 1.55 / aspect);
+  if (focus){ const p = focus.g.position; want = new THREE.Vector3(p.x - 4, p.y + 8, p.z + 30); look = new THREE.Vector3(p.x + 4, p.y + 1, p.z); }
+  else {
+    // a slightly angled wide shot that keeps the stairs, the cliff and the snowbank in view
+    const hi = actors.reduce((m, a) => Math.max(m, a.g.position.y), 0);
+    want = new THREE.Vector3(12 + Math.sin(now / 9000) * 2, 14 + hi * .2, wide); look = new THREE.Vector3(5, 11 + hi * .2, 0);
+  }
+  const k = 1 - Math.pow(.05, dt);
+  camPos.lerp(want, k); camLook.lerp(look, k);
+  camera.position.copy(camPos); camera.lookAt(camLook);
+  const pa = snowGeo.attributes.position.array;
+  for (let i = 0; i < SN; i++){ pa[i * 3 + 1] -= dt * (2 + (i % 5) * .3); if (pa[i * 3 + 1] < 0) pa[i * 3 + 1] = 60; }
+  snowGeo.attributes.position.needsUpdate = true;
+  for (let i = puffs.length - 1; i >= 0; i--){ const p = puffs[i]; p.userData.life -= dt * 1.1; p.userData.v.y -= 14 * dt; p.position.addScaledVector(p.userData.v, dt); p.material.opacity = Math.max(0, p.userData.life); if (p.userData.life <= 0){ scene3.remove(p); puffs.splice(i, 1); } }
+  renderer.render(scene3, camera);
+  requestAnimationFrame(frame);
+}
+function resize(){ const box = $('.stagebox'), w = box.clientWidth, hh = box.clientHeight; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize);
 
 /* =====================================================
    SOUND
@@ -338,7 +489,7 @@ async function reveal(){
   await Promise.all(R.climbers.map(async (c, i) => {
     if (c.out) return;
     const a = actors[i], g = c.guesses[R.i], add = Math.round(Math.abs(g - it.p) / it.step);
-    if (add === 0){ sfx.bull(); toast(`🎯 ${CL.teams > 1 ? CL.names[i] : 'Bullseye'}: exact price!`); return; }
+    if (add === 0){ sfx.bull(); cheer(a); toast(`🎯 ${CL.teams > 1 ? CL.names[i] : 'Bullseye'}: exact price!`); return; }
     for (let s = 0; s < add; s++){
       c.steps++;
       if (c.steps > H()){ setCount(a, c.steps); c.out = true; await fall(a); return; }
@@ -383,9 +534,10 @@ function renderEnd(prog){
    ===================================================== */
 $('#teamsBtn').onclick = () => {
   if (R && ['climbing', 'revealed'].includes(R.phase)) return;
-  CL.teams = CL.teams >= 4 ? 1 : CL.teams + 1; save(); renderTeamsBtn(); newRound();
+  CL.teams = CL.teams >= 4 ? 1 : CL.teams + 1; save(); resize(); renderTeamsBtn(); newRound(); requestAnimationFrame(frame);
+window.__summit = {get R(){ return R; }, get actors(){ return actors; }};
 };
-function renderTeamsBtn(){ $('#teamsBtn').textContent = CL.teams === 1 ? '👥 Class' : `👥 ${CL.teams} teams`; $('#teamsBtn').classList.toggle('on', CL.teams > 1); }
+function renderTeamsBtn(){ $('#teamsBtn').textContent = CL.teams === 1 ? '👥 Teams: Off' : `👥 Teams: ${CL.teams}`; $('#teamsBtn').classList.toggle('on', CL.teams > 1); }
 $('#sndBtn').onclick = () => { store.sound = !store.sound; save(); $('#sndBtn').textContent = store.sound ? '🔊' : '🔇'; };
 $('#setBtn').onclick = openSettings;
 function openSettings(){
@@ -445,7 +597,8 @@ function confetti(){
 }
 if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => window.parent.postMessage({type:'twr-close'}, '*'); }
 $('#sndBtn').textContent = store.sound ? '🔊' : '🔇';
-renderTeamsBtn(); newRound();
+resize(); renderTeamsBtn(); newRound(); requestAnimationFrame(frame);
+window.__summit = {get R(){ return R; }, get actors(){ return actors; }};
 </script>
 </body>
 </html>
