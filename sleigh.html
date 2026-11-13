@@ -37,7 +37,7 @@ h1 span{color:var(--gold)}
 .tip{font-weight:700;opacity:.9;font-size:16px;line-height:1.4}
 
 .controls{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:10px 14px;z-index:4;backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100vw - 20px)}
-.prot{width:170px;height:96px;flex:none}
+.prot{width:200px;height:113px;flex:none}
 .deg{font-family:'Lilita One',cursive;font-size:44px;min-width:110px;text-align:center;line-height:1}
 .deg small{display:block;font-family:Nunito;font-size:13px;font-weight:800;opacity:.7}
 .adj{display:flex;flex-direction:column;gap:6px;align-items:center}
@@ -104,25 +104,24 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } c
 
 /* =====================================================
    PHYSICS + GAME RULES
-   Angles (Gr 4–8): lip 3 m up, town on a 3 m plateau, so range = v² sin2θ / g.
-   Sizes (K–3): 30° ramp, height = blocks, flat ground.
+   Angles (Gr 4–8): the ramp board is always 7 m long, so a steeper ramp is a taller ramp.
+   Sizes (K–3): 30° ramp, height = blocks. Everything lands on flat ground.
    ===================================================== */
-const G = 9.8, V_ANG = 18, LIP = 3, PLAT_X = 4, PAD_R = 1.6;
+const G = 9.8, V_ANG = 17, BOARD = 7, PAD_R = 1.6;
 const SIZE_ANGLE = 30;
 const SIZES = {small:2, medium:4, big:7};
 const isAngles = () => ['g4', 'g56', 'g78'].includes(ST.band);
 const sizeSpeed = b => 8 + 1.2 * b;
 function launchInfo(){
-  if (isAngles()) return {theta:angle, H:LIP, v:V_ANG};
+  if (isAngles()) return {theta:angle, H:BOARD * Math.sin(angle * Math.PI / 180), v:V_ANG};
   return {theta:SIZE_ANGLE, H:blocks, v:sizeSpeed(blocks)};
 }
-const landY = x => (isAngles() && x >= PLAT_X) ? LIP : 0;
+const landY = x => 0;
 function rangeFor(theta, H, v){
   const r = theta * Math.PI / 180, vs = v * Math.sin(r), vc = v * Math.cos(r);
-  if (isAngles()) return v * v * Math.sin(2 * r) / G;          // lands back at lip height
   return vc * (vs + Math.sqrt(vs * vs + 2 * G * H)) / G;        // lands on the ground
 }
-const rangeAngle = th => rangeFor(th, LIP, V_ANG);
+const rangeAngle = th => rangeFor(th, BOARD * Math.sin(th * Math.PI / 180), V_ANG);
 const rangeBlocks = b => rangeFor(SIZE_ANGLE, b, sizeSpeed(b));
 
 let angle = 30, blocks = 4, sizeName = 'medium';
@@ -153,15 +152,16 @@ function makeQuestion(){
   }
   if (b === 'g4'){
     const forms = [
-      () => { const a = pick([10, 15, 20, 25, 30, 35, 60, 65, 70, 75, 80]); return [a, `Estimate! Set the ramp to <b>${a}°</b>.`, 'The degrees are hidden until you launch.', `${a}°`]; },
+      () => { const a = pick([15, 20, 25, 35, 40, 55, 65, 70, 75]); return [a, `Use the protractor on the ramp to set it to <b>${a}°</b>.`, 'Read where the red ramp crosses the protractor.', `${a}°`]; },
+      () => { const a = pick([10, 30, 45, 60, 80]); return [a, `Estimate! Set the ramp to about <b>${a}°</b>.`, 'The numbers are hidden until you launch. Then check with the protractor!', `${a}°`, true]; },
       () => [45, 'Set the ramp to <b>half of a right angle</b>.', 'A right angle is 90°.', '90 ÷ 2 = 45°'],
       () => [30, 'Set the ramp to <b>one third of a right angle</b>.', 'A right angle is 90°.', '90 ÷ 3 = 30°'],
       () => [60, 'Set the ramp to <b>two thirds of a right angle</b>.', 'A right angle is 90°.', '90 ÷ 3 × 2 = 60°'],
       () => { const k = pick([15, 20, 25, 30]); return [90 - k, `Set the ramp to <b>a right angle take away ${k}°</b>.`, 'A right angle is 90°.', `90 − ${k} = ${90 - k}°`]; },
-      () => { const a = pick([15, 20, 25, 30, 35]); return [a, `Set an <b>acute</b> angle of <b>${a}°</b>, with the numbers hidden.`, 'Acute angles are less than 90°.', `${a}°`]; },
+      () => { const a = pick([15, 20, 25, 35]); return [a, `Set an <b>acute</b> angle of <b>${a}°</b>.`, 'Acute angles are less than 90°.', `${a}°`]; },
     ];
-    const [ans, text, sub, expl] = pick(forms)();
-    return {kind:'angle', answer:ans, tol:3, house:rnd(0, 4), text, sub, expl, hideDeg:true};
+    const [ans, text, sub, expl, hideDeg] = pick(forms)();
+    return {kind:'angle', answer:ans, tol:hideDeg ? 3 : 1, house:rnd(0, 4), text, sub, expl, hideDeg:!!hideDeg};
   }
   const ans = goodAngle(), top = 90 - ans, ext = 180 - ans;
   if (b === 'g56'){
@@ -260,11 +260,6 @@ const hillY = x => x <= HILL_A ? HILL_TOP : x >= HILL_B ? 0 : HILL_TOP * (1 + Ma
   [-0.55, 0.55].forEach(z => { const t = track.clone(); t.position.z = z; scene.add(t); });
 }
 
-/* plateau (angles mode only) */
-const plateau = new THREE.Group(); scene.add(plateau);
-plateau.add(mesh(new THREE.BoxGeometry(160, LIP, 120), SNOW, PLAT_X + 80, LIP / 2, 0));
-{ const ice = mesh(new THREE.PlaneGeometry(PLAT_X, 30), M(0xbfe3f7, {roughness:.2, metalness:.1}), PLAT_X / 2, .02, 0); ice.rotation.x = -Math.PI / 2; plateau.add(ice); }
-
 /* trees */
 function tree(x, z, s = 1){
   const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s);
@@ -284,7 +279,7 @@ function house(color){
   const g = new THREE.Group();
   g.add(mesh(new THREE.BoxGeometry(5, 3.6, 4.4), M(color), 0, 1.8, 0));
   const roof = mesh(new THREE.ConeGeometry(4.1, 2.4, 4), M(0x5a3420), 0, 4.8, 0); roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, .9); g.add(roof);
-  g.add(mesh(new THREE.ConeGeometry(4.25, .5, 4), SNOW, 0, 4.0, 0)).rotation.y = Math.PI / 4;
+  { const m_ = mesh(new THREE.ConeGeometry(4.25, .5, 4), SNOW, 0, 4.0, 0); m_.rotation.y = Math.PI / 4; g.add(m_); }
   g.add(mesh(new THREE.BoxGeometry(.8, 2, .8), M(0x8a3b2a), 1.3, 5.2, 0));
   g.add(mesh(new THREE.BoxGeometry(.95, .25, .95), SNOW, 1.3, 6.25, 0));
   const glow = M(0xffd66b, {emissive:0xffb627, emissiveIntensity:.9});
@@ -349,6 +344,36 @@ function buildMarkers(){
 }
 
 /* ramp */
+const PROT_R = 3.2, protCache = {};
+function protractorMesh(hideNums){
+  const key = hideNums ? 'h' : 'n';
+  if (!protCache[key]){
+    const W = 1024, Hc = 540, c = document.createElement('canvas'); c.width = W; c.height = Hc;
+    const ctx = c.getContext('2d'), cx = W / 2, cy = Hc - 14, R = 500;
+    ctx.fillStyle = 'rgba(235,245,255,.72)'; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#1f4e8c'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, R * .38, Math.PI, 0); ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#123a6b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let a = 0; a <= 180; a++){
+      const t = Math.PI - a * Math.PI / 180;           // 0° points right, along the ground toward the lip
+      const len = a % 10 === 0 ? 62 : a % 5 === 0 ? 40 : 20;
+      ctx.lineWidth = a % 10 === 0 ? 4 : 2;
+      ctx.beginPath(); ctx.moveTo(cx - Math.cos(t) * R, cy - Math.sin(t) * R); ctx.lineTo(cx - Math.cos(t) * (R - len), cy - Math.sin(t) * (R - len)); ctx.stroke();
+      if (!hideNums && a % 10 === 0 && a <= 90){
+        ctx.font = '900 34px Nunito, Arial';
+        ctx.fillText(a, cx - Math.cos(t) * (R - 95), cy - Math.sin(t) * (R - 95));
+      }
+    }
+    ctx.beginPath(); ctx.arc(cx, cy, 10, 0, 7); ctx.fill();
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    protCache[key] = new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false, side:THREE.DoubleSide});
+  }
+  // the protractor's centre sits on the ramp's bottom corner (only the 0–90° quarter matters, but kids recognise a full protractor)
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(PROT_R * 2, PROT_R * 2 * 540 / 1024), protCache[key]);
+  m.geometry.translate(0, PROT_R * 540 / 1024 - PROT_R * 14 / 1024 * 2, 0);
+  m.renderOrder = 5;
+  return m;
+}
 const rampGroup = new THREE.Group(); scene.add(rampGroup);
 let rampAngleSprite = null;
 function buildRamp(){
@@ -362,13 +387,15 @@ function buildRamp(){
     const tri = new THREE.Shape(); tri.moveTo(baseX, 0); tri.lineTo(0, 0); tri.lineTo(0, H); tri.lineTo(baseX, 0);
     [-1.6, 1.6].forEach(z => { const m = mesh(new THREE.ShapeGeometry(tri), M(0xe9c896, {side:THREE.DoubleSide}), 0, 0, z); rampGroup.add(m); });
     rampGroup.add(mesh(new THREE.BoxGeometry(.3, H, 3.4), DARKWOOD, -.15, H / 2, 0));
+    // see-through protractor at the bottom corner of the ramp, so students can measure
+    const hid = hideNow();
+    if (ST.prot !== false){ const pr = protractorMesh(hid); pr.position.set(baseX, 0, 1.68); rampGroup.add(pr); }
     // angle arc + label on the front panel
-    const ar = Math.min(2.6, L * .45);
+    const ar = 1.3;
     const arc = new THREE.Mesh(new THREE.RingGeometry(ar - .22, ar, 40, 1, 0, r), new THREE.MeshBasicMaterial({color:0xf5c542, side:THREE.DoubleSide}));
     arc.position.set(baseX, .02, 1.63); rampGroup.add(arc);
-    const showNum = !hideNow();
-    rampAngleSprite = textSprite(showNum ? theta + '°' : '?°', {size:64, scale:1.3, bg:'rgba(245,197,66,.95)'});
-    const mid = r / 2, lr = ar + 1.3;
+    rampAngleSprite = textSprite(hid ? '?°' : theta + '°', {size:64, scale:1.3, bg:'rgba(245,197,66,.95)'});
+    const mid = r / 2, lr = PROT_R + 1.1;
     rampAngleSprite.position.set(baseX + Math.cos(mid) * lr, Math.max(.7, Math.sin(mid) * lr), 1.8); rampGroup.add(rampAngleSprite);
     // little square = right angle at the back post
     rampGroup.add(mesh(new THREE.BoxGeometry(.5, .5, .02), new THREE.MeshBasicMaterial({color:0x333333, wireframe:true}), -.55, .25, 1.64, false));
@@ -410,12 +437,12 @@ function makeSleigh(){
   inner.add(mesh(new THREE.BoxGeometry(2.1, .08, 1.32), gold, -.15, .74, 0));
   // Santa
   inner.add(mesh(new THREE.SphereGeometry(.46, 18, 14), M(0xc62828), -.25, 1.12, 0));
-  inner.add(mesh(new THREE.TorusGeometry(.42, .07, 8, 20), M(0x222222), -.25, 1.05, 0)).rotation.x = Math.PI / 2;
+  { const m_ = mesh(new THREE.TorusGeometry(.42, .07, 8, 20), M(0x222222), -.25, 1.05, 0); m_.rotation.x = Math.PI / 2; inner.add(m_); }
   inner.add(mesh(new THREE.SphereGeometry(.27, 16, 12), M(0xf2c7a5), -.2, 1.72, 0));
   const beard = mesh(new THREE.SphereGeometry(.24, 14, 10), M(0xffffff), -.05, 1.6, 0); beard.scale.set(.8, 1.1, 1.05); inner.add(beard);
   inner.add(mesh(new THREE.SphereGeometry(.06, 8, 6), M(0xe57373), .07, 1.72, 0));
   const hat = mesh(new THREE.ConeGeometry(.26, .55, 14), M(0xc62828), -.28, 2.05, 0); hat.rotation.z = .5; inner.add(hat);
-  inner.add(mesh(new THREE.TorusGeometry(.25, .07, 8, 18), M(0xffffff), -.22, 1.87, 0)).rotation.x = Math.PI / 2;
+  { const m_ = mesh(new THREE.TorusGeometry(.25, .07, 8, 18), M(0xffffff), -.22, 1.87, 0); m_.rotation.x = Math.PI / 2; inner.add(m_); }
   inner.add(mesh(new THREE.SphereGeometry(.09, 8, 6), M(0xffffff), -.5, 2.22, 0));
   const arm = mesh(new THREE.CylinderGeometry(.1, .1, .6), M(0xc62828), .15, 1.25, .38); arm.rotation.z = -1.1; inner.add(arm);
   inner.add(mesh(new THREE.SphereGeometry(.1, 8, 6), M(0x222222), .42, 1.12, .38));
@@ -476,7 +503,7 @@ const whoosh = () => { for (let i = 0; i < 6; i++) tone(300 + i * 80, i * .05, .
 /* =====================================================
    GAME LOOP
    ===================================================== */
-let phase = 'idle', t0 = 0, flight = null, landing = null, revealDeg = false, camMode = 'side';
+let phase = 'idle', t0 = 0, flight = null, landing = null, revealDeg = false, camMode = 'side', view = 'wide';
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 function parkSleigh(){
   phase = 'idle';
@@ -488,7 +515,7 @@ const slopeAt = x => (trackY(x + .3) - trackY(x - .3)) / .6;
 function launch(){
   if (phase !== 'idle' && phase !== 'done') return;
   revealDeg = false; buildRamp();
-  phase = 'ride'; t0 = performance.now(); trailPts = []; landing = null; whoosh();
+  view = 'wide'; phase = 'ride'; t0 = performance.now(); trailPts = []; landing = null; whoosh();
   hideBanner(); $('#launchBtn').disabled = true;
   track('sleigh-launch');
 }
@@ -549,14 +576,14 @@ function frame(now){
     const f = flight; f.t += dt;
     const x = f.vx * f.t, y = info.H + f.vy * f.t - G * f.t * f.t / 2, vy = f.vy - G * f.t;
     const ground = landY(x);
-    let hitWall = isAngles() && x >= PLAT_X && f.x < PLAT_X && y < LIP;
+    const hitWall = false;
     if ((vy < 0 && y <= ground) || hitWall){
       // solve exact touchdown
       let lx = x, ly = ground;
       if (!hitWall){
         const disc = f.vy * f.vy + 2 * G * (info.H - ground), tl = (f.vy + Math.sqrt(Math.max(0, disc))) / G;
         lx = f.vx * tl;
-      } else lx = PLAT_X - .4;
+      }
       sleigh.position.set(lx, landY(lx), 0); sleigh.rotation.z = 0;
       trailPts.push(new THREE.Vector3(lx, landY(lx) + .3, 0));
       phase = 'slide'; landing = {x:lx, v:Math.min(f.vx * .5, 8)};
@@ -570,7 +597,7 @@ function frame(now){
   } else if (phase === 'slide'){
     landing.v = Math.max(0, landing.v - 14 * dt);
     const nx = sleigh.position.x + landing.v * dt;
-    if (!(isAngles() && sleigh.position.x < PLAT_X && nx >= PLAT_X - .4)) sleigh.position.x = nx;
+    sleigh.position.x = nx;
     sleigh.position.y = landY(sleigh.position.x);
     if (landing.v <= 0){ phase = 'done'; $('#launchBtn').disabled = false; $('#launchBtn').textContent = '🛷 Again!'; setTimeout(() => { if (phase === 'done') parkSleigh(); }, 2200); }
   }
@@ -582,9 +609,14 @@ function frame(now){
   if (camMode === 'chase' && phase !== 'idle'){
     want = new THREE.Vector3(sx - 11, sy + 4.5, 6); look = new THREE.Vector3(sx + 6, sy + 1, 0);
   } else {
-    const left = isAngles() ? Math.min(-12, -LIP / Math.tan(angle * Math.PI / 180) - 8) : -14, right = far + 3;
+    const left = isAngles() ? -BOARD * Math.cos(angle * Math.PI / 180) - 7 : -14, right = far + 3;
     const span = right - left, d = Math.max(26, span / (1.25 * Math.min(1.8, camera.aspect) / 1.75));
-    if (phase === 'idle' || phase === 'done'){
+    if (phase === 'idle' && view === 'ramp' && isAngles()){
+      // frame the whole ramp + protractor, kept above the control bar at the bottom of the screen
+      const r = angle * Math.PI / 180, w = BOARD * Math.cos(r) + PROT_R * 2 + 2, ht = Math.max(BOARD * Math.sin(r), PROT_R) + 1.5;
+      const cx = -BOARD * Math.cos(r) / 2 - .3, d = Math.max(ht * 1.9, w * 1.05) + 2;
+      want = new THREE.Vector3(cx, ht * .55, d); look = new THREE.Vector3(cx, ht * .5 - d * .09, 0);
+    } else if (phase === 'idle' || phase === 'done'){
       const cx = (left + right) / 2;
       want = new THREE.Vector3(cx, 8.5, d); look = new THREE.Vector3(cx, 6, 0);
     } else {
@@ -594,7 +626,7 @@ function frame(now){
   }
   const k = 1 - Math.pow(.04, dt);
   camPos.lerp(want, k); camLook.lerp(look, k);
-  camera.position.copy(camPos); camera.lookAt(camLook);
+  if (window.__freeze){ camera.position.copy(window.__freeze[0]); camera.lookAt(window.__freeze[1]); } else { camera.position.copy(camPos); camera.lookAt(camLook); }
 
   // ambient bits
   const pa = snowGeo.attributes.position.array;
@@ -607,6 +639,7 @@ function frame(now){
     p.position.addScaledVector(p.userData.v, dt); p.material.opacity = Math.max(0, p.userData.life);
     if (p.userData.life <= 0){ scene.remove(p); puffs.splice(i, 1); }
   }
+  markers.visible = !(phase === 'idle' && view === 'ramp' && isAngles());
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
@@ -619,7 +652,7 @@ addEventListener('resize', resize); resize();
 function protractorSVG(theta, hide){
   const r = theta * Math.PI / 180, cx = 85, cy = 88, R = 72;
   let ticks = '';
-  for (let a = 0; a <= 180; a += 10){ const t = a * Math.PI / 180, l = a % 30 ? 6 : 11; ticks += `<line x1="${cx + Math.cos(t) * R}" y1="${cy - Math.sin(t) * R}" x2="${cx + Math.cos(t) * (R - l)}" y2="${cy - Math.sin(t) * (R - l)}" stroke="#555" stroke-width="1.5"/>`; if (!hide && a % 30 === 0) ticks += `<text x="${cx + Math.cos(t) * (R - 20)}" y="${cy - Math.sin(t) * (R - 20) + 4}" font-size="10" font-weight="800" text-anchor="middle" fill="#555" font-family="Nunito,Arial">${180 - a}</text>`; }
+  for (let a = 0; a <= 180; a += 10){ const t = a * Math.PI / 180, l = a % 30 ? 6 : 11; ticks += `<line x1="${cx + Math.cos(t) * R}" y1="${cy - Math.sin(t) * R}" x2="${cx + Math.cos(t) * (R - l)}" y2="${cy - Math.sin(t) * (R - l)}" stroke="#555" stroke-width="1.5"/>`; if (!hide && a % 30 === 0 && a >= 90) ticks += `<text x="${cx + Math.cos(t) * (R - 22)}" y="${cy - Math.sin(t) * (R - 22) + 5}" font-size="14" font-weight="800" text-anchor="middle" fill="#555" font-family="Nunito,Arial">${180 - a}</text>`; }
   // ramp goes up to the right from the left end: angle measured from the right-pointing ground
   const ex = cx + Math.cos(Math.PI - r) * -R * -1, ey = cy - Math.sin(r) * R;
   const ax = cx + Math.cos(r) * 30 * -1, ay = cy - Math.sin(r) * 30;
@@ -641,6 +674,8 @@ function renderControls(){
       <div class="adj">
         <input type="range" id="angIn" min="10" max="80" step="1" value="${angle}" aria-label="Ramp angle">
         <div class="row"><button class="btn sm" data-d="-5">−5</button><button class="btn sm" data-d="-1">−1</button><button class="btn sm" data-d="1">+1</button><button class="btn sm" data-d="5">+5</button>
+        <button class="btn sm" id="viewBtn" title="Zoom in on the ramp, or out to see the houses">${view === 'ramp' ? '🔭' : '🔍'}</button>
+        <button class="btn sm${ST.prot !== false ? ' on' : ''}" id="protBtn" title="Show the protractor on the ramp">📐</button>
         <button class="btn sm${ST.hide ? ' on' : ''}" id="hideBtn" title="Hide the degrees so students estimate">🙈</button></div>
       </div>`;
   } else if (ST.band === 'k1'){
@@ -654,16 +689,18 @@ function renderControls(){
   }
   h += `<button class="launch" id="launchBtn"${phase === 'idle' || phase === 'done' ? '' : ' disabled'}>🛷 Launch!</button>`;
   $('#controls').innerHTML = h;
-  const setAngle = a => { angle = Math.max(10, Math.min(80, a)); if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); renderControls(); };
-  const ai = $('#angIn'); if (ai) ai.oninput = () => { angle = +ai.value; if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); $('#degOut').innerHTML = (hideNow() ? '?°' : angle + '°') + '<small>ramp angle</small>'; $('#controls .prot').outerHTML = protractorSVG(angle, hideNow()); };
+  const setAngle = a => { view = 'ramp'; angle = Math.max(10, Math.min(80, a)); if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); renderControls(); };
+  const ai = $('#angIn'); if (ai) ai.oninput = () => { view = 'ramp'; angle = +ai.value; if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); $('#degOut').innerHTML = (hideNow() ? '?°' : angle + '°') + '<small>ramp angle</small>'; $('#controls .prot').outerHTML = protractorSVG(angle, hideNow()); const vb2 = $('#viewBtn'); if (vb2) vb2.textContent = '🔭'; };
   $('#controls').querySelectorAll('[data-d]').forEach(b => b.onclick = () => setAngle(angle + +b.dataset.d));
+  const vb = $('#viewBtn'); if (vb) vb.onclick = () => { view = view === 'ramp' ? 'wide' : 'ramp'; if (phase === 'done') parkSleigh(); renderControls(); };
+  const pb = $('#protBtn'); if (pb) pb.onclick = () => { ST.prot = ST.prot === false; save(); buildRamp(); renderControls(); };
   const hb = $('#hideBtn'); if (hb) hb.onclick = () => { ST.hide = !ST.hide; save(); buildRamp(); renderControls(); };
   $('#controls').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { sizeName = b.dataset.s; blocks = SIZES[sizeName]; if (phase === 'done') parkSleigh(); buildRamp(); renderControls(); });
   $('#controls').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { blocks = Math.max(1, Math.min(8, blocks + +b.dataset.k)); if (phase === 'done') parkSleigh(); buildRamp(); renderControls(); });
   $('#launchBtn').onclick = launch;
 }
 const TIPS = {
-  angles:['Which angle makes Santa fly the <b>farthest</b>? Test a few and compare.', 'Try <b>30°</b>, then <b>60°</b>. What do you notice about where Santa lands?', 'Try <b>20°</b> and <b>70°</b>. Then <b>35°</b> and <b>55°</b>. What do the pairs add up to?', 'Which is higher: a <b>75°</b> jump or a <b>15°</b> jump? Which one is longer?', 'Turn on 🙈 and estimate: can someone set exactly <b>45°</b> without looking?'],
+  angles:['Which angle makes Santa fly the <b>farthest</b>? Test a few and compare.', 'Try <b>30°</b>, then <b>60°</b>. Which one flies higher? Which one lands farther?', 'Steeper ramps are taller. Does a <b>taller</b> ramp always mean a <b>longer</b> jump?', 'Which is higher: a <b>75°</b> jump or a <b>15°</b> jump? Which one is longer?', 'Turn on 🙈 and estimate: can someone set exactly <b>45°</b> without looking?'],
   k1:['Which ramp makes Santa go the <b>farthest</b>?', 'Which ramp is the <b>shortest</b>? Where does Santa land?', 'Guess first! Which house will the <b>medium</b> ramp reach?'],
   g23:['Each number on the snow shows where that many blocks will land.', 'How many blocks do you need to go past <b>20 m</b>?', 'Does <b>one more block</b> always make Santa go farther?'],
 };
@@ -682,17 +719,16 @@ function renderCard(){
   }
   $('#card').innerHTML = h;
   const a = $('#ansBtn'); if (a) a.onclick = () => { showAns = !showAns; renderCard(); };
-  const n = $('#nextBtn'); if (n) n.onclick = () => { Q = makeQuestion(); trails.clear(); parkSleigh(); hideBanner(); buildTargets(); renderCard(); renderControls(); };
+  const n = $('#nextBtn'); if (n) n.onclick = () => { view = 'wide'; Q = makeQuestion(); trails.clear(); parkSleigh(); hideBanner(); buildTargets(); renderCard(); renderControls(); };
   const t = $('#tipBtn'); if (t) t.onclick = () => { tipI++; renderCard(); };
   const c = $('#clrBtn'); if (c) c.onclick = () => trails.clear();
 }
 function applyBand(){
   document.querySelectorAll('#bands button').forEach(b => b.classList.toggle('on', b.dataset.b === ST.band));
   document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === ST.mode));
-  plateau.visible = isAngles();
   if (ST.band === 'k1'){ blocks = SIZES[sizeName]; }
   Q = ST.mode === 'challenge' ? makeQuestion() : null; qNum = ST.mode === 'challenge' ? 1 : 0;
-  trails.clear(); hideBanner(); revealDeg = false;
+  trails.clear(); hideBanner(); revealDeg = false; view = 'wide';
   buildRamp(); buildTown(); buildMarkers(); buildTargets(); parkSleigh();
   renderCard(); renderControls();
 }
@@ -705,7 +741,7 @@ if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () =
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.key !== ' ') return;
   if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); launch(); }
-  if (isAngles() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')){ e.preventDefault(); angle = Math.max(10, Math.min(80, angle + (e.key === 'ArrowRight' ? 1 : -1))); if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); renderControls(); }
+  if (isAngles() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')){ e.preventDefault(); view = 'ramp'; angle = Math.max(10, Math.min(80, angle + (e.key === 'ArrowRight' ? 1 : -1))); if (phase === 'done') parkSleigh(); revealDeg = false; buildRamp(); renderControls(); }
 });
 
 let bannerT;
@@ -726,7 +762,7 @@ $('#delivered').textContent = ST.delivered; sndLabel();
 applyBand();
 camPos.set(0, 9, 52); camLook.set(0, 4, 0);
 requestAnimationFrame(frame);
-window.__sleigh = {get phase(){ return phase; }, get Q(){ return Q; }, setAngle:a => { angle = a; buildRamp(); renderControls(); }, setBlocks:b => { blocks = b; buildRamp(); renderControls(); }, setSize:s => { sizeName = s; blocks = SIZES[s]; buildRamp(); renderControls(); }, targetX, rangeAngle, rangeBlocks, launch, get x(){ return sleigh.position.x; }};
+window.__sleigh = {sleigh, camera, V:THREE.Vector3, get phase(){ return phase; }, get Q(){ return Q; }, setAngle:a => { angle = a; buildRamp(); renderControls(); }, setBlocks:b => { blocks = b; buildRamp(); renderControls(); }, setSize:s => { sizeName = s; blocks = SIZES[s]; buildRamp(); renderControls(); }, targetX, rangeAngle, rangeBlocks, launch, get x(){ return sleigh.position.x; }};
 </script>
 </body>
 </html>
