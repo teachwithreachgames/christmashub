@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Class Says… | Teach With Reach Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#16306b;--bg2:#070d24;--cream:#fdf6e3;--gold:#f5c542;--red:#d64045;--green:#2fbf71;--panel:rgba(255,255,255,.08);--line:rgba(255,255,255,.18)}
+*{box-sizing:border-box}
+html{background:var(--bg2)}
+html,body{margin:0;min-height:100%}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--cream);background:radial-gradient(1300px 800px at 50% -10%,var(--bg1),var(--bg2)) fixed;user-select:none;-webkit-user-select:none}
+button,input,select,textarea{font:inherit}
+.hidden{display:none!important}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;min-height:46px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.on,.btn.gold{background:var(--gold);color:#2a1d00;border-color:transparent}
+.btn.red{background:var(--red);color:#fff;border-color:transparent}
+.btn.green{background:var(--green);color:#052b16;border-color:transparent}
+.btn:disabled{opacity:.4;cursor:default}
+.big{font-family:'Lilita One',cursive;font-weight:400;font-size:clamp(20px,2vw,28px);padding:12px 24px;min-height:62px;border-radius:16px}
+header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-family:'Lilita One',cursive;font-weight:400;margin:0 6px;font-size:clamp(20px,2vw,30px);white-space:nowrap}
+h1 span{color:var(--gold)}
+.spacer{flex:1}
+main{max-width:1300px;margin:0 auto;padding:16px}
+h2{font-family:'Lilita One',cursive;font-weight:400;color:var(--gold);margin:18px 0 8px;font-size:24px}
+.hint{opacity:.72;font-size:14px}
+
+/* menu */
+.hero{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.blist{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:8px}
+.bcard{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;font-weight:800;text-align:left;color:var(--cream);min-height:56px}
+.bcard:hover{background:rgba(255,255,255,.16)}
+.bcard.played{opacity:.55}
+.bcard small{display:block;font-weight:700;opacity:.7}
+.bcard .del{margin-left:auto;opacity:.6;padding:6px}
+
+/* game */
+.qbox{background:linear-gradient(#1d3f8f,#12275c);border:3px solid var(--gold);border-radius:20px;padding:14px 20px;text-align:center;font-family:'Lilita One',cursive;font-size:clamp(22px,2.8vw,40px);line-height:1.15;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.meta{display:flex;justify-content:center;align-items:center;gap:14px;margin:12px 0}
+.bank{font-family:'Lilita One',cursive;font-size:clamp(34px,4vw,60px);background:#000;border:3px solid var(--gold);border-radius:16px;padding:2px 26px;min-width:150px;text-align:center;color:var(--gold)}
+.pill{font-weight:900;background:rgba(255,255,255,.12);border-radius:999px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);color:var(--cream)}
+.tiles{display:grid;grid-auto-flow:column;gap:10px;max-width:1100px;margin:0 auto}
+.tile{position:relative;height:clamp(54px,8vh,82px);perspective:900px;cursor:pointer;border:0;background:none;padding:0;color:inherit}
+.tile .in{position:absolute;inset:0;transition:transform .5s;transform-style:preserve-3d}
+.tile.open .in{transform:rotateX(180deg)}
+.tile.just .in{animation:flip .5s}
+@keyframes flip{from{transform:rotateX(0)}to{transform:rotateX(180deg)}}
+.face{position:absolute;inset:0;border-radius:14px;display:flex;align-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid #9fb6ff}
+.front{background:linear-gradient(#2c56c4,#173482);justify-content:center}
+.front b{font-family:'Lilita One',cursive;font-weight:400;font-size:clamp(26px,3vw,40px);width:1.6em;height:1.6em;border-radius:50%;background:#0d1f52;display:grid;place-items:center;border:2px solid #9fb6ff}
+.back{background:linear-gradient(#fdf6e3,#e9dcb5);color:#12275c;transform:rotateX(180deg);padding:0 0 0 18px;font-weight:900;font-size:clamp(18px,2.1vw,30px);justify-content:space-between;overflow:hidden}
+.back span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back i{font-style:normal;font-family:'Lilita One',cursive;background:#12275c;color:var(--gold);align-self:stretch;display:grid;place-items:center;min-width:2.4em;font-size:1.1em}
+.tile.late .back{background:linear-gradient(#d9dde8,#b9bfd0)}
+.status{text-align:center;font-weight:900;font-size:clamp(17px,1.7vw,24px);margin:14px 0 10px;min-height:1.4em}
+.ctrl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+.strikes{display:flex;gap:6px}
+.strikes i{font-style:normal;width:44px;height:44px;border-radius:10px;border:2px solid var(--line);display:grid;place-items:center;font-size:26px;opacity:.3}
+.strikes i.on{opacity:1;background:var(--red);border-color:var(--red)}
+.teams{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.team{flex:1 1 220px;max-width:340px;background:var(--panel);border:3px solid var(--line);border-radius:18px;padding:10px 14px;text-align:center;cursor:pointer;color:var(--cream)}
+.team.ctl{border-color:var(--gold);background:rgba(245,197,66,.16)}
+.team.steal{border-color:var(--red);background:rgba(214,64,69,.22)}
+.team.buzzed{animation:flash .25s 6 alternate}
+@keyframes flash{to{background:var(--gold);color:#2a1d00}}
+.team .n{font-weight:900;font-size:20px}
+.team .s{font-family:'Lilita One',cursive;font-size:clamp(34px,4vw,56px);line-height:1}
+.team .tag{font-size:13px;font-weight:900;min-height:18px;color:var(--gold)}
+.team .buzz{margin-top:6px}
+.xo{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:30;opacity:0}
+.xo.show{animation:xin .9s}
+.xo div{font-size:clamp(120px,24vw,340px);line-height:1;filter:drop-shadow(0 10px 30px #000);letter-spacing:-.1em}
+@keyframes xin{0%{opacity:0;transform:scale(2)}15%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+
+/* survey + bonus */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;max-width:900px;margin:0 auto 14px}
+.in{width:100%;background:rgba(255,255,255,.1);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;user-select:text;-webkit-user-select:text}
+select.in option{color:#111}
+.grow{display:grid;grid-template-columns:1fr 54px auto auto 150px auto;gap:6px;align-items:center;padding:4px 0}
+.grow b{font-family:'Lilita One',cursive;font-weight:400;font-size:24px;text-align:center;color:var(--gold)}
+.sm{min-height:38px;padding:4px 10px;border-radius:10px}
+.timer{font-family:'Lilita One',cursive;font-size:clamp(50px,7vw,100px);text-align:center;line-height:1}
+.bq{font-family:'Lilita One',cursive;font-size:clamp(24px,3vw,42px);text-align:center;margin:8px 0 14px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.brow{display:grid;grid-template-columns:1fr 1fr 70px;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1);font-weight:800;align-items:center}
+.brow b{font-family:'Lilita One',cursive;font-weight:400;font-size:26px;color:var(--gold);text-align:right}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:40;padding:16px}
+.sheet{background:#101a40;border:1px solid var(--line);border-radius:20px;padding:18px 20px;width:min(640px,100%);max-height:90vh;overflow:auto}
+.sheet h2{margin-top:0}
+.trow{display:grid;grid-template-columns:1fr 110px;gap:8px;margin:6px 0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--cream);color:#101a40;padding:10px 18px;border-radius:12px;font-weight:900;z-index:50;transition:opacity .4s;pointer-events:none;text-align:center;max-width:90vw}
+.krow{display:grid;grid-template-columns:34px 1fr 54px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);font-weight:800;font-size:18px}
+.krow b{font-family:'Lilita One',cursive;font-weight:400;color:var(--gold);text-align:right}
+.krow.done{opacity:.5}
+details.kb{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:6px 0;break-inside:avoid}
+details.kb summary{font-weight:900;cursor:pointer}
+details.kb ol{margin:6px 0 2px;padding-left:24px}
+details.kb li{padding:1px 0}
+.url{user-select:all;-webkit-user-select:all;background:rgba(0,0,0,.35);border-radius:8px;padding:6px 10px;font-size:13px;word-break:break-all;display:block;margin-top:6px}
+@media print{
+  html,body{background:#fff!important;color:#000!important}
+  header,.noprint,.toast{display:none!important}
+  details.kb{border:1px solid #999;background:#fff;color:#000}
+  h2{color:#000!important}
+  main{max-width:none;columns:2;column-gap:18px;padding:0}
+  main h2{column-span:all}
+}
+</style>
+<script data-goatcounter="https://teachwithreach.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+<header>
+  <button class="btn hidden" id="hubBtn">🏠 Hub</button>
+  <h1>🎤 The Class <span>Says…</span></h1>
+  <div class="spacer"></div>
+  <button class="btn" id="keyBtn" title="Teacher answer key">🔑 Answer key</button>
+  <button class="btn" id="menuBtn">📋 Boards</button>
+  <button class="btn" id="teamsBtn">👥 Teams</button>
+  <button class="btn" id="sndBtn" title="Sound on/off">🔊</button>
+</header>
+<main id="main"></main>
+<div class="xo" id="xo"><div></div></div>
+<div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const params = new URLSearchParams(location.search), EMBED = params.has('embed');
+function track(name){ try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:'event/' + name, title:name, event:true}); } catch(e) {} }
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* =====================================================
+   BUILT-IN BOARDS
+   Answers and points were written for this game. They are NOT from a real survey.
+   (Use "Survey your class" to make boards from real answers.)
+   ===================================================== */
+const B = (id, q, ...a) => ({id, q, a});
+const BOARDS = [
+  B('tree', 'Name something you’d find on a Christmas tree.', ['Ornaments', 34], ['Lights', 27], ['Star', 16], ['Tinsel', 9], ['Candy canes', 7], ['Angel', 4]),
+  B('snowday', 'Name something people do on a snow day.', ['Sleep in', 30], ['Go sledding', 22], ['Build a snowman', 16], ['Play video games', 13], ['Shovel', 9], ['Watch movies', 6]),
+  B('movie', 'Name a Christmas movie everyone has seen.', ['Home Alone', 32], ['Elf', 26], ['The Grinch', 18], ['The Polar Express', 11], ['A Christmas Story', 6], ['Rudolph', 4]),
+  B('santajob', 'Name something Santa needs to do his job.', ['Sleigh', 30], ['Reindeer', 26], ['Sack of toys', 15], ['Elves', 12], ['The list', 9], ['Red suit', 5]),
+  B('late', 'Name a reason you might be late for school in winter.', ['Slept in', 28], ['Bus was late', 24], ['Snowy roads', 20], ['Car wouldn’t start', 12], ['Had to shovel', 8], ['Couldn’t find my boots', 5]),
+  B('warm', 'Name something people drink to warm up.', ['Hot chocolate', 40], ['Coffee', 22], ['Tea', 18], ['Apple cider', 9], ['Soup', 6], ['Warm milk', 3]),
+  B('wrap', 'Name something that’s hard to wrap.', ['Bike', 28], ['Ball', 22], ['Stuffed animal', 15], ['Hockey stick', 13], ['Guitar', 10], ['A pet', 6]),
+  B('pretend', 'Name a gift people pretend to like.', ['Socks', 33], ['Sweater', 22], ['Fruitcake', 14], ['Pyjamas', 11], ['Soap or bath set', 10], ['Calendar', 6]),
+  B('break', 'Name something you do during the winter break.', ['Sleep in', 30], ['See family', 22], ['Play video games', 16], ['Eat', 12], ['Watch movies', 10], ['Travel', 6]),
+  B('sport', 'Name a winter sport.', ['Hockey', 36], ['Skiing', 22], ['Snowboarding', 16], ['Skating', 12], ['Curling', 8], ['Sledding', 4]),
+  B('dinner', 'Name something served at a holiday dinner.', ['Turkey', 36], ['Mashed potatoes', 20], ['Stuffing', 16], ['Gravy', 10], ['Ham', 8], ['Cranberry sauce', 6]),
+  B('wear', 'Name something you wear in winter.', ['Coat', 30], ['Mittens or gloves', 22], ['Toque', 20], ['Boots', 14], ['Scarf', 10], ['Snow pants', 4]),
+  B('snowman', 'Name something a snowman is made with.', ['Snow', 30], ['Carrot nose', 25], ['Scarf', 15], ['Hat', 12], ['Buttons or coal', 10], ['Stick arms', 8]),
+  B('song', 'Name a Christmas song everyone knows.', ['Jingle Bells', 34], ['All I Want for Christmas Is You', 22], ['Rudolph', 14], ['Frosty the Snowman', 10], ['Silent Night', 9], ['Deck the Halls', 6]),
+  B('lastday', 'Name something classes do on the last day before the break.', ['Watch a movie', 34], ['Eat treats', 22], ['Play games', 16], ['Exchange gifts', 12], ['Clean out lockers', 8], ['Leave early', 5]),
+  B('ruin', 'Name something that ruins a snowman.', ['Warm weather', 36], ['Rain', 20], ['Someone kicks it', 18], ['A dog', 10], ['The snowplow', 8], ['Wind', 4]),
+  B('skate', 'Name a place where people go skating.', ['Arena', 34], ['Outdoor rink', 24], ['Pond or lake', 20], ['Backyard rink', 12], ['Canal', 6], ['Mall', 3]),
+  B('house', 'Name something people put on their house for Christmas.', ['Lights', 44], ['Wreath', 20], ['Inflatables', 14], ['Reindeer', 9], ['Garland', 7], ['Santa', 4]),
+  B('stocking', 'Name something you’d find in a stocking.', ['Candy', 32], ['Chocolate', 22], ['An orange', 14], ['Socks', 12], ['Gift card', 10], ['Toothbrush', 6]),
+  B('teacher', 'Name something teachers say before the break.', ['“Have a great holiday!”', 30], ['“Clean out your locker”', 20], ['“No homework”', 18], ['“Sit down”', 12], ['“It’s not the break yet”', 12], ['“See you next year!”', 6]),
+  B('elf', 'Name a job an elf has.', ['Making toys', 40], ['Wrapping gifts', 22], ['Feeding the reindeer', 14], ['Checking the list', 10], ['Loading the sleigh', 8], ['Baking cookies', 4]),
+  B('roadhockey', 'Name something you need for road hockey.', ['Sticks', 34], ['A ball', 24], ['Nets', 20], ['A goalie', 10], ['Friends', 8], ['Someone to yell “Car!”', 3]),
+  B('cookie', 'Name a cookie people bake in December.', ['Sugar cookies', 30], ['Gingerbread', 28], ['Shortbread', 18], ['Chocolate chip', 12], ['Snickerdoodles', 6], ['Thumbprint', 4]),
+  B('teen', 'Name a gift a teenager wants.', ['Phone', 30], ['Money', 24], ['Video games', 16], ['Clothes', 12], ['Shoes', 10], ['Gift cards', 6]),
+  B('forget', 'Name something people forget to buy before the holidays.', ['Batteries', 30], ['Wrapping paper', 22], ['Tape', 18], ['A gift for someone', 14], ['Cards', 8], ['Food', 6]),
+  B('homework', 'Name an excuse for not doing homework over the break.', ['“I forgot”', 30], ['“I was too busy”', 22], ['“I was away”', 18], ['“I lost it”', 12], ['“I was sick”', 10], ['“I didn’t know about it”', 6]),
+  B('crowded', 'Name a place that’s crowded in December.', ['The mall', 44], ['The airport', 18], ['Grocery store', 14], ['Post office', 10], ['Parking lots', 8], ['The line for Santa', 4]),
+  B('better', 'Name something that’s better in winter than in summer.', ['Hot chocolate', 30], ['Hockey', 20], ['Warm blankets', 18], ['Soup', 12], ['A fireplace', 10], ['Hoodies', 8]),
+  B('power', 'Name something you do when the power goes out.', ['Light candles', 30], ['Find a flashlight', 24], ['Go to sleep', 14], ['Play board games', 12], ['Use my phone', 12], ['Talk to my family', 6]),
+  B('rudolph', 'Name something Rudolph might want for Christmas.', ['Carrots', 32], ['Sunglasses', 16], ['A day off', 16], ['New bells', 12], ['Apples', 10], ['Friends', 8]),
+  B('shovel', 'Name the worst thing about shovelling snow.', ['It’s cold', 30], ['It’s heavy', 24], ['Sore back', 16], ['The plow fills it back in', 14], ['It takes forever', 10], ['It snows again', 5]),
+  B('bus', 'Name something you do on a long bus or car ride.', ['Listen to music', 34], ['Sleep', 24], ['Use my phone', 18], ['Look out the window', 10], ['Talk', 8], ['Eat snacks', 5]),
+];
+const SURVEY_IDEAS = ['Name the best thing about the winter break.', 'Name a food you could eat every day.', 'Name the best gift you could get this year.', 'Name something our school needs.', 'Name the best holiday movie.', 'Name something you’d buy with $100.', 'Name the worst chore.', 'Name a job you’d love to have.', 'Name the best snack.', 'Name something you can’t leave home without.'];
+const TEAM_DEF = ['Team Reindeer', 'Team Snowmen', 'Team Elves', 'Team Penguins'];
+const BUZZ_KEYS = ['a', 'l', 'f', 'j'];
+
+/* =====================================================
+   SAVE (surveys are shared by every class on this computer; scores are per class)
+   ===================================================== */
+const KEY = 'twr-classsays-v1';
+let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+store = Object.assign({surveys:[], sound:true, classes:{}, draft:null}, store || {});
+let classId = 'default', className = 'Our class';
+try { const hub = JSON.parse(localStorage.getItem('twr-hub-v1')); if (hub && hub.classes && hub.classes.length){ const w = params.get('class') || hub.current; const c = hub.classes.find(c => c.id === w) || hub.classes[0]; classId = c.id; className = c.name; } } catch(e) {}
+const CL = store.classes[classId] = Object.assign({teams:2, names:[...TEAM_DEF], scores:[0, 0, 0, 0], used:[]}, store.classes[classId] || {});
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} };
+const tname = i => CL.names[i] || TEAM_DEF[i];
+
+/* =====================================================
+   SOUND
+   ===================================================== */
+let AC = null;
+function tone(f, t0, dur, type = 'sine', vol = .12, f2){
+  if (!store.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + t0;
+    o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + .05);
+  } catch(e) {}
+}
+const sfx = {
+  ding:() => { tone(1319, 0, .5, 'triangle', .14); tone(1976, .08, .5, 'sine', .08); },
+  strike:() => { tone(160, 0, .6, 'sawtooth', .16); tone(120, 0, .6, 'square', .1); },
+  buzz:() => tone(520, 0, .3, 'square', .1, 780),
+  win:() => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .13, .4, 'triangle', .12)),
+  tick:() => tone(900, 0, .04, 'square', .04),
+};
+
+/* =====================================================
+   STATE
+   ===================================================== */
+let screen = 'menu', G = null, roundNo = 0, BN = null;
+const allBoards = () => [...store.surveys, ...BOARDS];
+
+function startBoard(b){
+  roundNo++;
+  G = {b, open:[], late:[], bank:0, strikes:0, control:null, stealer:null, phase:'faceoff', buzz:null, awardedTo:null, mult:roundNo <= 2 ? 1 : roundNo === 3 ? 2 : 3};
+  if (!CL.used.includes(b.id)){ CL.used.push(b.id); save(); }
+  screen = 'game'; render(); track('says-board');
+}
+function nextBoard(){
+  const pool = BOARDS.filter(b => !CL.used.includes(b.id));
+  if (!pool.length){ CL.used = CL.used.filter(id => !BOARDS.some(b => b.id === id)); save(); return startBoard(shuffle(BOARDS)[0]); }
+  startBoard(shuffle(pool)[0]);
+}
+function award(t, msg){
+  CL.scores[t] += G.bank; G.awardedTo = t; G.phase = 'over'; save(); sfx.win();
+  toast(msg || `${tname(t)} wins ${G.bank} points!`);
+}
+function reveal(i){
+  if (!G || G.open.includes(i)) return;
+  G.open.push(i); G.just = [i]; sfx.ding();
+  if (G.phase === 'over'){ G.late.push(i); return render(); }
+  G.bank += G.b.a[i][1] * G.mult;
+  if (G.phase === 'steal') award(G.stealer, `STOLEN! ${tname(G.stealer)} takes ${G.bank} points!`);
+  else if (G.open.length === G.b.a.length){
+    if (G.control != null) award(G.control, `Clean sweep! ${tname(G.control)} wins ${G.bank} points!`);
+    else { G.phase = 'over'; toast('Tap the team that gets the points'); }
+  }
+  render();
+}
+function strike(){
+  if (!G || G.phase === 'over') return;
+  sfx.strike();
+  let n = 1;
+  if (G.phase === 'play'){ G.strikes++; n = G.strikes; if (G.strikes >= 3){ G.phase = 'steal'; G.stealer = (G.control + 1) % CL.teams; } }
+  else if (G.phase === 'steal'){ n = 1; award(G.control, `No steal! ${tname(G.control)} keeps ${G.bank} points!`); }
+  showX(n); render();
+}
+function showX(n){ const x = $('#xo'); x.firstElementChild.textContent = '❌'.repeat(n); x.classList.remove('show'); void x.offsetWidth; x.classList.add('show'); }
+function teamClick(t){
+  if (!G) return;
+  if (G.phase === 'faceoff' || G.phase === 'play'){ G.control = t; G.phase = 'play'; }
+  else if (G.phase === 'steal'){ if (t !== G.control) G.stealer = t; }
+  else if (G.phase === 'over' && G.awardedTo == null && G.bank > 0) award(t);
+  render();
+}
+function buzz(t){
+  if (!G || G.phase !== 'faceoff' || G.buzz != null) return;
+  G.buzz = t; sfx.buzz(); render();
+}
+
+/* =====================================================
+   TEACHER ANSWER KEY
+   The key opens in its own window (drag it to your laptop screen, away from the smartboard).
+   It follows the board that is being played and can flip answers on the board.
+   ===================================================== */
+const KEYMODE = params.has('key'), LIVE = 'twr-says-live-' + classId;
+let chan = null; try { chan = new BroadcastChannel('twr-says-' + classId); } catch(e) {}
+function publish(){
+  if (KEYMODE) return;
+  const st = G && screen === 'game' ? {id:G.b.id, open:G.open, phase:G.phase, strikes:G.strikes} : null;
+  try { localStorage.setItem(LIVE, JSON.stringify(st)); } catch(e) {}
+  if (chan) chan.postMessage({type:'state', st});
+}
+if (chan && !KEYMODE) chan.onmessage = e => {
+  const m = e.data || {};
+  if (m.type === 'hello') publish();
+  if (!G || screen !== 'game') return;
+  if (m.type === 'reveal' && m.id === G.b.id) reveal(m.i);
+  if (m.type === 'strike') strike();
+};
+const keyUrl = extra => location.pathname.split('/').pop() + '?key=1&class=' + encodeURIComponent(classId) + (extra || '');
+function keyList(b){ return `<ol>${b.a.map(([t, p]) => `<li>${esc(t)} <b>(${p})</b></li>`).join('')}</ol>`; }
+function initKey(){
+  document.title = 'Answer key | The Class Says…';
+  ['#menuBtn', '#teamsBtn', '#sndBtn', '#keyBtn', '#hubBtn'].forEach(s => $(s).classList.add('hidden'));
+  document.querySelector('h1').innerHTML = '🔑 Teacher <span>answer key</span>';
+  let live = null; try { live = JSON.parse(localStorage.getItem(LIVE)); } catch(e) {}
+  const draw = () => {
+    try { store.surveys = (JSON.parse(localStorage.getItem(KEY)) || {}).surveys || store.surveys; } catch(e) {}
+    const openIds = [...document.querySelectorAll('details.kb[open]')].map(d => d.dataset.id);
+    const b = live && allBoards().find(x => x.id === live.id);
+    let h = `<div class="card noprint"><h2 style="margin-top:0">📺 On the board now</h2>`;
+    if (b){
+      h += `<p style="font-weight:900;font-size:20px;margin:0 0 6px">${esc(b.q)}</p>
+        ${b.a.map(([t, p], i) => `<div class="krow${live.open.includes(i) ? ' done' : ''}"><span>${i + 1}</span><span>${esc(t)}</span><b>${p}</b>${live.open.includes(i) ? '<span>✅ shown</span>' : live.phase === 'over' ? `<button class="btn sm" data-flip="${i}">Show</button>` : `<button class="btn sm green" data-flip="${i}">Flip it</button>`}</div>`).join('')}
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button class="btn red" id="kStrike"${live.phase === 'over' ? ' disabled' : ''}>❌ Strike</button><span class="hint">Strikes: ${live.strikes} · Buttons here work the smartboard.</span></div>`;
+    } else h += `<p class="hint">No board is being played right now. Start one on the smartboard and its answers appear here. (This only follows along when both windows are on the same computer. On a phone, use the full list below.)</p>`;
+    h += `</div><h2>📚 Every board <button class="btn sm noprint" id="kPrint" style="margin-left:10px">🖨 Print the answer key</button></h2>
+      ${allBoards().map(x => `<details class="kb" data-id="${x.id}"${openIds.includes(x.id) ? ' open' : ''}><summary>${x.by ? '📝 ' : ''}${esc(x.q)}${x.by ? ` <span class="hint">(${esc(x.by)})</span>` : ''}</summary>${keyList(x)}</details>`).join('')}`;
+    $('#main').innerHTML = h;
+    document.querySelectorAll('[data-flip]').forEach(btn => btn.onclick = () => chan && chan.postMessage({type:'reveal', id:live.id, i:+btn.dataset.flip}));
+    const ks = $('#kStrike'); if (ks) ks.onclick = () => chan && chan.postMessage({type:'strike'});
+    $('#kPrint').onclick = () => { document.querySelectorAll('details.kb').forEach(d => d.open = true); setTimeout(() => window.print(), 50); };
+  };
+  if (chan){ chan.onmessage = e => { if ((e.data || {}).type === 'state'){ live = e.data.st; draw(); } }; chan.postMessage({type:'hello'}); }
+  addEventListener('storage', e => { if (e.key === LIVE){ try { live = JSON.parse(e.newValue); } catch(_) {} draw(); } });
+  draw();
+  if (params.has('print')){ document.querySelectorAll('details.kb').forEach(d => d.open = true); setTimeout(() => window.print(), 400); }
+}
+$('#keyBtn').onclick = () => {
+  const b = G && screen === 'game' ? G.b : null;
+  $('#sheet').innerHTML = `<h2>🔑 Teacher answer key</h2>
+    <p>Three ways to see the answers without showing the class:</p>
+    <p><button class="btn gold" id="kOpen">🖥 Open the teacher view</button><br><span class="hint">Opens a small window. Drag it onto your laptop screen, away from the smartboard. It follows each board, and you can flip answers and give strikes from it.</span></p>
+    <p><button class="btn" id="kPrintAll">🖨 Print the answer key</button><br><span class="hint">Every board and its answers on paper, including your class surveys.</span></p>
+    <p><span class="hint">On your phone: open this address on your website to see every board’s answers.</span><span class="url">${esc(location.origin + location.pathname)}?key=1</span></p>
+    ${b ? `<details class="kb"><summary>👀 Peek at this board’s answers here (the class will see them too!)</summary>${keyList(b)}</details>` : ''}
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn" id="kClose">Close</button></div>`;
+  $('#modal').classList.remove('hidden');
+  $('#kOpen').onclick = () => { const w = window.open(keyUrl(), 'twr-says-key', 'width=540,height=820'); if (!w) toast('Your browser blocked the window. Allow pop-ups for this site.'); else closeModal(); };
+  $('#kPrintAll').onclick = () => { const w = window.open(keyUrl('&print=1'), 'twr-says-key', 'width=900,height=820'); if (!w) toast('Your browser blocked the window. Allow pop-ups for this site.'); };
+  $('#kClose').onclick = closeModal;
+};
+
+/* =====================================================
+   RENDER
+   ===================================================== */
+function render(){
+  publish();
+  if (screen === 'menu') renderMenu();
+  else if (screen === 'game') renderGame();
+  else if (screen === 'survey') renderSurvey();
+  else if (screen === 'bonus') renderBonus();
+  $('#menuBtn').classList.toggle('hidden', screen === 'menu');
+}
+function renderMenu(){
+  const left = BOARDS.filter(b => !CL.used.includes(b.id)).length;
+  $('#main').innerHTML = `
+    <div class="hero">
+      <button class="btn big green" id="playNext">▶ Play a board</button>
+      <button class="btn big" id="bonusBtn">⚡ Bonus round</button>
+      <button class="btn big gold" id="surveyBtn">📝 Survey your class</button>
+    </div>
+    <p class="hint">${left} of ${BOARDS.length} boards left for ${esc(className)}. Two teams take turns naming the top answers. Three strikes and the other team can steal!</p>
+    <h2>📝 Our class surveys</h2>
+    ${store.surveys.length ? `<div class="blist">${store.surveys.map(s => `<div class="bcard${CL.used.includes(s.id) ? ' played' : ''}" data-b="${s.id}"><span>${CL.used.includes(s.id) ? '✅' : '📝'}</span><span>${esc(s.q)}<small>Answers from ${esc(s.by)} · ${s.a.length} answers</small></span><span class="del" data-del="${s.id}" title="Delete this survey">🗑</span></div>`).join('')}</div>`
+      : `<p class="hint">None yet. Press <b>📝 Survey your class</b>: one class gives answers, and another class tries to guess them.</p>`}
+    <h2>🎄 Ready-made boards</h2>
+    <p class="hint">These answers and points were written for the game. They are not from a real survey.</p>
+    <div class="blist">${BOARDS.map(b => `<div class="bcard${CL.used.includes(b.id) ? ' played' : ''}" data-b="${b.id}"><span>${CL.used.includes(b.id) ? '✅' : '🎁'}</span><span>${esc(b.q)}</span></div>`).join('')}</div>`;
+  $('#playNext').onclick = nextBoard;
+  $('#bonusBtn').onclick = startBonus;
+  $('#surveyBtn').onclick = () => { screen = 'survey'; render(); };
+  document.querySelectorAll('[data-b]').forEach(el => el.onclick = e => {
+    if (e.target.dataset.del){ if (confirm('Delete this survey board?')){ store.surveys = store.surveys.filter(s => s.id !== e.target.dataset.del); save(); render(); } return; }
+    startBoard(allBoards().find(b => b.id === el.dataset.b));
+  });
+}
+function renderGame(){
+  const b = G.b, n = b.a.length, rows = n > 4 ? Math.ceil(n / 2) : n;
+  const status = {
+    faceoff: G.buzz != null ? `🔔 ${esc(tname(G.buzz))} buzzed in first! Tap the answers, then tap the team that wins control.` : 'Face-off! One player from each team. Buzz in, then tap the team that wins control.',
+    play: `${esc(tname(G.control ?? 0))} is playing. Three strikes and the other team can steal.`,
+    steal: `🚨 STEAL! ${esc(tname(G.stealer ?? 0))} gets ONE answer. Tap it if it’s on the board, or press ❌.`,
+    over: G.awardedTo != null ? `🏆 ${esc(tname(G.awardedTo))} wins ${G.bank} points!` : (G.bank ? 'Tap the team that gets the points.' : 'Round over.'),
+  }[G.phase];
+  const tiles = b.a.map(([t, p], i) => `<button class="tile${G.open.includes(i) ? ' open' : ''}${G.late.includes(i) ? ' late' : ''}${(G.just || []).includes(i) ? ' just' : ''}" data-i="${i}" aria-label="Answer ${i + 1}"><div class="in"><div class="face front"><b>${i + 1}</b></div><div class="face back"><span>${G.open.includes(i) ? esc(t) : ''}</span><i>${G.open.includes(i) ? p : ''}</i></div></div></button>`).join('');
+  const teams = Array.from({length:CL.teams}, (_, t) => {
+    const cls = (G.phase === 'steal' && G.stealer === t) ? ' steal' : (G.control === t && G.phase !== 'faceoff') ? ' ctl' : '';
+    const tag = G.phase === 'steal' && G.stealer === t ? '🚨 STEALING' : (G.control === t && G.phase === 'play') ? '▶ IN CONTROL' : G.awardedTo === t ? '🏆 WON THE ROUND' : '';
+    return `<div class="team${cls}${G.buzz === t && G.phase === 'faceoff' ? ' buzzed' : ''}" data-t="${t}"><div class="tag">${tag}</div><div class="n">${esc(tname(t))}</div><div class="s">${CL.scores[t]}</div>
+      ${G.phase === 'faceoff' ? `<button class="btn buzz" data-buzz="${t}"${G.buzz != null ? ' disabled' : ''}>🔔 Buzz (${BUZZ_KEYS[t].toUpperCase()} key)</button>` : ''}</div>`;
+  }).join('');
+  $('#main').innerHTML = `
+    <div class="qbox">${esc(b.q)}</div>
+    <div class="meta"><button class="pill" id="multBtn" title="Tap to change how much this round is worth">${['', 'Single', 'Double', 'Triple'][G.mult]} points ×${G.mult}</button><div class="bank" title="Points in the bank">${G.bank}</div><span class="pill" style="cursor:default">${b.by ? '📝 ' + esc(b.by) + ' said…' : 'Top ' + n + ' answers'}</span></div>
+    <div class="tiles" style="grid-template-rows:repeat(${rows},auto);grid-template-columns:repeat(${n > 4 ? 2 : 1},minmax(0,1fr));${n > 4 ? '' : 'max-width:640px'}">${tiles}</div>
+    <div class="status">${status}</div>
+    <div class="ctrl">
+      <button class="btn big red" id="strikeBtn"${G.phase === 'over' ? ' disabled' : ''}>❌ Strike (X)</button>
+      <div class="strikes">${[0, 1, 2].map(i => `<i class="${i < G.strikes ? 'on' : ''}">❌</i>`).join('')}</div>
+      ${G.phase === 'over' ? `<button class="btn big" id="restBtn"${G.open.length === n ? ' disabled' : ''}>👀 Reveal the rest</button><button class="btn big green" id="nextBtn">⏭ Next board</button>` : ''}
+    </div>
+    <div class="teams">${teams}</div>`;
+  G.just = null;
+  document.querySelectorAll('.tile').forEach(el => el.onclick = () => reveal(+el.dataset.i));
+  document.querySelectorAll('.team').forEach(el => el.onclick = e => { if (e.target.dataset.buzz != null) return buzz(+e.target.dataset.buzz); teamClick(+el.dataset.t); });
+  $('#strikeBtn').onclick = strike;
+  $('#multBtn').onclick = () => { if (G.bank || G.phase === 'over') return toast('Change this before any answers are revealed'); G.mult = G.mult % 3 + 1; render(); };
+  const rb = $('#restBtn'); if (rb) rb.onclick = () => { G.just = []; b.a.forEach((_, i) => { if (!G.open.includes(i)){ G.open.push(i); G.late.push(i); G.just.push(i); } }); sfx.ding(); render(); };
+  const nb = $('#nextBtn'); if (nb) nb.onclick = nextBoard;
+}
+
+/* =====================================================
+   SURVEY YOUR CLASS
+   ===================================================== */
+const normKey = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/^(a|an|the|my|some) /, '').replace(/\s+/g, ' ').trim().replace(/s$/, '');
+function renderSurvey(){
+  const D = store.draft = store.draft || {q:'', groups:[]};
+  const total = D.groups.reduce((s, g) => s + g.n, 0);
+  const sorted = [...D.groups].sort((a, b) => b.n - a.n);
+  $('#main').innerHTML = `
+    <div class="card">
+      <h2 style="margin-top:0">📝 Survey your class</h2>
+      <p class="hint">Ask the question. Type each student’s answer and press Enter. Matching answers are counted together. Then another class tries to guess the top answers!</p>
+      <label class="hint" for="sq">The question</label>
+      <input class="in" id="sq" maxlength="110" placeholder="Name something…" value="${esc(D.q)}" list="ideas">
+      <datalist id="ideas">${SURVEY_IDEAS.map(i => `<option value="${esc(i)}">`).join('')}</datalist>
+      <div style="display:flex;gap:8px;margin-top:12px"><input class="in" id="sa" maxlength="40" placeholder="Type an answer, press Enter" autocomplete="off"><button class="btn gold" id="addBtn">Add</button></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">📊 ${total} answer${total === 1 ? '' : 's'} so far</h2>
+      ${sorted.length ? sorted.map(g => `<div class="grow"><input class="in" data-lab="${g.k}" value="${esc(g.t)}" maxlength="40"><b>${g.n}</b><button class="btn sm" data-dec="${g.k}">−</button><button class="btn sm" data-inc="${g.k}">+</button>
+        <select class="in sm" data-merge="${g.k}"><option value="">Merge into…</option>${sorted.filter(o => o !== g).map(o => `<option value="${o.k}">${esc(o.t)}</option>`).join('')}</select><button class="btn sm" data-rm="${g.k}" title="Remove">🗑</button></div>`).join('') : '<p class="hint">No answers yet.</p>'}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn big green" id="buildBtn"${sorted.length < 3 ? ' disabled' : ''}>✅ Build the board</button>
+        <button class="btn" id="clearBtn">🧹 Start over</button>
+      </div>
+      <p class="hint">The board uses the top ${Math.min(8, Math.max(3, sorted.length))} answers. Points are the percent of students who gave that answer. You need at least 3 different answers.</p>
+    </div>`;
+  const find = k => D.groups.find(g => g.k === k);
+  const add = () => {
+    const v = $('#sa').value.trim(); if (!v) return;
+    const k = normKey(v) || v.toLowerCase(); const g = find(k);
+    if (g) g.n++; else D.groups.push({k, t:v.charAt(0).toUpperCase() + v.slice(1), n:1});
+    save(); renderSurvey(); $('#sa').focus();
+  };
+  $('#sq').oninput = e => { D.q = e.target.value; save(); };
+  $('#sa').onkeydown = e => { if (e.key === 'Enter') add(); };
+  $('#addBtn').onclick = add;
+  document.querySelectorAll('[data-lab]').forEach(i => i.onchange = () => { find(i.dataset.lab).t = i.value.trim() || find(i.dataset.lab).t; save(); });
+  document.querySelectorAll('[data-inc]').forEach(b => b.onclick = () => { find(b.dataset.inc).n++; save(); renderSurvey(); });
+  document.querySelectorAll('[data-dec]').forEach(b => b.onclick = () => { const g = find(b.dataset.dec); g.n--; if (g.n <= 0) D.groups = D.groups.filter(x => x !== g); save(); renderSurvey(); });
+  document.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { D.groups = D.groups.filter(x => x.k !== b.dataset.rm); save(); renderSurvey(); });
+  document.querySelectorAll('[data-merge]').forEach(s => s.onchange = () => { if (!s.value) return; const from = find(s.dataset.merge), to = find(s.value); to.n += from.n; D.groups = D.groups.filter(x => x !== from); save(); renderSurvey(); });
+  $('#clearBtn').onclick = () => { if (!D.groups.length || confirm('Clear this survey and start over?')){ store.draft = null; save(); renderSurvey(); } };
+  $('#buildBtn').onclick = () => {
+    const q = D.q.trim(); if (!q){ toast('Type the question first'); $('#sq').focus(); return; }
+    const top = sorted.slice(0, 8);
+    store.surveys.unshift({id:'s' + Date.now(), q, a:top.map(g => [g.t, Math.max(1, Math.round(g.n / total * 100))]), by:className, date:new Date().toISOString().slice(0, 10)});
+    store.draft = null; save(); screen = 'menu'; render(); toast('Board saved! Play it with another class.'); track('says-survey');
+  };
+}
+
+/* =====================================================
+   BONUS ROUND: one player, five questions, 30 seconds
+   ===================================================== */
+function startBonus(){
+  const lead = CL.scores.slice(0, CL.teams).indexOf(Math.max(...CL.scores.slice(0, CL.teams)));
+  BN = {team:lead, qs:shuffle(BOARDS).slice(0, 5), i:0, said:[], pts:[], phase:'ready', t:30, j:0};
+  screen = 'bonus'; render();
+}
+let bnTimer = null;
+function renderBonus(){
+  clearInterval(bnTimer);
+  let h = '';
+  if (BN.phase === 'ready'){
+    h = `<div class="card" style="text-align:center"><h2 style="margin-top:0">⚡ Bonus round</h2>
+      <p>One player. Five questions. 30 seconds. Say the first answer that comes to mind!<br>Score <b>100 points</b> or more to win a 100-point bonus.</p>
+      <p class="hint">You type what the player says (a few letters is enough). Points are revealed at the end.</p>
+      <div class="opts" style="margin:14px 0">${Array.from({length:CL.teams}, (_, t) => `<button class="btn${BN.team === t ? ' on' : ''}" data-bt="${t}">${esc(tname(t))}</button>`).join('')}</div>
+      <button class="btn big green" id="bnGo">▶ Start the clock</button></div>`;
+  } else if (BN.phase === 'ask'){
+    h = `<div class="card" style="text-align:center"><div class="timer" id="bnT">${BN.t}</div><div class="hint">Question ${BN.i + 1} of 5</div>
+      <div class="bq">${esc(BN.qs[BN.i].q)}</div>
+      <div style="display:flex;gap:8px;max-width:560px;margin:0 auto"><input class="in" id="bnIn" placeholder="Type the answer, press Enter" autocomplete="off" maxlength="40"><button class="btn" id="bnPass">Pass</button></div></div>`;
+  } else if (BN.phase === 'score'){
+    const b = BN.qs[BN.j], done = BN.pts[BN.j] != null, total = BN.pts.reduce((s, p) => s + (p || 0), 0);
+    h = `<div class="card" style="text-align:center"><div class="hint">Answer ${BN.j + 1} of 5 · Total so far: <b>${total}</b></div>
+      <div class="bq">${esc(b.q)}</div>
+      <p style="font-size:24px;font-weight:900">They said: “${esc(BN.said[BN.j] || '(no answer)')}”</p>
+      ${done ? `<div class="timer" style="color:var(--gold)">${BN.pts[BN.j]}</div><button class="btn big green" id="bnNext">${BN.j < 4 ? 'Next answer ▶' : '🏁 Final score'}</button>`
+        : `<p class="hint">Tap the answer it matches:</p><div class="opts">${b.a.map(([t], k) => `<button class="btn" data-pick="${k}">${esc(t)}</button>`).join('')}<button class="btn red" data-pick="-1">Not on the board</button></div>`}</div>`;
+  } else {
+    const total = BN.pts.reduce((s, p) => s + (p || 0), 0), won = total >= 100;
+    h = `<div class="card" style="text-align:center"><h2 style="margin-top:0">${won ? '🎉 Bonus beaten!' : 'So close!'}</h2>
+      <div class="timer" style="color:var(--gold)">${total}</div><p style="font-weight:900">${esc(tname(BN.team))} earns ${total}${won ? ' + 100 bonus' : ''} points.</p>
+      ${BN.qs.map((b, k) => `<div class="brow"><span>${esc(b.q)}</span><span>“${esc(BN.said[k] || '—')}” <span class="hint">(top answer: ${esc(b.a[0][0])})</span></span><b>${BN.pts[k] || 0}</b></div>`).join('')}
+      <button class="btn big green" id="bnDone" style="margin-top:14px">📋 Back to the boards</button></div>`;
+  }
+  $('#main').innerHTML = h;
+  document.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BN.team = +b.dataset.bt; renderBonus(); });
+  const go = $('#bnGo'); if (go) go.onclick = () => { BN.phase = 'ask'; renderBonus(); track('says-bonus'); };
+  if (BN.phase === 'ask'){
+    const inp = $('#bnIn'); inp.focus();
+    const nextQ = v => { BN.said[BN.i] = v; BN.i++; if (BN.i >= 5){ BN.phase = 'score'; } renderBonus(); };
+    inp.onkeydown = e => { if (e.key === 'Enter') nextQ(inp.value.trim()); };
+    $('#bnPass').onclick = () => nextQ('');
+    bnTimer = setInterval(() => { BN.t--; sfx.tick(); const el = $('#bnT'); if (el) el.textContent = BN.t; if (BN.t <= 0){ clearInterval(bnTimer); sfx.strike(); BN.said[BN.i] = ($('#bnIn') || {}).value || ''; BN.phase = 'score'; renderBonus(); } }, 1000);
+  }
+  document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const k = +b.dataset.pick; BN.pts[BN.j] = k < 0 ? 0 : BN.qs[BN.j].a[k][1]; k < 0 ? sfx.strike() : sfx.ding(); renderBonus(); });
+  const nx = $('#bnNext'); if (nx) nx.onclick = () => {
+    if (BN.j < 4){ BN.j++; } else { const total = BN.pts.reduce((s, p) => s + (p || 0), 0); CL.scores[BN.team] += total + (total >= 100 ? 100 : 0); save(); BN.phase = 'done'; if (total >= 100){ sfx.win(); confetti(); } }
+    renderBonus();
+  };
+  const dn = $('#bnDone'); if (dn) dn.onclick = () => { screen = 'menu'; render(); };
+}
+
+/* =====================================================
+   TEAMS, KEYS, MISC
+   ===================================================== */
+$('#teamsBtn').onclick = () => {
+  const draw = () => {
+    $('#sheet').innerHTML = `<h2>👥 Teams</h2>
+      <div class="opts" style="justify-content:flex-start;margin-bottom:10px">${[2, 3, 4].map(n => `<button class="btn${CL.teams === n ? ' on' : ''}" data-n="${n}">${n} teams</button>`).join('')}</div>
+      <div class="trow hint"><span>Team name</span><span>Score</span></div>
+      ${Array.from({length:CL.teams}, (_, t) => `<div class="trow"><input class="in" data-name="${t}" value="${esc(tname(t))}" maxlength="24"><input class="in" type="number" data-score="${t}" value="${CL.scores[t]}"></div>`).join('')}
+      <p class="hint">Fix a score here if you tapped the wrong thing.</p>
+      <div style="display:flex;gap:8px;justify-content:space-between;margin-top:12px"><button class="btn" id="zero">🧹 Reset scores to 0</button><button class="btn gold" id="closeT">Done</button></div>`;
+    $('#sheet').querySelectorAll('[data-n]').forEach(b => b.onclick = () => { CL.teams = +b.dataset.n; save(); draw(); });
+    $('#sheet').querySelectorAll('[data-name]').forEach(i => i.oninput = () => { CL.names[+i.dataset.name] = i.value; save(); });
+    $('#sheet').querySelectorAll('[data-score]').forEach(i => i.oninput = () => { CL.scores[+i.dataset.score] = parseInt(i.value, 10) || 0; save(); });
+    $('#zero').onclick = () => { CL.scores = [0, 0, 0, 0]; roundNo = 0; save(); draw(); };
+    $('#closeT').onclick = closeModal;
+  };
+  draw(); $('#modal').classList.remove('hidden');
+};
+function closeModal(){ $('#modal').classList.add('hidden'); if (G && G.control != null && G.control >= CL.teams) G.control = 0; render(); }
+$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+$('#menuBtn').onclick = () => { clearInterval(bnTimer); screen = 'menu'; render(); };
+$('#sndBtn').onclick = () => { store.sound = !store.sound; save(); $('#sndBtn').textContent = store.sound ? '🔊' : '🔇'; };
+$('#sndBtn').textContent = store.sound ? '🔊' : '🔇';
+addEventListener('keydown', e => {
+  if (screen !== 'game' || !$('#modal').classList.contains('hidden') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (/^[1-8]$/.test(k) && +k <= G.b.a.length) reveal(+k - 1);
+  else if (k === 'x') strike();
+  else if (G.phase === 'faceoff' && BUZZ_KEYS.slice(0, CL.teams).includes(k)) buzz(BUZZ_KEYS.indexOf(k));
+});
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 2600); }
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#f5c542', '#d64045', '#2fbf71', '#4aa3ff', '#ff8fc7'];
+  for (let i = 0; i < 100; i++){
+    const el = document.createElement('div'); el.style.cssText = `position:fixed;width:12px;height:18px;z-index:60;pointer-events:none;border-radius:2px;left:${innerWidth / 2}px;top:${innerHeight * .35}px;background:${colors[i % 5]}`;
+    document.body.appendChild(el);
+    const dx = (Math.random() - .5) * innerWidth, dy = -100 - Math.random() * 400, r = (Math.random() - .5) * 900;
+    try { el.animate([{transform:'translate(0,0)'}, {transform:`translate(${dx}px,${dy}px) rotate(${r}deg)`, offset:.4}, {transform:`translate(${dx * 1.2}px,${dy + 800}px) rotate(${r * 2}deg)`, opacity:0}], {duration:2200, easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish = () => el.remove(); } catch(e) { el.remove(); }
+  }
+}
+if (EMBED){ $('#hubBtn').classList.remove('hidden'); $('#hubBtn').onclick = () => { clearInterval(bnTimer); window.parent.postMessage({type:'twr-close'}, '*'); }; }
+window.__says = {get G(){ return G; }, get BN(){ return BN; }, CL, store};
+if (KEYMODE) initKey(); else render();
+</script>
+</body>
+</html>
