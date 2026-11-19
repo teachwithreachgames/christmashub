@@ -126,7 +126,7 @@ main{padding:20px clamp(14px,2.5vw,36px) 30px;display:flex;flex-direction:column
 .overlay{position:fixed;inset:0;z-index:500;background:rgba(3,10,7,.86);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
 .sheet{width:min(760px,96vw);max-height:90vh;overflow:auto;background:#0f2a1e;border:1px solid var(--line);border-radius:18px;padding:22px;-webkit-user-select:text;user-select:text}
 .sheet h2{font-family:'Lilita One',cursive;font-weight:400;margin:0 0 4px;font-size:30px}
-.class-row{display:grid;grid-template-columns:1fr 190px auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.class-row{display:grid;grid-template-columns:1fr 170px 140px auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .class-row .in{font-size:16px;min-height:46px}
 .sheet-foot{display:flex;gap:10px;justify-content:space-between;margin-top:16px;flex-wrap:wrap}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -157,6 +157,11 @@ main{padding:20px clamp(14px,2.5vw,36px) 30px;display:flex;flex-direction:column
       <div class="lvl-pick">
         <button class="lvl-opt" data-lvl="elem"><span class="e">🧒</span>Elementary<small>Picture clues, easier words, Build-a-Snowman</small></button>
         <button class="lvl-opt" data-lvl="hs"><span class="e">🎓</span>High School<small>Harder words, trick puzzles, song tier list</small></button>
+      </div>
+      <p style="font-weight:800;margin:0">Language · Langue</p>
+      <div class="lvl-pick">
+        <button class="lvl-opt on" data-lang="en"><span class="e">🍁</span>English</button>
+        <button class="lvl-opt" data-lang="fr"><span class="e">⚜️</span>Français<small>French immersion: every activity in French</small></button>
       </div>
       <button class="btn gold" id="obGo" style="width:100%;font-size:20px;min-height:58px" disabled>Create class &amp; open the hub →</button>
     </div>
@@ -220,7 +225,7 @@ main{padding:20px clamp(14px,2.5vw,36px) 30px;display:flex;flex-direction:column
 <div class="overlay hidden" id="manager">
   <div class="sheet">
     <h2>⚙ Your classes</h2>
-    <p class="hint">Rename classes, change grade levels, or remove a class. The grade level decides which activities and puzzles each class sees.</p>
+    <p class="hint">Rename classes, change grade levels or language, or remove a class. The grade level decides which activities and puzzles each class sees. Classes set to Français get every activity in French.</p>
     <div id="classRows"></div>
     <div class="sheet-foot">
       <button class="btn" id="addClassBtn">＋ Add class</button>
@@ -234,21 +239,34 @@ main{padding:20px clamp(14px,2.5vw,36px) 30px;display:flex;flex-direction:column
    levels: 'elem', 'hs'.  url: page in this folder (leave out until it's built).
    daily: true shows a "Daily" tag.  */
 const ACTIVITIES = [
-  {id:'wordle',      emoji:'🔤', title:'Christmas Wordle',      desc:'Guess the holiday word in 6 tries. New daily word every school day.', levels:['elem','hs'], url:'wordle.html', daily:true},
-  {id:'connections', emoji:'🔗', title:'Christmas Connections', desc:'Sort the tiles into groups. New daily puzzle every school day.',      levels:['elem','hs'], url:'connections.html', daily:true},
-  {id:'tierlist',    emoji:'🎁', title:'25 Songs of Christmas', desc:'Unwrap a mystery song and rank it S to F as a class.',                levels:['hs'],        url:'tier-list.html'},
-  {id:'tree',        emoji:'🎄', title:'Class Christmas Tree',  desc:'Decorate a 3D tree together, then walk around it.',                   levels:['elem','hs'], url:'tree.html'},
-  {id:'snowman',     emoji:'⛄', title:'Build-a-Snowman',        desc:'Take turns adding hats, scarves and buttons.',                        levels:['elem'],      url:'snowman.html'},
-  {id:'globe',       emoji:'🌍', title:"Santa's World Tour",     desc:'Spin the 3D globe and fly Santa to 22 countries to learn how Christmas is celebrated there.', levels:['elem'], url:'globe.html'},
-  {id:'sleigh',      emoji:'🛷', title:"Santa's Sleigh Jump",    desc:'Set the ramp size (K–3) or the ramp angle (Gr 4–8) to land Santa at the right house.', levels:['elem'], url:'sleigh.html'},
-  {id:'printables',  emoji:'🖨️', title:'Printables',             desc:'Word searches, crosswords, colouring and colour by math, with answer keys.', levels:['elem'], url:'printables.html'},
-  {id:'tune',        emoji:'🎵', title:'Name That Tune',        desc:'Guess the Christmas song from 2, 5 or 10 seconds. Play in teams!',    levels:['elem'], url:'tune.html'},
-  {id:'summit',      emoji:'🏔️', title:'Santa Summit',          desc:'Guess the price. Every dollar off is a step up the mountain. Too far and Santa falls off!', levels:['hs'], url:'summit.html'},
-  {id:'tune-hs',     emoji:'🎵', title:'Name That Tune',        desc:'Guess the song from a few seconds of the intro.',                     levels:['hs']},
-  {id:'freeze',      emoji:'❄️', title:'Freeze Dance',          desc:'Dance until the music stops. Then FREEZE like a snowman!',            levels:['elem'], url:'freeze.html'},
-  {id:'says',        emoji:'🎤', title:'The Class Says…',       desc:'Guess the top answers on the board. Three strikes and the other team steals! Or survey your own classes.', levels:['hs'], url:'class-says.html'},
-  {id:'hottakes',    emoji:'🔥', title:'Hot Takes',             desc:'"Gift cards are a lazy gift." Agree or disagree? Pick a side and defend it.', levels:['hs'], url:'hottakes.html'},
+  {id:'wordle',      emoji:'🔤', title:'Christmas Wordle',      desc:'Guess the holiday word in 6 tries. New daily word every school day.', levels:['elem','hs'], url:'wordle.html', daily:true,
+    fr:['Wordle de Noël', 'Devine le mot des fêtes en 6 essais. Un nouveau mot chaque jour d’école.']},
+  {id:'connections', emoji:'🔗', title:'Christmas Connections', desc:'Sort the tiles into groups. New daily puzzle every school day.',      levels:['elem','hs'], url:'connections.html', daily:true,
+    fr:['Connexions de Noël', 'Classe les tuiles en groupes. Un nouveau casse-tête chaque jour d’école.']},
+  {id:'tierlist',    emoji:'🎁', title:'25 Songs of Christmas', desc:'Unwrap a mystery song and rank it S to F as a class.',                levels:['hs'],        url:'tier-list.html',
+    fr:['25 chansons de Noël', 'Déballe une chanson mystère et classe-la de S à F avec ta classe.']},
+  {id:'tree',        emoji:'🎄', title:'Class Christmas Tree',  desc:'Decorate a 3D tree together, then walk around it.',                   levels:['elem','hs'], url:'tree.html',
+    fr:['Le sapin de la classe', 'Décorez ensemble un sapin en 3D, puis faites-en le tour.']},
+  {id:'snowman',     emoji:'⛄', title:'Build-a-Snowman',        desc:'Take turns adding hats, scarves and buttons.',                        levels:['elem'],      url:'snowman.html',
+    fr:['Fabrique un bonhomme', 'Chacun son tour, ajoute des chapeaux, des foulards et des boutons.']},
+  {id:'globe',       emoji:'🌍', title:"Santa's World Tour",     desc:'Spin the 3D globe and fly Santa to 22 countries to learn how Christmas is celebrated there.', levels:['elem'], url:'globe.html',
+    fr:['Le tour du monde du père Noël', 'Fais tourner le globe 3D et fais voler le père Noël dans 22 pays pour découvrir comment on y fête Noël.']},
+  {id:'sleigh',      emoji:'🛷', title:"Santa's Sleigh Jump",    desc:'Set the ramp size (K–3) or the ramp angle (Gr 4–8) to land Santa at the right house.', levels:['elem'], url:'sleigh.html',
+    fr:['Le saut du traîneau', 'Choisis la taille de la rampe (mat.–3e) ou son angle (4e–8e) pour que le père Noël atterrisse à la bonne maison.']},
+  {id:'printables',  emoji:'🖨️', title:'Printables',             desc:'Word searches, crosswords, colouring and colour by math, with answer keys.', levels:['elem'], url:'printables.html',
+    fr:['Fiches à imprimer', 'Mots cachés, mots croisés, coloriages et coloriages magiques, avec corrigés.']},
+  {id:'tune',        emoji:'🎵', title:'Name That Tune',        desc:'Guess the Christmas song from 2, 5 or 10 seconds. Play in teams!',    levels:['elem'], url:'tune.html',
+    fr:['Quelle est la chanson?', 'Devine la chanson de Noël après 2, 5 ou 10 secondes. Joue en équipes!']},
+  {id:'summit',      emoji:'🏔️', title:'Santa Summit',          desc:'Guess the price. Every dollar off is a step up the mountain. Too far and Santa falls off!', levels:['hs'], url:'summit.html',
+    fr:['Le sommet du père Noël', 'Devine le prix. Chaque écart fait monter d’une marche. Trop loin, et le père Noël tombe!']},
+  {id:'freeze',      emoji:'❄️', title:'Freeze Dance',          desc:'Dance until the music stops. Then FREEZE like a snowman!',            levels:['elem'], url:'freeze.html',
+    fr:['Statues musicales', 'Danse jusqu’à ce que la musique arrête. Puis fige comme un bonhomme de neige!']},
+  {id:'says',        emoji:'🎤', title:'The Class Says…',       desc:'Guess the top answers on the board. Three strikes and the other team steals! Or survey your own classes.', levels:['hs'], url:'class-says.html',
+    fr:['La classe a dit…', 'Devine les réponses populaires. Trois prises et l’autre équipe peut voler! Ou sonde tes propres classes.']},
+  {id:'hottakes',    emoji:'🔥', title:'Hot Takes',             desc:'"Gift cards are a lazy gift." Agree or disagree? Pick a side and defend it.', levels:['hs'], url:'hottakes.html',
+    fr:['Opinions chaudes', '« Les cartes-cadeaux, c’est un cadeau paresseux. » D’accord ou pas? Choisis ton camp et défends-le.']},
 ];
+const LANGS = {en:'English', fr:'Français'};
 
 /* ================= Shared helpers ================= */
 const HUB_KEY = 'twr-hub-v1', TIER_KEY = 'twr-xmas-tierlist-v1';
@@ -263,7 +281,7 @@ const PREVIEW = new URLSearchParams(location.search).has('preview');
 const SEASON_YEAR = (() => { const t = new Date(); return t.getMonth() < 10 ? t.getFullYear() - 1 : t.getFullYear(); })();
 const DAYS = (() => { const out = [], d = new Date(SEASON_YEAR, 10, 25), end = new Date(SEASON_YEAR, 11, 24); while (d <= end){ const w = d.getDay(); if (w > 0 && w < 6) out.push(new Date(d)); d.setDate(d.getDate() + 1); } return out; })();
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const fmtDay = d => d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'});
+const fmtDay = d => d.toLocaleDateString(loc(), {weekday:'long', month:'short', day:'numeric'});
 const todayIndex = () => { const k = ymd(new Date()); return DAYS.findIndex(d => ymd(d) === k); };
 const nextDayIndex = () => { const now = new Date(); return DAYS.findIndex(d => d > now); };
 
@@ -285,6 +303,12 @@ function loadHub(){
 let hub = loadHub();
 function saveHub(){ try { localStorage.setItem(HUB_KEY, JSON.stringify(hub)); } catch(e) {} }
 const curClass = () => hub.classes.find(c => c.id === hub.current) || hub.classes[0];
+/* French immersion: a class set to Français sees the hub and every activity in French */
+const isFr = () => (curClass() || {}).lang === 'fr';
+const tt = (en, fr) => isFr() ? fr : en;
+const LEVELS_FR = {elem:'Élémentaire', hs:'Secondaire'};
+const lvlName = l => tt(LEVELS[l], LEVELS_FR[l]);
+const loc = () => isFr() ? 'fr-CA' : undefined;
 
 /* ================= Daily puzzle status (read from each game's save) ================= */
 function dailyStatus(game, cls){
@@ -295,21 +319,21 @@ function dailyStatus(game, cls){
     const s = readJSON('twr-wordle-v1'), C = s && s.classes && s.classes[cls.id];
     const g = C && C.daily && C.daily[cls.level] && C.daily[cls.level][key];
     if (!g || !g.guesses || !g.guesses.length) return {state:'new', n:i + 1};
-    if (!g.done) return {state:'playing', n:i + 1, text:`${g.guesses.length}/6 guesses so far`};
-    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? `Solved in ${g.guesses.length}/6` : 'Not solved'};
+    if (!g.done) return {state:'playing', n:i + 1, text:tt(`${g.guesses.length}/6 guesses so far`, `${g.guesses.length}/6 essais jusqu’ici`)};
+    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? tt(`Solved in ${g.guesses.length}/6`, `Résolu en ${g.guesses.length}/6`) : tt('Not solved', 'Non résolu')};
   } else {
     const s = readJSON('twr-connections-v1'), C = s && s.classes && s.classes[cls.id];
     const pool = cls.level === 'hs' ? 'hs' : 'elem';
     const g = C && C.daily && C.daily[pool] && C.daily[pool][key];
     if (!g || !(g.solved.length || g.mistakes || g.done)) return {state:'new', n:i + 1};
-    if (!g.done) return {state:'playing', n:i + 1, text:`${g.solved.length} of ${g.puz.groups.length} groups found`};
-    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? (g.mistakes ? `Solved · ${g.mistakes} mistake${g.mistakes === 1 ? '' : 's'}` : 'Perfect! 🌟') : 'Not solved'};
+    if (!g.done) return {state:'playing', n:i + 1, text:tt(`${g.solved.length} of ${g.puz.groups.length} groups found`, `${g.solved.length} groupe(s) trouvé(s) sur ${g.puz.groups.length}`)};
+    return {state: g.won ? 'won' : 'lost', n:i + 1, text: g.won ? (g.mistakes ? tt(`Solved · ${g.mistakes} mistake${g.mistakes === 1 ? '' : 's'}`, `Résolu · ${g.mistakes} erreur${g.mistakes === 1 ? '' : 's'}`) : tt('Perfect! 🌟', 'Parfait! 🌟')) : tt('Not solved', 'Non résolu')};
   }
 }
 const statusIcon = s => !s ? '' : s.state === 'won' ? '✅' : s.state === 'lost' ? '❌' : s.state === 'playing' ? '✏️' : '⬜';
 
 /* ================= Class screen ================= */
-let obLevel = null;
+let obLevel = null, obLang = 'en';
 function showClassScreen(){
   closeActivity();
   $('#hubScreen').classList.add('hidden'); $('#classScreen').classList.remove('hidden');
@@ -325,7 +349,7 @@ function showClassScreen(){
     const w = dailyStatus('wordle', c), k = dailyStatus('connections', c);
     return `<div class="class-card" data-id="${c.id}" role="button" tabindex="0">
       <button class="edit" data-edit title="Edit classes">✏️</button>
-      <span class="level-chip${c.level === 'elem' ? ' elem' : ''}" style="align-self:flex-start">${LEVELS[c.level]}</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="level-chip${c.level === 'elem' ? ' elem' : ''}">${c.lang === 'fr' ? LEVELS_FR[c.level] : LEVELS[c.level]}</span>${c.lang === 'fr' ? '<span class="level-chip" style="background:#3d6bd6;color:#fff">⚜️ Français</span>' : ''}</div>
       <div class="nm">${esc(c.name)}</div>
       ${w ? `<div class="today"><span>${statusIcon(w)} Wordle</span><span>${statusIcon(k)} Connections</span></div>` : '<div class="today"></div>'}
     </div>`;
@@ -342,12 +366,13 @@ function enterHub(id){
   renderHub(); scrollTo(0, 0);
 }
 // onboarding
-document.querySelectorAll('.lvl-opt').forEach(b => b.onclick = () => { obLevel = b.dataset.lvl; document.querySelectorAll('.lvl-opt').forEach(x => x.classList.toggle('on', x === b)); checkOb(); });
+document.querySelectorAll('.lvl-opt[data-lvl]').forEach(b => b.onclick = () => { obLevel = b.dataset.lvl; document.querySelectorAll('.lvl-opt[data-lvl]').forEach(x => x.classList.toggle('on', x === b)); checkOb(); });
+document.querySelectorAll('.lvl-opt[data-lang]').forEach(b => b.onclick = () => { obLang = b.dataset.lang; document.querySelectorAll('.lvl-opt[data-lang]').forEach(x => x.classList.toggle('on', x === b)); });
 $('#obName').oninput = checkOb;
 function checkOb(){ $('#obGo').disabled = !($('#obName').value.trim() && obLevel); }
 $('#obName').onkeydown = e => { if (e.key === 'Enter' && !$('#obGo').disabled) $('#obGo').click(); };
 $('#obGo').onclick = () => {
-  const c = {id:uid(), name:$('#obName').value.trim(), level:obLevel};
+  const c = {id:uid(), name:$('#obName').value.trim(), level:obLevel, lang:obLang};
   hub.classes.push(c); saveHub(); enterHub(c.id);
 };
 $('#manageBtn2').onclick = () => openManager();
@@ -356,33 +381,41 @@ $('#manageBtn2').onclick = () => openManager();
 function renderHub(){
   const c = curClass();
   $('#classNm').textContent = c.name;
-  $('#levelChip').textContent = LEVELS[c.level];
+  $('#levelChip').textContent = lvlName(c.level) + (isFr() ? ' · FR' : '');
+  document.documentElement.lang = isFr() ? 'fr' : 'en';
+  $('#switchBtn').title = tt('Switch class', 'Changer de classe');
+  $('#fsBtn').title = tt('Fullscreen', 'Plein écran');
+  document.querySelectorAll('.cd-lbl').forEach((el, i) => el.textContent = isFr() ? ['Jours', 'Heures', 'Minutes', 'Secondes'][i] : ['Days', 'Hours', 'Minutes', 'Seconds'][i]);
+  $('.xmas-day').textContent = tt('🎅 Merry Christmas!', '🎅 Joyeux Noël!');
+  $('#todayTitle').textContent = tt("🧩 Today's puzzles", '🧩 Les casse-têtes du jour');
+  $('#showAll').parentElement.lastChild.textContent = tt(' Show activities for all grades', ' Voir les activités de tous les niveaux');
+  $('footer').innerHTML = tt('Made by <a href="https://teachwithreachgames.com" target="_blank" rel="noopener">Teach With Reach Games</a> · Progress is saved in this browser', 'Créé par <a href="https://teachwithreachgames.com" target="_blank" rel="noopener">Teach With Reach Games</a> · La progression est enregistrée dans ce navigateur');
   $('#levelChip').className = 'level-chip' + (c.level === 'elem' ? ' elem' : '');
   $('#countdown').classList.toggle('elem', c.level === 'elem');
   renderToday(); renderGrid(); tick();
 }
 function renderToday(){
   const c = curClass(), i = todayIndex(), grid = $('#todayGrid');
-  const games = [['wordle','🔤','Christmas Wordle'], ['connections','🔗','Christmas Connections']];
+  const games = [['wordle','🔤',tt('Christmas Wordle','Wordle de Noël')], ['connections','🔗',tt('Christmas Connections','Connexions de Noël')]];
   if (i < 0){
     const n = nextDayIndex();
     if (n === 0){
       const days = Math.ceil((DAYS[0] - new Date()) / 86400000);
       $('#todayHint').textContent = '';
-      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="unlimited"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">Daily puzzles start ${fmtDay(DAYS[0])} (${days} day${days === 1 ? '' : 's'})</div><div class="hint">Tap to play Unlimited now</div></div></button>`).join('');
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="unlimited"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">${tt(`Daily puzzles start ${fmtDay(DAYS[0])} (${days} day${days === 1 ? '' : 's'})`, `Les casse-têtes du jour commencent le ${fmtDay(DAYS[0])} (${days} jour${days === 1 ? '' : 's'})`)}</div><div class="hint">${tt('Tap to play Unlimited now', 'Touche pour jouer en illimité maintenant')}</div></div></button>`).join('');
     } else if (n > 0){
-      $('#todayHint').textContent = 'No new puzzle today (weekend). Catch up on any missed days!';
-      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">Daily #${n + 1} unlocks ${fmtDay(DAYS[n])}</div><div class="hint">Tap to play earlier days</div></div></button>`).join('');
+      $('#todayHint').textContent = tt('No new puzzle today (weekend). Catch up on any missed days!', 'Pas de nouveau casse-tête aujourd’hui (fin de semaine). Rattrape les jours manqués!');
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">${tt(`Daily #${n + 1} unlocks ${fmtDay(DAYS[n])}`, `Le no ${n + 1} s’ouvre le ${fmtDay(DAYS[n])}`)}</div><div class="hint">${tt('Tap to play earlier days', 'Touche pour jouer les jours précédents')}</div></div></button>`).join('');
     } else {
-      $('#todayHint').textContent = 'The daily puzzles are done for this year. Merry Christmas!';
-      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">All ${DAYS.length} dailies are in the archive</div><div class="hint">Tap to replay any day, or try Unlimited</div></div></button>`).join('');
+      $('#todayHint').textContent = tt('The daily puzzles are done for this year. Merry Christmas!', 'Les casse-têtes du jour sont finis pour cette année. Joyeux Noël!');
+      grid.innerHTML = games.map(([id, e, t]) => `<button class="daily off" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t}</h3><div class="st">${tt(`All ${DAYS.length} dailies are in the archive`, `Les ${DAYS.length} casse-têtes sont dans les archives`)}</div><div class="hint">${tt('Tap to replay any day, or try Unlimited', 'Touche pour rejouer un jour, ou essaie le mode illimité')}</div></div></button>`).join('');
     }
   } else {
-    $('#todayHint').textContent = `${fmtDay(DAYS[i])} · Daily #${i + 1} of ${DAYS.length}`;
+    $('#todayHint').textContent = tt(`${fmtDay(DAYS[i])} · Daily #${i + 1} of ${DAYS.length}`, `${fmtDay(DAYS[i])} · no ${i + 1} sur ${DAYS.length}`);
     grid.innerHTML = games.map(([id, e, t]) => {
       const s = dailyStatus(id, c), done = s.state === 'won' || s.state === 'lost';
-      const st = s.state === 'new' ? 'Not played yet' : s.text;
-      return `<button class="daily${done ? ' done' : ''}" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t} #${s.n}</h3><div class="st">${statusIcon(s)} ${esc(st)}</div></div><span class="btn gold go">${s.state === 'new' ? '▶ Play' : s.state === 'playing' ? '▶ Continue' : 'View'}</span></button>`;
+      const st = s.state === 'new' ? tt('Not played yet', 'Pas encore joué') : s.text;
+      return `<button class="daily${done ? ' done' : ''}" data-id="${id}" data-mode="daily"><div class="e">${e}</div><div><h3>${t} #${s.n}</h3><div class="st">${statusIcon(s)} ${esc(st)}</div></div><span class="btn gold go">${s.state === 'new' ? tt('▶ Play', '▶ Jouer') : s.state === 'playing' ? tt('▶ Continue', '▶ Continuer') : tt('View', 'Voir')}</span></button>`;
     }).join('');
   }
   grid.querySelectorAll('.daily').forEach(b => b.onclick = () => openActivity(b.dataset.id, b.dataset.mode));
@@ -390,16 +423,16 @@ function renderToday(){
 function renderGrid(){
   const c = curClass(), all = $('#showAll').checked;
   const list = ACTIVITIES.filter(a => all || a.levels.includes(c.level)).sort((a, b) => (!!b.url - !!a.url));
-  $('#actTitle').textContent = all ? 'All activities' : `Activities for ${LEVELS[c.level]}`;
+  $('#actTitle').textContent = all ? tt('All activities', 'Toutes les activités') : tt(`Activities for ${LEVELS[c.level]}`, `Activités · ${LEVELS_FR[c.level]}`);
   $('#grid').innerHTML = list.map(a => `
     <button class="act${a.url ? '' : ' soon'}" data-id="${a.id}">
       <div class="emoji">${a.emoji}</div>
-      <h3>${esc(a.title)}</h3>
-      <p>${esc(a.desc)}</p>
+      <h3>${esc(isFr() && a.fr ? a.fr[0] : a.title)}</h3>
+      <p>${esc(isFr() && a.fr ? a.fr[1] : a.desc)}</p>
       <div class="tags">
-        ${a.url ? '<span class="tag ready">▶ Ready</span>' : '<span class="tag">Coming in December</span>'}
-        ${a.daily ? '<span class="tag daily">📅 Daily</span>' : ''}
-        ${a.levels.map(l => `<span class="tag">${LEVELS[l]}</span>`).join('')}
+        ${a.url ? `<span class="tag ready">${tt('▶ Ready', '▶ Prêt')}</span>` : `<span class="tag">${tt('Coming in December', 'En décembre')}</span>`}
+        ${a.daily ? `<span class="tag daily">${tt('📅 Daily', '📅 Chaque jour')}</span>` : ''}
+        ${a.levels.map(l => `<span class="tag">${lvlName(l)}</span>`).join('')}
       </div>
     </button>`).join('');
   $('#grid').querySelectorAll('.act').forEach(b => b.onclick = () => openActivity(b.dataset.id));
@@ -412,7 +445,7 @@ function openActivity(id, mode){
   const a = ACTIVITIES.find(x => x.id === id);
   if (!a || !a.url) return;
   const c = curClass();
-  let src = `${a.url}?embed=1&class=${encodeURIComponent(c.id)}&level=${c.level}`;
+  let src = c.lang === 'fr' ? `play.html?page=${a.url}&lang=fr&embed=1&class=${encodeURIComponent(c.id)}&level=${c.level}` : `${a.url}?embed=1&class=${encodeURIComponent(c.id)}&level=${c.level}`;
   if (mode) src += `&mode=${mode}`;
   if (PREVIEW) src += '&preview=1';
   $('#actFrame').src = src;
@@ -435,7 +468,7 @@ window.addEventListener('message', e => {
 let draft = [];
 function openManager(addNew){
   draft = hub.classes.map(c => ({...c}));
-  if (addNew) draft.push({id:uid(), name:'', level: (curClass() || {}).level || 'hs'});
+  if (addNew) draft.push({id:uid(), name:'', level: (curClass() || {}).level || 'hs', lang: (curClass() || {}).lang || 'en'});
   renderRows();
   $('#manager').classList.remove('hidden');
   if (addNew){ const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length - 1].focus(); }
@@ -448,17 +481,22 @@ function renderRows(){
         <option value="elem"${c.level === 'elem' ? ' selected' : ''}>Elementary</option>
         <option value="hs"${c.level === 'hs' ? ' selected' : ''}>High School</option>
       </select>
+      <select class="in" data-lang="${i}" title="Language · Langue">
+        <option value="en"${c.lang !== 'fr' ? ' selected' : ''}>English</option>
+        <option value="fr"${c.lang === 'fr' ? ' selected' : ''}>Français</option>
+      </select>
       <button class="btn danger" data-del="${i}">Delete</button>
     </div>`).join('') || '<p class="hint">No classes. Add one below.</p>';
   $('#classRows').querySelectorAll('[data-name]').forEach(el => el.oninput = () => draft[el.dataset.name].name = el.value);
   $('#classRows').querySelectorAll('[data-level]').forEach(el => el.onchange = () => draft[el.dataset.level].level = el.value);
+  $('#classRows').querySelectorAll('select[data-lang]').forEach(el => el.onchange = () => draft[el.dataset.lang].lang = el.value);
   $('#classRows').querySelectorAll('[data-del]').forEach(el => el.onclick = () => {
     const c = draft[el.dataset.del];
     if (c.name && !confirm(`Delete "${c.name}"? Its progress will be hidden.`)) return;
     draft.splice(el.dataset.del, 1); renderRows();
   });
 }
-$('#addClassBtn').onclick = () => { draft.push({id:uid(), name:'', level:(curClass() || {}).level || 'hs'}); renderRows(); const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length - 1].focus(); };
+$('#addClassBtn').onclick = () => { draft.push({id:uid(), name:'', level:(curClass() || {}).level || 'hs', lang:(curClass() || {}).lang || 'en'}); renderRows(); const ins = $('#classRows').querySelectorAll('[data-name]'); ins[ins.length - 1].focus(); };
 $('#cancelManager').onclick = () => $('#manager').classList.add('hidden');
 $('#saveManager').onclick = () => {
   hub.classes = draft.filter(c => (c.name || '').trim()).map(c => ({...c, name:c.name.trim()}));
@@ -472,16 +510,16 @@ function tick(){
   if ($('#hubScreen').classList.contains('hidden') || !curClass()) return;
   const now = new Date();
   let h = now.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
-  $('#time').innerHTML = `${h}:${pad(now.getMinutes())}<small>${ap}</small>`;
-  $('#date').textContent = now.toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  $('#time').innerHTML = isFr() ? `${now.getHours()} h ${pad(now.getMinutes())}` : `${h}:${pad(now.getMinutes())}<small>${ap}</small>`;
+  $('#date').textContent = now.toLocaleDateString(loc(), {weekday:'long', month:'long', day:'numeric', year:'numeric'});
   const hr = now.getHours();
-  $('#greet').textContent = (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') + ', ' + curClass().name + '!';
+  $('#greet').textContent = isFr() ? (hr < 17 ? 'Bonjour' : 'Bonsoir') + ', ' + curClass().name + '!' : (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') + ', ' + curClass().name + '!';
   const y = now.getFullYear();
   const isXmas = now.getMonth() === 11 && now.getDate() === 25;
   let target = new Date(y, 11, 25);
   if (now >= new Date(y, 11, 26)) target = new Date(y + 1, 11, 25);
   $('#countdown').classList.toggle('is-xmas', isXmas);
-  $('#cdTitle').textContent = isXmas ? "It's Christmas Day!" : 'Countdown to Christmas';
+  $('#cdTitle').textContent = isXmas ? tt("It's Christmas Day!", 'C’est Noël!') : tt('Countdown to Christmas', 'Compte à rebours jusqu’à Noël');
   if (!isXmas){
     let s = Math.max(0, Math.floor((target - now) / 1000));
     const d = Math.floor(s / 86400); s -= d*86400;
@@ -491,7 +529,7 @@ function tick(){
     const today = new Date(y, now.getMonth(), now.getDate());
     const sleeps = Math.round((target - today) / 86400000);
     $('#sleepNum').textContent = sleeps;
-    $('#sleepWord').textContent = sleeps === 1 ? 'more sleep!' : 'sleeps to go!';
+    $('#sleepWord').textContent = isFr() ? (sleeps === 1 ? 'dodo encore!' : 'dodos encore!') : (sleeps === 1 ? 'more sleep!' : 'sleeps to go!');
   }
 }
 setInterval(tick, 1000);

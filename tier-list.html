@@ -235,18 +235,21 @@ const SONGS = [
   {id:'helms',      title:'Jingle Bell Rock',                            artist:'Bobby Helms',                yt:'ZnDmmiiFSUU', alt:'Z0ajuTaHBtM', start:0},
   {id:'burl',       title:'A Holly Jolly Christmas',                     artist:'Burl Ives',                  yt:'P_dI6fVZwd0', alt:'9QEK4K-KWT8', start:0},
   {id:'andy',       title:"It's the Most Wonderful Time of the Year",    artist:'Andy Williams',              yt:'cbZTfrhcamA', alt:'9JQU_3Mx6xY', start:0},
-  {id:'dean',       title:'Let It Snow! Let It Snow! Let It Snow!',      artist:'Dean Martin',                yt:'Rnil5LyK_B0', alt:'2TA3IKH8Y5c', start:0},
+  {id:'dean',       title:'Let It Snow! Let It Snow! Let It Snow!',      artist:'Dean Martin',                yt:'2TA3IKH8Y5c', alt:'', start:0},
   {id:'elvis',      title:'Blue Christmas',                              artist:'Elvis Presley',              yt:'B6WnnZRSKYs', alt:'NqwENLwSTWQ', start:0},
   {id:'berry',      title:'Run Rudolph Run',                             artist:'Chuck Berry',                yt:'YiadNVhaGwk', alt:'3tQLBSt80Ac', start:0},
   {id:'feliciano',  title:'Feliz Navidad',                               artist:'José Feliciano',             yt:'N8NcQzMQN_U', alt:'', start:0},
   {id:'chipmunks',  title:"The Chipmunk Song (Christmas Don't Be Late)", artist:'Alvin & the Chipmunks',      yt:'mDtOwSjIDFw', alt:'N7xALO9ocvo', start:0},
-  {id:'wham',       title:'Last Christmas',                              artist:'Wham!',                      yt:'E8gmARGvPlI', alt:'UOCJBYTrRFM', start:0},
-  {id:'mccartney',  title:'Wonderful Christmastime',                     artist:'Paul McCartney',             yt:'94Ye-3C1FC8', alt:'-IHP9Acxa54', start:0},
-  {id:'rundmc',     title:'Christmas in Hollis',                         artist:'Run-DMC',                    yt:'OR07r0ZMFb8', alt:'C0b8FqocXcU', start:0},
+  {id:'wham',       title:'Last Christmas',                              artist:'Wham!',                      yt:'UOCJBYTrRFM', alt:'', start:0},
+  {id:'mccartney',  title:'Wonderful Christmastime',                     artist:'Paul McCartney',             yt:'-IHP9Acxa54', alt:'', start:0},
+  {id:'train',      title:'Shake Up Christmas',                          artist:'Train',                      yt:'jx6DzaiV66Y', alt:'', start:0},
   {id:'tso',        title:'Christmas Eve/Sarajevo 12/24',                artist:'Trans-Siberian Orchestra',   yt:'MHioIlbnS_A', alt:'2LbmhneqBnE', start:0},
   {id:'ariana',     title:'Santa Tell Me',                               artist:'Ariana Grande',              yt:'nlR0MkrRklg', alt:'2TEAh5SHZGs', start:0},
   {id:'bieber',     title:'Mistletoe',                                   artist:'Justin Bieber',              yt:'LUjn3RpkcKY', alt:'g-HR0e4gLzQ', start:0},
 ];
+/* Videos that were removed from the list. If one was saved in this browser's
+   Settings, it's cleared so the new video above is used instead. */
+const RETIRED = {wham:'E8gmARGvPlI', mccartney:'94Ye-3C1FC8', dean:'Rnil5LyK_B0'};
 
 const KEY = 'twr-xmas-tierlist-v1';
 const TIER_KEYS = ['S','A','B','C','D','F'];
@@ -279,6 +282,9 @@ function load(){
     s = {meta:{}, classes:{[id]:makeClass('My Class')}, current:id};
   }
   s.meta = s.meta || {};
+  for (const id of Object.keys(s.meta)){
+    if (!byId[id] || (RETIRED[id] && s.meta[id].yt === RETIRED[id])) delete s.meta[id];
+  }
   Object.values(s.classes).forEach(sanitize);
   if (!s.classes[s.current]) s.current = Object.keys(s.classes)[0];
   return s;
@@ -620,7 +626,7 @@ function openSettings(focusId){
     if (!confirm(`Re-wrap all 25 gifts for "${c.name}"? This clears this class's tier list and reshuffles the songs.`)) return;
     store.classes[store.current] = makeClass(c.name); save(); renderAll(); closeSettings();
   };
-  if (multi) $('#deleteBtn').onclick = () => {
+  if (multi && !HUBBED) $('#deleteBtn').onclick = () => {
     if (!confirm(`Delete "${c.name}" and its tier list?`)) return;
     delete store.classes[store.current]; store.current = Object.keys(store.classes)[0]; save(); renderAll(); closeSettings();
   };
@@ -645,7 +651,10 @@ function openSettings(focusId){
     SONGS.forEach(s => {
       const raw = $(`[data-url="${s.id}"]`).value.trim(), p = parseYT(raw);
       if (raw && !p.yt){ bad = true; return; }
-      store.meta[s.id] = {url:raw, yt:p.yt, start:Math.max(0, parseInt($(`[data-start="${s.id}"]`).value, 10) || 0)};
+      const start = Math.max(0, parseInt($(`[data-start="${s.id}"]`).value, 10) || 0);
+      // Only remember a link if it differs from the default, so future list updates still apply.
+      if (p.yt === (s.yt||'') && start === (s.start||0)) delete store.meta[s.id];
+      else store.meta[s.id] = {url:raw, yt:p.yt, start};
     });
     save(); renderBoard();
     if (bad) alert('Some links (in red) were not recognized as YouTube links and were not saved.');

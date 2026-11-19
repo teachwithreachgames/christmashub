@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Carrefour de Noël | Teach With Reach Games</title>
+<!--
+  FRENCH LOADER. The hub opens French classes' activities here, e.g.
+  play.html?page=wordle.html&lang=fr&class=...
+  It loads the English activity, swaps in the French word lists from fr-data.js,
+  and adds fr.js so the buttons and messages show in French.
+  The English activity files are never changed.
+-->
+<script src="fr-data.js"></script>
+</head>
+<body style="margin:0;background:#06140e;color:#fdf6e3;font:20px Nunito,system-ui,sans-serif">
+<p id="msg" style="padding:30px;text-align:center">Chargement…</p>
+<script>
+(async () => {
+  const page = new URLSearchParams(location.search).get('page') || '';
+  const fail = t => { document.getElementById('msg').textContent = t; };
+  if (!/^[\w-]+\.html$/.test(page) || page === 'play.html') return fail('Activité introuvable.');
+  let html;
+  try {
+    const r = await fetch(page, {cache:'no-cache'});
+    if (!r.ok) throw new Error(r.status);
+    html = await r.text();
+  } catch(e) {
+    return fail(location.protocol === 'file:'
+      ? 'Les activités en français doivent être ouvertes à partir de ton site Web (GitHub Pages), pas d’un fichier sur l’ordinateur.'
+      : 'Impossible de charger cette activité. Vérifie ta connexion et réessaie.');
+  }
+  // swap in the French content
+  for (const [from, to, rep] of (window.TWR_FR_DATA || {})[page] || []){
+    const i = html.indexOf(from);
+    if (i < 0){ console.warn('[FR] text not found in ' + page + ':', from.slice(0, 60)); continue; }
+    if (to === null){ html = html.slice(0, i) + rep + html.slice(i + from.length); continue; }
+    const j = html.indexOf(to, i + from.length);
+    if (j < 0){ console.warn('[FR] end not found in ' + page + ':', to.slice(0, 60)); continue; }
+    html = html.slice(0, i) + rep + html.slice(j);
+  }
+  // French interface first, before the activity's own scripts run
+  html = html.replace('<html lang="en">', '<html lang="fr">').replace(/<head[^>]*>/i, m => m + '\n<script src="fr.js"><\/script>');
+  document.open(); document.write(html); document.close();
+})();
+</script>
+</body>
+</html>
